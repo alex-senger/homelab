@@ -1,0 +1,44 @@
+# Captured verbatim from the live Helm release on 2026-08-18 via:
+#   helm get values cilium -n kube-system -o yaml
+#
+# These values are Talos-specific. Do not change them without reading
+# docs/runbooks/cilium-recovery.md first — a bad value here takes down
+# all pod networking.
+
+# Talos mounts cgroups itself; Cilium must not try.
+cgroup:
+  autoMount:
+    enabled: false
+  hostRoot: /sys/fs/cgroup
+
+# Pod CIDRs are allocated by kube-controller-manager, not Cilium.
+ipam:
+  mode: kubernetes
+
+# Talos KubePrism: the node-local API server proxy. Using it means Cilium
+# does not depend on a Service IP that Cilium itself is responsible for.
+k8sServiceHost: localhost
+k8sServicePort: 7445
+
+# Talos ships no kube-proxy; Cilium provides the equivalent via eBPF.
+kubeProxyReplacement: true
+
+# Talos runs a locked-down container runtime, so capabilities are explicit.
+securityContext:
+  capabilities:
+    ciliumAgent:
+      - CHOWN
+      - KILL
+      - NET_ADMIN
+      - NET_RAW
+      - IPC_LOCK
+      - SYS_ADMIN
+      - SYS_RESOURCE
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+    cleanCiliumState:
+      - NET_ADMIN
+      - SYS_ADMIN
+      - SYS_RESOURCE
