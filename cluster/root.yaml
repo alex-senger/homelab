@@ -1,0 +1,30 @@
+# Applied by hand exactly once, after bootstrap:
+#   kubectl apply -f cluster/root.yaml
+#
+# Uses project 'default' because the infrastructure and apps projects are
+# created by this Application's own first sync — they do not exist yet when
+# it is applied.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/alex-senger/homelab.git
+    targetRevision: main
+    path: cluster
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+
+  syncPolicy:
+    automated:
+      # Safe here: this Application manages only Application and AppProject
+      # resources. Pruning an Application does not prune what it manages
+      # unless that Application carries a finalizer.
+      prune: true
+      selfHeal: true

@@ -1,0 +1,29 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: apps
+  namespace: argocd
+spec:
+  description: >-
+    User-facing workloads. Denied cluster-scoped resources so a third-party
+    chart cannot grant itself cluster-admin or install CRDs.
+
+  sourceRepos:
+    - https://github.com/alex-senger/homelab.git
+
+  # Namespaces planned in sub-project #6. Extend as applications are added;
+  # an application targeting an unlisted namespace is refused.
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: website
+    - server: https://kubernetes.default.svc
+      namespace: authelia
+    - server: https://kubernetes.default.svc
+      namespace: nextcloud
+
+  # Empty: no cluster-scoped resource of any kind is permitted.
+  clusterResourceWhitelist: []
+
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
