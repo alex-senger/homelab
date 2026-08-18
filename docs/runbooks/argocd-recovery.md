@@ -50,3 +50,30 @@ content it should not have.
 
 Client-side apply was used somewhere. Every apply of ArgoCD needs `--server-side`, and ArgoCD's
 own Application needs `ServerSideApply=true` in its `syncOptions`.
+
+## Symptom: "I changed something by hand and ArgoCD did not revert it"
+
+Usually correct behaviour, not a bug.
+
+Every Application in this repository syncs with `ServerSideApply=true`. Under server-side apply
+ArgoCD owns only the fields it actually declares, tracked through the object's `managedFields`.
+A field introduced by a different manager — a label you added with `kubectl label`, an annotation
+from another controller — is an *extra* field rather than a divergence from desired state, so
+there is nothing for self-heal to reconcile. The Application stays `Synced`, correctly.
+
+Verified on this cluster 2026-08-18: `kubectl -n kube-system label daemonset cilium
+drift-test=true` was never reverted, while the Cilium Application reported `Synced` the whole time.
+
+To confirm self-heal genuinely works, drift a field the rendered manifest declares:
+
+    kubectl -n kube-system patch ds cilium --type merge \
+      -p '{"spec":{"updateStrategy":{"rollingUpdate":{"maxUnavailable":1}}}}'
+
+Within about a minute it returns to `2`. `updateStrategy` is a safe choice because it only affects
+how future template changes roll out — changing it restarts no pods. Avoid drifting anything
+inside `spec.template`: that field *is* declared, so it would be reverted, but the revert triggers
+a rolling restart of the CNI on a live cluster.
+
+To see who owns a field:
+
+    kubectl -n kube-system get ds cilium --show-managed-fields -o yaml | grep -A5 'manager: argocd'
