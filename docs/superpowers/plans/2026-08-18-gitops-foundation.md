@@ -1449,7 +1449,12 @@ jobs:
               echo "### \`$dir\`"
               echo
               echo '```diff'
-              echo "$out"
+              # MANDATORY redaction. Rendering Cilium produces TLS Secrets whose
+              # data fields are private keys, and the chart regenerates them on
+              # every template — so they appear in almost every diff. Without this
+              # filter the job publishes live private keys into a PR comment on a
+              # public repository.
+              echo "$out" | sed -E 's/[A-Za-z0-9+\/]{60,}=*/<REDACTED-KEY-MATERIAL>/g'
               echo '```'
               echo
             done
@@ -1469,12 +1474,24 @@ jobs:
           header: rendered-diff
           path: /tmp/comment.md
 
+  # Scoped to apps/ — the workloads authored in this repository — and NOT to
+  # infrastructure/.
+  #
+  # kube-linter's checks target application workloads. Run against the platform
+  # charts it produces 54 findings, all of which a CNI legitimately requires:
+  # cilium-agent cannot run as non-root, cilium-envoy needs SYS_ADMIN and the
+  # host network namespace, apply-sysctl-overwrites mounts /proc because writing
+  # sysctls is its entire purpose. Excluding every security and host check still
+  # leaves 21 (privileged-container, drop-net-raw-capability, unset resources on
+  # the upstream chart's containers). There is no configuration under which this
+  # tool says something true and useful about a CNI DaemonSet.
+  #
+  # A check that can never go green teaches people to ignore CI, so rather than
+  # leaving it permanently red under continue-on-error, it is scoped to where its
+  # checks actually apply and made a real gate. apps/ is empty until
+  # sub-project #6; the job says so explicitly rather than passing silently.
   lint:
-    needs: prepare
     runs-on: ubuntu-latest
-    # Advisory only. Upstream charts trip these checks, and a permanently
-    # failing required check is a check nobody reads.
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
 
@@ -1485,17 +1502,26 @@ jobs:
           curl -sSfL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv${KUSTOMIZE_VERSION}/kustomize_v${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" \
             | sudo tar -xz -C /usr/local/bin kustomize
 
-      - name: Render everything into one directory
+      - name: Render workloads authored in this repository
+        id: render
         run: |
           mkdir -p /tmp/lint
           : > /tmp/lint/all.yaml
-          for dir in $(echo '${{ needs.prepare.outputs.dirs }}' | jq -r '.[]'); do
+          found=0
+          for dir in $(find apps -name kustomization.yaml -printf '%h\n' 2>/dev/null | sort -u); do
+            echo "Rendering $dir"
             echo "---" >> /tmp/lint/all.yaml
             kustomize build --enable-helm "$dir" >> /tmp/lint/all.yaml
+            found=1
           done
+          echo "found=$found" >> "$GITHUB_OUTPUT"
+          if [ "$found" = "0" ]; then
+            echo "::notice title=kube-linter::No workloads under apps/ yet, so there is nothing to lint. Platform components under infrastructure/ are deliberately out of scope — see the comment above this job."
+          fi
 
       # The action's `directory` input expects a directory, not a file.
       - uses: stackrox/kube-linter-action@v1
+        if: steps.render.outputs.found == '1'
         with:
           directory: /tmp/lint
 ```
@@ -1513,9 +1539,21 @@ for dir in $(find . -name kustomization.yaml -not -path './.git/*' | xargs -n1 d
 done
 ```
 
-Expected: four directories (`bootstrap/argocd`, `cluster`, `infrastructure/argocd`, `infrastructure/cilium`), each `0 errors`.
+Expected: four directories, with these exact sizes — `bootstrap/argocd` 45 resources (42 valid, 3 skipped), `cluster` 3 resources, `infrastructure/argocd` 45 resources (42 valid, 3 skipped), `infrastructure/cilium` 23 resources (23 valid). `bootstrap/argocd` and `infrastructure/argocd` matching exactly is the anti-drift property from Task 4 holding.
 
 Note `find` here uses `xargs dirname` because macOS `find` lacks GNU's `-printf`. The workflow runs on `ubuntu-latest`, where `-printf` is available.
+
+**Verify the redaction filter actually works.** This is the control that stops the diff job publishing private keys, so test it rather than trusting it:
+
+```bash
+kustomize build --enable-helm infrastructure/cilium > /tmp/cil.yaml
+echo "base64 runs before: $(grep -cE '[A-Za-z0-9+/]{60,}' /tmp/cil.yaml)"
+echo "base64 runs after:  $(sed -E 's/[A-Za-z0-9+\/]{60,}=*/<REDACTED>/g' /tmp/cil.yaml | grep -cE '[A-Za-z0-9+/]{60,}')"
+```
+
+Expected: a non-zero count before, and `0` after.
+
+Do **not** try to spot-check this with `grep -A2 'kind: Secret'`. Kustomize emits each resource's top-level keys alphabetically, so `data` sorts before `kind` — after-context never captures the key material, and the check silently reports success regardless of whether redaction works.
 
 - [ ] **Step 3: Commit and push on a branch, so the workflow exercises the PR path**
 

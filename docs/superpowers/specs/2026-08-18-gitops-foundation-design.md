@@ -390,9 +390,25 @@ and posts a sticky pull-request comment. The reviewer sees the actual Kubernetes
 will change rather than a values diff they must mentally compile. Requires
 `permissions: {contents: read, pull-requests: write}`.
 
-**`lint`** runs kube-linter as a **non-blocking** job — missing resource limits, missing probes,
-running as root. Advisory, because upstream charts will trip it and a permanently red check is a
-check nobody reads.
+**`lint`** runs kube-linter against `apps/` only — the workloads this repository authors — as a
+**real gate**, not an advisory one.
+
+The original design ran it across everything under `continue-on-error: true`. Measurement showed
+that was wrong. Against the platform charts kube-linter produces **54 findings**, every one of
+which a CNI legitimately requires: `cilium-agent` cannot run as non-root, `cilium-envoy` needs
+`SYS_ADMIN` and the host network namespace, `apply-sysctl-overwrites` mounts `/proc` because
+writing sysctls is its entire purpose. Excluding every security and host check still leaves **21**
+— `privileged-container`, `drop-net-raw-capability`, and unset resources on the upstream chart's
+own containers. No configuration makes this tool say something true and useful about a CNI
+DaemonSet.
+
+Hiding that behind `continue-on-error` yields a permanently red check, which teaches people to
+stop reading CI — worse than no check at all. Scoping it to where its assumptions hold makes it
+meaningful and lets it block. `apps/` is empty until sub-project #6, so the job emits a `::notice`
+saying there is nothing to lint rather than passing silently.
+
+The general lesson is worth keeping: when a tool disagrees with your manifests 54 times, establish
+whether its assumptions apply before either silencing it or obeying it.
 
 ## 14. Renovate
 
