@@ -387,10 +387,17 @@ helmCharts:
     releaseName: cilium
     namespace: kube-system
     valuesFile: values.yaml
-    includeCRDs: true
 ```
 
 `releaseName: cilium` and `namespace: kube-system` must match the live release exactly, or every rendered resource name and namespace will differ from what is running.
+
+**There is deliberately no `includeCRDs: true`.** Verified 2026-08-18: the Cilium chart ships no
+`crds/` directory and no `CustomResourceDefinition` templates at all, while the cluster has 10
+registered `cilium.io` CRDs. Cilium's agent and operator create them programmatically at startup.
+`includeCRDs` would therefore be a no-op that falsely implies this Kustomization manages them.
+
+This is a real limit on the repository's "everything is declared in Git" claim, and the README
+states it: Cilium's CRDs are the one part of the CNI that is not declarative.
 
 - [ ] **Step 4: Run the test — render and schema-validate**
 
@@ -411,8 +418,15 @@ This is the step that makes Task 7 safe.
 
 ```bash
 helm get manifest cilium -n kube-system > /tmp/cilium-live.yaml
-dyff between --omit-header /tmp/cilium-live.yaml /tmp/cilium-rendered.yaml
+dyff between --omit-header /tmp/cilium-live.yaml /tmp/cilium-rendered.yaml \
+  | sed -E 's/(LS0tLS1CRUdJT|[A-Za-z0-9+\/]{60,}=*)/<REDACTED-KEY-MATERIAL>/g'
 ```
+
+**Never paste the unredacted diff into a chat, a report, an issue, or a commit message.** The
+`data` field of a TLS Secret *is* the private key; diffing two of them prints both keys in full.
+The `sed` filter above collapses long base64 runs so the structural diff stays readable while the
+key material does not leave the terminal. Run the unfiltered command only when you need to inspect
+a specific non-Secret resource, and do not copy its output anywhere.
 
 Expected: no differences, or differences **only** in Hubble TLS certificate Secrets and the `cilium-ca` Secret.
 
@@ -1870,6 +1884,11 @@ Debian VM. It works. It is not fast, and Prometheus scrape intervals are tuned a
 
 **One control-plane node.** etcd has no quorum, so a control-plane reboot is an API outage. A
 third node is planned.
+
+**Cilium's CRDs are not declarative.** The Cilium chart ships no CustomResourceDefinition
+manifests; the agent and operator register the ten `cilium.io` CRDs programmatically at startup.
+Everything else about the CNI is declared here, but those ten resources exist because Cilium put
+them there, not because this repository asked for them.
 
 ## Design documents
 
