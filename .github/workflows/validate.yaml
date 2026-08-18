@@ -163,10 +163,24 @@ jobs:
           header: rendered-diff
           path: /tmp/comment.md
 
+  # Scoped to apps/ — the workloads authored in this repository — and NOT to
+  # infrastructure/.
+  #
+  # kube-linter's checks target application workloads. Run against the platform
+  # charts it produces 54 findings, all of which a CNI legitimately requires:
+  # cilium-agent cannot run as non-root, cilium-envoy needs SYS_ADMIN and the
+  # host network namespace, apply-sysctl-overwrites mounts /proc because writing
+  # sysctls is its entire purpose. Excluding every security and host check still
+  # leaves 21 (privileged-container, drop-net-raw-capability, unset resources on
+  # the upstream chart's containers). There is no configuration under which this
+  # tool says something true and useful about a CNI DaemonSet.
+  #
+  # A check that can never go green teaches people to ignore CI, so rather than
+  # leaving it permanently red under continue-on-error, it is scoped to where its
+  # checks actually apply and made a real gate. apps/ is empty until
+  # sub-project #6; the job says so explicitly rather than passing silently.
   lint:
-    needs: prepare
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
 
@@ -177,15 +191,24 @@ jobs:
           curl -sSfL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv${KUSTOMIZE_VERSION}/kustomize_v${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" \
             | sudo tar -xz -C /usr/local/bin kustomize
 
-      - name: Render everything into one directory
+      - name: Render workloads authored in this repository
+        id: render
         run: |
           mkdir -p /tmp/lint
           : > /tmp/lint/all.yaml
-          for dir in $(echo '${{ needs.prepare.outputs.dirs }}' | jq -r '.[]'); do
+          found=0
+          for dir in $(find apps -name kustomization.yaml -printf '%h\n' 2>/dev/null | sort -u); do
+            echo "Rendering $dir"
             echo "---" >> /tmp/lint/all.yaml
             kustomize build --enable-helm "$dir" >> /tmp/lint/all.yaml
+            found=1
           done
+          echo "found=$found" >> "$GITHUB_OUTPUT"
+          if [ "$found" = "0" ]; then
+            echo "::notice title=kube-linter::No workloads under apps/ yet, so there is nothing to lint. Platform components under infrastructure/ are deliberately out of scope — see the comment above this job."
+          fi
 
       - uses: stackrox/kube-linter-action@v1
+        if: steps.render.outputs.found == '1'
         with:
           directory: /tmp/lint
