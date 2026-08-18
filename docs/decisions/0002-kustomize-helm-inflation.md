@@ -22,8 +22,9 @@ This requires `kustomize.buildOptions: --enable-helm` in `argocd-cm`.
 ## Consequences
 
 Given pinned `kustomize` and `helm` versions, `kustomize build --enable-helm <dir>` on a laptop,
-in GitHub Actions, and in the ArgoCD repo-server produce identical output. CI therefore validates and diffs the real objects rather than
-approximating them with a separate `helm template` invocation that may drift.
+in GitHub Actions, and in the ArgoCD repo-server produce identical output. CI therefore validates
+and diffs the real objects rather than approximating them with a separate `helm template`
+invocation that may drift.
 
 Chart output stays patchable. Adding an `HTTPRoute` or `ExternalSecret` beside a chart is another
 entry in the same Kustomization rather than a second Application source.
