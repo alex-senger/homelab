@@ -1,0 +1,69 @@
+# ArgoCD configuration for the roastery cluster.
+#
+# Resource requests are sized for 2 vCPU / 4 GB nodes. Revisit after the
+# host RAM upgrade (see docs/superpowers/specs/2026-08-18-gitops-foundation-design.md section 3).
+
+configs:
+  cm:
+    # Required for helmCharts: inflation in every Kustomization in this repo.
+    # Without it the repo-server renders nothing and every Application fails.
+    kustomize.buildOptions: --enable-helm
+
+    # Track managed resources with an annotation instead of the default
+    # app.kubernetes.io/instance label. The default label collides with
+    # labels charts already set on their own resources — Cilium in particular.
+    application.resourceTrackingMethod: annotation
+
+  params:
+    # TLS terminates at the Gateway from sub-project #3 onward. Until then
+    # access is via kubectl port-forward, so serving plaintext internally
+    # avoids the self-signed-certificate warning loop.
+    server.insecure: true
+
+# Disabled to reclaim roughly 100 MB on a 4 GB node.
+# Dex returns in sub-project #6, when Authelia becomes the OIDC provider.
+dex:
+  enabled: false
+
+notifications:
+  enabled: false
+
+controller:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 768Mi
+
+repoServer:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      memory: 512Mi
+
+server:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      memory: 256Mi
+
+redis:
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      memory: 192Mi
+
+applicationSet:
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      memory: 192Mi
