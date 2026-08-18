@@ -432,6 +432,17 @@ Nothing here is unit-testable, so verification is behavioural.
 | 2 | Cilium render-vs-live parity diff empty (§11) | once, gating |
 | 3 | Every Application `Synced` and `Healthy`; `cilium status --wait` clean; no `CrashLoopBackOff` in `kubectl get pods -A` | after bootstrap |
 | 4 | **Drift test:** `kubectl scale deploy/argocd-repo-server --replicas=2`, confirm self-heal reverts it | once, then after major changes |
+| 4b | **Drift test on Cilium:** patch `spec.updateStrategy.rollingUpdate.maxUnavailable` to `1`, confirm it returns to `2` | once, after enabling automated sync |
+
+Both drift tests must target a field the desired manifest **declares**. With `ServerSideApply=true`,
+ArgoCD owns only the fields it applies, so anything added by a different field manager — a stray
+label, an extra annotation — is not a divergence from desired state and is correctly left alone.
+Verified 2026-08-18: adding `drift-test=true` to the Cilium DaemonSet's labels was never reverted
+and the Application reported `Synced` throughout. A label-based drift test therefore fails
+identically whether self-heal works or not, which makes it actively misleading.
+
+`spec.replicas` (ArgoCD) and `updateStrategy` (Cilium) are both declared and both sit outside the
+pod template, so neither test restarts a workload.
 | 5 | `helm list -A` returns empty | once |
 
 Check 4 is the only one that proves GitOps is *working* rather than merely installed. It is also

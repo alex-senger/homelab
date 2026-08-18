@@ -1242,26 +1242,37 @@ Expected: `0 errors`.
 
 - [ ] **Step 4: Verify self-heal works on Cilium too**
 
-Drift the DaemonSet's **metadata label**, not its pod template. A label on the DaemonSet object
-does not touch the pod spec, so no Cilium pods restart and pod networking is never disrupted. Do
-**not** use `kubectl set env` here — that mutates the pod template and triggers a rolling restart
-of the CNI on a live cluster.
+The drifted field must be one the rendered manifest actually **declares**, and one whose change
+does not trigger a pod rollout. `spec.updateStrategy.rollingUpdate.maxUnavailable` is both: the
+Cilium chart sets it to `2`, and `updateStrategy` only governs how *future* template changes roll
+out, so altering it restarts nothing.
 
 ```bash
-kubectl -n kube-system label daemonset cilium drift-test=true --overwrite
+kubectl -n kube-system patch ds cilium --type merge \
+  -p '{"spec":{"updateStrategy":{"rollingUpdate":{"maxUnavailable":1}}}}'
 sleep 60
-kubectl -n kube-system get daemonset cilium -o jsonpath='{.metadata.labels}' | grep -q drift-test \
-  && echo "STILL PRESENT — self-heal did not fire" \
-  || echo "reverted"
+test "$(kubectl -n kube-system get ds cilium -o jsonpath='{.spec.updateStrategy.rollingUpdate.maxUnavailable}')" = "2" \
+  && echo "reverted" || echo "STILL DRIFTED — self-heal did not fire"
 ```
 
-Expected: `reverted`. If it says `STILL PRESENT`, self-heal is not active — check
-`kubectl -n argocd get application cilium -o jsonpath='{.spec.syncPolicy}'` and remove the drift
-by hand:
+Expected: `reverted`. If it says `STILL DRIFTED`, check
+`kubectl -n argocd get application cilium -o jsonpath='{.spec.syncPolicy}'` and restore by hand
+with the same patch, setting the value back to `2`.
 
-```bash
-kubectl -n kube-system label daemonset cilium drift-test-
-```
+**Do not test drift by adding a label or annotation.** Verified 2026-08-18 on this cluster: adding
+`drift-test=true` to the DaemonSet's `metadata.labels` was never reverted, and the Application
+continued to report `Synced` throughout. That is correct behaviour, not a failure. With
+`ServerSideApply=true`, ArgoCD owns only the fields it declares; a label added by a different field
+manager is an *extra* field, not a divergence from desired state, so there is nothing to heal. A
+label test therefore reports failure whether or not self-heal works, which makes it worse than no
+test at all.
+
+For the same reason, do **not** use `kubectl set env` — that field *is* declared, so it would be
+reverted, but it lives in the pod template and would trigger a rolling restart of the CNI on a live
+cluster.
+
+The general rule: to test self-heal, drift a field the desired manifest declares. To test it
+safely, pick one outside the pod template.
 
 - [ ] **Step 5: Delete the stale Helm release metadata**
 
