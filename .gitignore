@@ -1,0 +1,11 @@
+# Render scratch output
+/tmp/
+*.rendered.yaml
+rendered/
+
+# Helm chart cache pulled by kustomize --enable-helm
+charts/
+*.tgz
+
+# OS
+.DS_Store
