@@ -21,13 +21,16 @@ This requires `kustomize.buildOptions: --enable-helm` in `argocd-cm`.
 
 ## Consequences
 
-`kustomize build --enable-helm <dir>` on a laptop, in GitHub Actions, and in the ArgoCD repo-server
-produce identical output. CI therefore validates and diffs the real objects rather than
+Given pinned `kustomize` and `helm` versions, `kustomize build --enable-helm <dir>` on a laptop,
+in GitHub Actions, and in the ArgoCD repo-server produce identical output. CI therefore validates and diffs the real objects rather than
 approximating them with a separate `helm template` invocation that may drift.
 
 Chart output stays patchable. Adding an `HTTPRoute` or `ExternalSecret` beside a chart is another
 entry in the same Kustomization rather than a second Application source.
 
-The costs: `--enable-helm` must be enabled on the repo-server, charts are re-downloaded on each
-render (mitigated by caching `~/.cache/helm` in CI), and `helm rollback` is no longer available —
-rollback is `git revert`.
+The costs: `--enable-helm` must be enabled on the repo-server, and charts are re-downloaded on
+each render, mitigated by caching `~/.cache/helm` in CI.
+
+Rollback is `git revert`, not `helm rollback`. This is not a cost of this decision — ArgoCD
+templates charts and applies manifests in all three of its Helm modes, so no Helm release object
+exists under any of the alternatives considered here.
