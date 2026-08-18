@@ -1,0 +1,23 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: argocd
+
+resources:
+  - namespace.yaml
+
+helmCharts:
+  - name: argo-cd
+    repo: https://argoproj.github.io/argo-helm
+    version: 10.4.0
+    releaseName: argocd
+    namespace: argocd
+    valuesFile: values.yaml
+    # No includeCRDs here, deliberately. Verified 2026-08-18: the argo-cd chart
+    # ships its 3 CRDs (applications, applicationsets, appprojects) as plain
+    # templates under templates/crds/, gated by values crds.install (default
+    # true) — not via Helm's special crds/ directory convention, which is the
+    # only thing includeCRDs/--include-crds controls. Rebuilding with and
+    # without includeCRDs: true produced byte-identical output. Leaving it in
+    # would falsely imply this Kustomization decides whether CRDs are
+    # installed; that decision is already made by the chart's own default.
