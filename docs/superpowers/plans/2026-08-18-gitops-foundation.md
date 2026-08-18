@@ -118,13 +118,19 @@ helm repo update argo >/dev/null
 helm search repo argo/argo-cd --versions | head -20
 ```
 
-Pick the newest chart version whose `APP VERSION` column starts with `3.5.`, matching the v3.5.1 currently running. Write it down — every later task refers to it as `<ARGOCD_CHART_VERSION>` and you substitute the literal number.
+Pick the newest chart version whose `APP VERSION` column starts with `v3.5.`, matching the v3.5.1 currently running. Write it down — every later task refers to it as `<ARGOCD_CHART_VERSION>` and you substitute the literal number.
+
+Note the `v` prefix: the `APP VERSION` column renders as `v3.5.1`, not `3.5.1`.
 
 ```bash
-helm search repo argo/argo-cd --versions | awk '$3 ~ /^3\.5\./ {print $2, $3; exit}'
+helm search repo argo/argo-cd --versions | awk '$3 ~ /^v3\.5\./ {print $2, $3; exit}'
 ```
 
-Expected: one line, e.g. `8.6.0 3.5.1`. The first field is the chart version.
+Expected: one line. The first field is the chart version.
+
+**Resolved 2026-08-18: chart `10.4.0`, appVersion `v3.5.1`** — an exact match for the running
+installation. Use `10.4.0` wherever this plan says `<ARGOCD_CHART_VERSION>` unless a newer chart
+with appVersion `v3.5.x` has since been published.
 
 ---
 
@@ -147,11 +153,6 @@ touch apps/.gitkeep talos/.gitkeep
 `.gitignore`:
 
 ```gitignore
-# Render scratch output
-/tmp/
-*.rendered.yaml
-rendered/
-
 # Helm chart cache pulled by kustomize --enable-helm
 charts/
 *.tgz
@@ -161,6 +162,8 @@ charts/
 ```
 
 Note `charts/` — `kustomize build --enable-helm` downloads charts into a `charts/` subdirectory next to the Kustomization. Those are build artifacts and must never be committed.
+
+There is deliberately no rule for render scratch output. Every render step in this plan writes to the operating system's `/tmp`, which is outside the working tree; a `/tmp/` rule in `.gitignore` would anchor to the repository root and match nothing.
 
 - [ ] **Step 2: Write ADR 0001**
 
@@ -187,7 +190,9 @@ automatically during adoption), and two AppProjects with different privilege lev
 
 ## Decision
 
-One explicit `Application` per component, all in `cluster/applications/`.
+One explicit `Application` per component, all in `cluster/applications/`. A single root
+`Application`, applied by hand once, syncs that directory — so ArgoCD manages the set of
+Applications the same way it manages everything else.
 
 ## Consequences
 
@@ -232,16 +237,20 @@ This requires `kustomize.buildOptions: --enable-helm` in `argocd-cm`.
 
 ## Consequences
 
-`kustomize build --enable-helm <dir>` on a laptop, in GitHub Actions, and in the ArgoCD repo-server
-produce identical output. CI therefore validates and diffs the real objects rather than
-approximating them with a separate `helm template` invocation that may drift.
+Given pinned `kustomize` and `helm` versions, `kustomize build --enable-helm <dir>` on a laptop,
+in GitHub Actions, and in the ArgoCD repo-server produce identical output. CI therefore validates
+and diffs the real objects rather than approximating them with a separate `helm template`
+invocation that may drift.
 
 Chart output stays patchable. Adding an `HTTPRoute` or `ExternalSecret` beside a chart is another
 entry in the same Kustomization rather than a second Application source.
 
-The costs: `--enable-helm` must be enabled on the repo-server, charts are re-downloaded on each
-render (mitigated by caching `~/.cache/helm` in CI), and `helm rollback` is no longer available —
-rollback is `git revert`.
+The costs: `--enable-helm` must be enabled on the repo-server, and charts are re-downloaded on
+each render, mitigated by caching `~/.cache/helm` in CI.
+
+Rollback is `git revert`, not `helm rollback`. This is not a cost of this decision — ArgoCD
+templates charts and applies manifests in all three of its Helm modes, so no Helm release object
+exists under any of the alternatives considered here.
 ```
 
 - [ ] **Step 4: Verify nothing is staged that shouldn't be**
