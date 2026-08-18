@@ -1,0 +1,214 @@
+name: validate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  # renovate: datasource=github-releases depName=kubernetes-sigs/kustomize
+  KUSTOMIZE_VERSION: 5.8.1
+  # renovate: datasource=github-releases depName=yannh/kubeconform
+  KUBECONFORM_VERSION: 0.8.0
+  # renovate: datasource=github-releases depName=homeport/dyff
+  DYFF_VERSION: 1.12.0
+  CRD_SCHEMAS: https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      dirs: ${{ steps.discover.outputs.dirs }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Discover every Kustomization
+        id: discover
+        run: |
+          dirs=$(find . -name kustomization.yaml -not -path './.git/*' -printf '%h\n' \
+                 | sed 's|^\./||' | sort -u | jq -R . | jq -sc .)
+          echo "dirs=$dirs" >> "$GITHUB_OUTPUT"
+          echo "Discovered: $dirs"
+
+  validate:
+    needs: prepare
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        dir: ${{ fromJson(needs.prepare.outputs.dirs) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/setup-helm@v4
+
+      - name: Cache Helm chart downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/helm
+          key: helm-${{ hashFiles('**/kustomization.yaml') }}
+          restore-keys: helm-
+
+      - name: Install kustomize and kubeconform
+        run: |
+          curl -sSfL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv${KUSTOMIZE_VERSION}/kustomize_v${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" \
+            | sudo tar -xz -C /usr/local/bin kustomize
+          curl -sSfL "https://github.com/yannh/kubeconform/releases/download/v${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" \
+            | sudo tar -xz -C /usr/local/bin kubeconform
+
+      - name: Render and schema-validate ${{ matrix.dir }}
+        run: |
+          kustomize build --enable-helm "${{ matrix.dir }}" > /tmp/rendered.yaml
+          kubeconform -strict -summary -skip CustomResourceDefinition \
+            -schema-location default \
+            -schema-location "$CRD_SCHEMAS" \
+            /tmp/rendered.yaml
+
+  standalone:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install kubeconform
+        run: |
+          curl -sSfL "https://github.com/yannh/kubeconform/releases/download/v${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" \
+            | sudo tar -xz -C /usr/local/bin kubeconform
+
+      - name: Assert the standalone list is still complete
+        run: |
+          for f in $(find cluster -name '*.yaml' -not -name 'kustomization.yaml' -not -name 'root.yaml'); do
+            base=$(basename "$f")
+            grep -q "$base" cluster/kustomization.yaml || {
+              echo "::error::$f is not referenced by cluster/kustomization.yaml and is not in the standalone list"
+              exit 1
+            }
+          done
+
+      - name: Validate standalone manifests
+        run: |
+          kubeconform -strict -summary -skip CustomResourceDefinition \
+            -schema-location default \
+            -schema-location "$CRD_SCHEMAS" \
+            cluster/root.yaml
+
+  diff:
+    needs: prepare
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: azure/setup-helm@v4
+
+      - name: Install kustomize and dyff
+        run: |
+          curl -sSfL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv${KUSTOMIZE_VERSION}/kustomize_v${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" \
+            | sudo tar -xz -C /usr/local/bin kustomize
+          curl -sSfL "https://github.com/homeport/dyff/releases/download/v${DYFF_VERSION}/dyff_${DYFF_VERSION}_linux_amd64.tar.gz" \
+            | sudo tar -xz -C /usr/local/bin dyff
+
+      - name: Render base and head, then diff
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          git worktree add /tmp/base "$BASE_SHA"
+
+          {
+            echo "## Rendered manifest changes"
+            echo
+            for dir in $(echo '${{ needs.prepare.outputs.dirs }}' | jq -r '.[]'); do
+              kustomize build --enable-helm "$dir" > /tmp/head.yaml 2>/dev/null || : > /tmp/head.yaml
+
+              if [ -f "/tmp/base/$dir/kustomization.yaml" ]; then
+                (cd /tmp/base && kustomize build --enable-helm "$dir") > /tmp/base.yaml 2>/dev/null || : > /tmp/base.yaml
+              else
+                : > /tmp/base.yaml
+                echo "### \`$dir\` — new component"
+                echo
+              fi
+
+              if out=$(dyff between --omit-header --set-exit-code /tmp/base.yaml /tmp/head.yaml 2>&1); then
+                continue
+              fi
+              echo "### \`$dir\`"
+              echo
+              echo '```diff'
+              echo "$out" | sed -E 's/[A-Za-z0-9+\/]{60,}=*/<REDACTED-KEY-MATERIAL>/g'
+              echo '```'
+              echo
+            done
+          } > /tmp/comment.md
+
+          if [ "$(wc -l < /tmp/comment.md)" -le 3 ]; then
+            {
+              echo "## Rendered manifest changes"
+              echo
+              echo "No changes to rendered Kubernetes objects."
+            } > /tmp/comment.md
+          fi
+
+          cat /tmp/comment.md
+
+      - name: Post the diff as a sticky comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: rendered-diff
+          path: /tmp/comment.md
+
+  # Scoped to apps/ — the workloads authored in this repository — and NOT to
+  # infrastructure/.
+  #
+  # kube-linter's checks target application workloads. Run against the platform
+  # charts it produces 54 findings, all of which a CNI legitimately requires:
+  # cilium-agent cannot run as non-root, cilium-envoy needs SYS_ADMIN and the
+  # host network namespace, apply-sysctl-overwrites mounts /proc because writing
+  # sysctls is its entire purpose. Excluding every security and host check still
+  # leaves 21 (privileged-container, drop-net-raw-capability, unset resources on
+  # the upstream chart's containers). There is no configuration under which this
+  # tool says something true and useful about a CNI DaemonSet.
+  #
+  # A check that can never go green teaches people to ignore CI, so rather than
+  # leaving it permanently red under continue-on-error, it is scoped to where its
+  # checks actually apply and made a real gate. apps/ is empty until
+  # sub-project #6; the job says so explicitly rather than passing silently.
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/setup-helm@v4
+
+      - name: Install kustomize
+        run: |
+          curl -sSfL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv${KUSTOMIZE_VERSION}/kustomize_v${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" \
+            | sudo tar -xz -C /usr/local/bin kustomize
+
+      - name: Render workloads authored in this repository
+        id: render
+        run: |
+          mkdir -p /tmp/lint
+          : > /tmp/lint/all.yaml
+          found=0
+          for dir in $(find apps -name kustomization.yaml -printf '%h\n' 2>/dev/null | sort -u); do
+            echo "Rendering $dir"
+            echo "---" >> /tmp/lint/all.yaml
+            kustomize build --enable-helm "$dir" >> /tmp/lint/all.yaml
+            found=1
+          done
+          echo "found=$found" >> "$GITHUB_OUTPUT"
+          if [ "$found" = "0" ]; then
+            echo "::notice title=kube-linter::No workloads under apps/ yet, so there is nothing to lint. Platform components under infrastructure/ are deliberately out of scope — see the comment above this job."
+          fi
+
+      - uses: stackrox/kube-linter-action@v1
+        if: steps.render.outputs.found == '1'
+        with:
+          directory: /tmp/lint
