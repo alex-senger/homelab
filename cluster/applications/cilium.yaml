@@ -1,0 +1,52 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cilium
+  namespace: argocd
+  annotations:
+    # Wave -1: the CNI must exist before anything that needs pod networking.
+    argocd.argoproj.io/sync-wave: "-1"
+  # NO finalizer, deliberately.
+  #
+  # resources-finalizer.argocd.argoproj.io makes deleting this Application
+  # cascade-delete everything it manages. For this Application that means
+  # deleting the CNI and taking down all pod networking cluster-wide.
+  # Recovery would require docs/runbooks/cilium-recovery.md.
+spec:
+  project: infrastructure
+
+  source:
+    repoURL: https://github.com/alex-senger/homelab.git
+    targetRevision: main
+    path: infrastructure/cilium
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-system
+
+  # Manual sync during adoption. Automated sync is enabled in a later commit,
+  # once a manual sync has been reviewed and returned clean.
+  syncPolicy:
+    syncOptions:
+      - ServerSideApply=true
+      - RespectIgnoreDifferences=true
+
+  # The Cilium chart's default hubble.tls.auto.method is "helm", which generates
+  # certificates at template time. Every render therefore produces different key
+  # material. Without these rules ArgoCD reports permanent drift and rotates
+  # Hubble's certificates on every single sync.
+  #
+  # Sub-project #3 replaces this by moving Hubble TLS to cert-manager.
+  ignoreDifferences:
+    - group: ""
+      kind: Secret
+      name: cilium-ca
+      namespace: kube-system
+      jsonPointers:
+        - /data
+    - group: ""
+      kind: Secret
+      name: hubble-server-certs
+      namespace: kube-system
+      jsonPointers:
+        - /data
