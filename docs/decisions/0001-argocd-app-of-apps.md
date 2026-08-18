@@ -18,7 +18,9 @@ automatically during adoption), and two AppProjects with different privilege lev
 
 ## Decision
 
-One explicit `Application` per component, all in `cluster/applications/`.
+One explicit `Application` per component, all in `cluster/applications/`. A single root
+`Application`, applied by hand once, syncs that directory — so ArgoCD manages the set of
+Applications the same way it manages everything else.
 
 ## Consequences
 
