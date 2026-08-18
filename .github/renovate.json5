@@ -1,0 +1,58 @@
+{
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+
+  extends: [
+    "config:recommended",
+    ":dependencyDashboard",
+    "helpers:pinGitHubActionDigests",
+  ],
+
+  timezone: "Europe/Berlin",
+
+  // Weekly rather than continuous, so the commit history reads as maintained
+  // rather than bot-flooded.
+  schedule: ["* 0-6 * * 1"],
+  prConcurrentLimit: 5,
+  commitMessagePrefix: "chore(deps): ",
+
+  packageRules: [
+    {
+      // Either of these can take the cluster down: Cilium is the CNI, and
+      // ArgoCD is what applies everything else. Always a dedicated PR, never
+      // automerged, never batched with anything.
+      matchPackageNames: ["cilium", "argo-cd"],
+      groupName: null,
+      automerge: false,
+      addLabels: ["critical-infrastructure"],
+      prPriority: 10,
+    },
+    {
+      // Everything else: patch bumps land on their own once CI is green.
+      matchUpdateTypes: ["patch"],
+      matchPackageNames: ["!cilium", "!argo-cd"],
+      automerge: true,
+      automergeType: "pr",
+      platformAutomerge: true,
+    },
+    {
+      matchUpdateTypes: ["major"],
+      addLabels: ["major-update"],
+      automerge: false,
+    },
+  ],
+
+  customManagers: [
+    {
+      // CLI tool versions pinned in workflow env: blocks, each marked with a
+      // "# renovate:" comment on the preceding line. The built-in managers
+      // cover the Helm charts (kustomize manager reads helmCharts[].version)
+      // and the actions themselves, but not these curl-installed binaries.
+      customType: "regex",
+      description: "CLI tool versions pinned in GitHub workflows",
+      managerFilePatterns: ["/^\\.github/workflows/.+\\.ya?ml$/"],
+      matchStrings: [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\s+[A-Z_]+_VERSION:\\s*(?<currentValue>\\S+)",
+      ],
+    },
+  ],
+}
