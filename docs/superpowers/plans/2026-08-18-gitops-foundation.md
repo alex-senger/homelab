@@ -1449,7 +1449,12 @@ jobs:
               echo "### \`$dir\`"
               echo
               echo '```diff'
-              echo "$out"
+              # MANDATORY redaction. Rendering Cilium produces TLS Secrets whose
+              # data fields are private keys, and the chart regenerates them on
+              # every template — so they appear in almost every diff. Without this
+              # filter the job publishes live private keys into a PR comment on a
+              # public repository.
+              echo "$out" | sed -E 's/[A-Za-z0-9+\/]{60,}=*/<REDACTED-KEY-MATERIAL>/g'
               echo '```'
               echo
             done
@@ -1513,9 +1518,21 @@ for dir in $(find . -name kustomization.yaml -not -path './.git/*' | xargs -n1 d
 done
 ```
 
-Expected: four directories (`bootstrap/argocd`, `cluster`, `infrastructure/argocd`, `infrastructure/cilium`), each `0 errors`.
+Expected: four directories, with these exact sizes — `bootstrap/argocd` 45 resources (42 valid, 3 skipped), `cluster` 3 resources, `infrastructure/argocd` 45 resources (42 valid, 3 skipped), `infrastructure/cilium` 23 resources (23 valid). `bootstrap/argocd` and `infrastructure/argocd` matching exactly is the anti-drift property from Task 4 holding.
 
 Note `find` here uses `xargs dirname` because macOS `find` lacks GNU's `-printf`. The workflow runs on `ubuntu-latest`, where `-printf` is available.
+
+**Verify the redaction filter actually works.** This is the control that stops the diff job publishing private keys, so test it rather than trusting it:
+
+```bash
+kustomize build --enable-helm infrastructure/cilium > /tmp/cil.yaml
+echo "base64 runs before: $(grep -cE '[A-Za-z0-9+/]{60,}' /tmp/cil.yaml)"
+echo "base64 runs after:  $(sed -E 's/[A-Za-z0-9+\/]{60,}=*/<REDACTED>/g' /tmp/cil.yaml | grep -cE '[A-Za-z0-9+/]{60,}')"
+```
+
+Expected: a non-zero count before, and `0` after.
+
+Do **not** try to spot-check this with `grep -A2 'kind: Secret'`. Kustomize emits each resource's top-level keys alphabetically, so `data` sorts before `kind` — after-context never captures the key material, and the check silently reports success regardless of whether redaction works.
 
 - [ ] **Step 3: Commit and push on a branch, so the workflow exercises the PR path**
 
