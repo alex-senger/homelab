@@ -24,9 +24,16 @@ spec:
     server: https://kubernetes.default.svc
     namespace: kube-system
 
-  # Manual sync during adoption. Automated sync is enabled in a later commit,
-  # once a manual sync has been reviewed and returned clean.
+  # Adoption completed 2026-08-18: a manual sync was reviewed and returned clean,
+  # with no pod restarts and no certificate rotation.
   syncPolicy:
+    automated:
+      # prune stays false permanently, not as temporary caution. Removing a
+      # Cilium resource must be a deliberate human act, never a consequence of
+      # a transient render failure — pruning a CNI resource takes down cluster
+      # networking.
+      prune: false
+      selfHeal: true
     syncOptions:
       - ServerSideApply=true
       - RespectIgnoreDifferences=true
