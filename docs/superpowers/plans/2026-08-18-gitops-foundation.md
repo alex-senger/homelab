@@ -2063,16 +2063,33 @@ Expected: `1`.
 
 - [ ] **Step 5: Rebuild-from-clone works**
 
-The strongest claim this repository makes is that a fresh clone reproduces the cluster. Test it.
+The strongest claim this repository makes is that a fresh clone reproduces the cluster. Test that the clone *renders and validates* standalone:
 
 ```bash
-cd $(mktemp -d)
-git clone https://github.com/alex-senger/homelab.git
-cd homelab
-kustomize build --enable-helm bootstrap/argocd | kubectl diff --server-side -f - || true
+D=$(mktemp -d); git clone https://github.com/alex-senger/homelab.git "$D/homelab"; cd "$D/homelab"
+for dir in $(find . -name kustomization.yaml -not -path './.git/*' | xargs -n1 dirname | sed 's|^\./||' | sort -u); do
+  printf "%-24s " "$dir"
+  kustomize build --enable-helm "$dir" | kubeconform -strict -summary -skip CustomResourceDefinition \
+    -schema-location default \
+    -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json'
+done
 ```
 
-Expected: `kubectl diff` reports no changes, or only immaterial ones. A material difference means live state has drifted from the repository.
+Expected: all four directories render with `0 errors`, with no state carried over from your working copy.
+
+**Do not use `kubectl diff` as the parity check.** Verified 2026-08-18 — it fails in two distinct ways against an ArgoCD-managed cluster, neither indicating real drift:
+
+1. **Field-manager conflicts.** `kubectl diff --server-side` runs under its own field manager and tries to claim fields `argocd-controller` owns, producing `Error from server (Conflict)` and exit code 2. Adding `--force-conflicts` gets past it but changes what is being measured.
+2. **Helm hooks appear as phantom differences.** The argo-cd chart ships `argocd-redis-secret-init` as a `helm.sh/hook: pre-install,pre-upgrade` Job plus a ServiceAccount, Role and RoleBinding. `kustomize build` emits all four; ArgoCD runs them as sync hooks and does not retain them. They therefore show as 85 lines of `+` diff against a perfectly healthy cluster.
+
+The authoritative parity check is ArgoCD's own comparison, computed by the controller that actually owns the fields:
+
+```bash
+kubectl -n argocd get applications
+kubectl -n argocd get application argocd -o jsonpath='{range .status.resources[*]}{.status}{"\n"}{end}' | sort | uniq -c
+```
+
+Expected: every Application `Synced`/`Healthy`, and every managed resource `Synced`. Resources reporting an empty status are hooks — confirm with `{.hook}` before treating one as a problem.
 
 - [ ] **Step 6: CI is green on main**
 
