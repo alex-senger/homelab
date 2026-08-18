@@ -322,16 +322,23 @@ done.
 Documented in `docs/bootstrap.md`. On a clean cluster, two commands:
 
 ```bash
-kubectl apply -k bootstrap/argocd
+kustomize build --enable-helm bootstrap/argocd | kubectl apply --server-side -f -
 kubectl apply -f cluster/root.yaml
 ```
+
+`kubectl apply -k` cannot be used here: it has no `--enable-helm` flag, so it cannot inflate the
+chart. `--server-side` is also required rather than optional — ArgoCD's CRDs exceed the 262 144-byte
+`kubectl.kubernetes.io/last-applied-configuration` annotation limit that client-side apply imposes.
+
+For the same reason, ArgoCD's own `Application` carries `ServerSideApply=true` in its
+`syncOptions`, so that self-management does not hit the identical limit when reconciling its CRDs.
 
 For the one-time migration off the hand-installed ArgoCD, the namespace deletion from §10 comes
 first:
 
 ```bash
 kubectl delete namespace argocd
-kubectl apply -k bootstrap/argocd
+kustomize build --enable-helm bootstrap/argocd | kubectl apply --server-side -f -
 kubectl apply -f cluster/root.yaml
 ```
 
@@ -340,6 +347,13 @@ recreated automatically. Subsequent rebuilds need only the two-command form.
 
 The root Application syncs, AppProjects appear, every other Application appears, and
 `infrastructure/argocd` adopts the installation that just created it.
+
+**Precondition: the GitHub repository must be public.** ArgoCD clones over HTTPS
+(`https://github.com/alex-senger/homelab.git`). A private repository would require a
+repository-credential Secret in the `argocd` namespace, which would break the zero-secrets property
+this sub-project depends on (§16) and create a bootstrap chicken-and-egg with sub-project #4. The
+repository is intended to be public portfolio work regardless, so this costs nothing. If it must
+stay private, a deploy key applied out-of-band before bootstrap is the documented exception.
 
 ArgoCD becomes self-managing **before** Cilium is adopted. If the Cilium step goes wrong, the
 GitOps machinery is already proven, so only one thing is being debugged.
