@@ -21,6 +21,8 @@ You are working in `~/workspaces/homelab`, a git repository whose remote is `git
 1. **`kustomize build --enable-helm <dir> | kubeconform -strict`** — proves the YAML renders and every field is real. `-strict` rejects unknown fields, which is what catches a mistyped Helm value that would otherwise silently do nothing.
 2. **A parity diff** — `dyff between <live-manifest> <rendered-manifest>` — proves that what the repository will apply is byte-for-byte what is already running. This is the gate that prevents adopting Cilium from taking the cluster's networking down.
 
+**Why every kubeconform invocation carries `-skip CustomResourceDefinition`:** verified 2026-08-18, the `kubernetes-json-schema` catalog that `-schema-location default` resolves to publishes no schema for the `CustomResourceDefinition` kind itself, under any path or version. It serves `deployment-apps-v1.json` but returns 404 for `customresourcedefinition-apiextensions-v1.json`. Without the skip, any chart shipping CRDs — ArgoCD ships three — fails validation permanently. `-skip` is used rather than `-ignore-missing-schemas` because the latter silently waves through *every* unrecognised kind, which would defeat the point of `-strict` for the custom resources this repository actually writes. CRD structural validity is enforced by the API server on apply, and these CRDs come from upstream charts rather than being hand-authored here.
+
 Run the "test" step before the "implement" step, see it fail, then make it pass. Commit after each task.
 
 **Things that will bite you if you skip them:**
@@ -404,7 +406,7 @@ states it: Cilium's CRDs are the one part of the CNI that is not declarative.
 ```bash
 cd ~/workspaces/homelab
 kustomize build --enable-helm infrastructure/cilium > /tmp/cilium-rendered.yaml
-kubeconform -strict -summary \
+kubeconform -strict -summary -skip CustomResourceDefinition \
   -schema-location default \
   -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
   /tmp/cilium-rendered.yaml
@@ -577,14 +579,20 @@ helmCharts:
     releaseName: argocd
     namespace: argocd
     valuesFile: values.yaml
-    includeCRDs: true
 ```
+
+**No `includeCRDs`, for a different reason than Cilium's.** Verified 2026-08-18: the argo-cd chart
+ships its three CRDs as ordinary templates under `templates/crds/`, gated by the chart value
+`crds.install` (default `true`) — not via Helm's special `crds/` directory, which is the only thing
+`--include-crds` controls. Rendering with and without the flag produces byte-identical output.
+Including it would falsely imply this Kustomization decides whether CRDs are installed; the chart's
+own default already decided.
 
 - [ ] **Step 4: Run the test — render and schema-validate**
 
 ```bash
 kustomize build --enable-helm infrastructure/argocd > /tmp/argocd-rendered.yaml
-kubeconform -strict -summary \
+kubeconform -strict -summary -skip CustomResourceDefinition \
   -schema-location default \
   -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
   /tmp/argocd-rendered.yaml
@@ -607,7 +615,17 @@ grep 'resourceTrackingMethod' /tmp/argocd-rendered.yaml
 grep -c 'argocd-dex-server\|argocd-notifications' /tmp/argocd-rendered.yaml
 ```
 
-Expected: at least 3 CRDs, each name appearing exactly once (if a name appears twice, remove `includeCRDs: true` — this chart version ships CRDs as templates and you are duplicating them); `kustomize.buildOptions: --enable-helm` and `application.resourceTrackingMethod: annotation` both present; the dex/notifications count is `0`.
+Expected: exactly 3 CRDs, each name appearing exactly once; `kustomize.buildOptions: --enable-helm` and `application.resourceTrackingMethod: annotation` both present; exactly one `Namespace`; the image tag `quay.io/argoproj/argocd:v3.5.1`, matching what is running.
+
+The dex/notifications grep returns `3`, not `0` — and that is correct. All three hits are `argocd-dex-server-tls` Secret and volume *references* inside the argocd-server Deployment, which the chart emits regardless. Confirm the components are genuinely absent by checking for workloads rather than string matches:
+
+```bash
+grep -E '^kind: (Deployment|StatefulSet)$' -A3 /tmp/argocd-rendered.yaml | grep 'name:' | sort
+```
+
+Expected: `argocd-application-controller`, `argocd-applicationset-controller`, `argocd-redis`, `argocd-repo-server`, `argocd-server` — and no dex or notifications workload.
+
+Total memory limits across all five workloads come to roughly 1.9 GB, which fits a 4 GB node alongside Cilium and system overhead.
 
 - [ ] **Step 6: Commit**
 
@@ -841,7 +859,7 @@ spec:
 
 ```bash
 kustomize build cluster > /tmp/cluster-rendered.yaml
-kubeconform -strict -summary \
+kubeconform -strict -summary -skip CustomResourceDefinition \
   -schema-location default \
   -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
   /tmp/cluster-rendered.yaml cluster/root.yaml
@@ -1083,7 +1101,7 @@ resources:
 
 ```bash
 kustomize build cluster > /tmp/cluster-rendered.yaml
-kubeconform -strict -summary \
+kubeconform -strict -summary -skip CustomResourceDefinition \
   -schema-location default \
   -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
   /tmp/cluster-rendered.yaml
@@ -1209,7 +1227,7 @@ In `cluster/applications/cilium.yaml`, replace the `syncPolicy` block with:
 - [ ] **Step 3: Run the test, commit, push**
 
 ```bash
-kustomize build cluster | kubeconform -strict -summary \
+kustomize build cluster | kubeconform -strict -summary -skip CustomResourceDefinition \
   -schema-location default \
   -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json'
 git add cluster/applications/cilium.yaml
@@ -1342,7 +1360,7 @@ jobs:
       - name: Render and schema-validate ${{ matrix.dir }}
         run: |
           kustomize build --enable-helm "${{ matrix.dir }}" > /tmp/rendered.yaml
-          kubeconform -strict -summary \
+          kubeconform -strict -summary -skip CustomResourceDefinition \
             -schema-location default \
             -schema-location "$CRD_SCHEMAS" \
             /tmp/rendered.yaml
@@ -1455,7 +1473,7 @@ cd ~/workspaces/homelab
 for dir in $(find . -name kustomization.yaml -not -path './.git/*' | xargs -n1 dirname | sed 's|^\./||' | sort -u); do
   echo "=== $dir"
   kustomize build --enable-helm "$dir" \
-    | kubeconform -strict -summary \
+    | kubeconform -strict -summary -skip CustomResourceDefinition \
         -schema-location default \
         -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json'
 done
