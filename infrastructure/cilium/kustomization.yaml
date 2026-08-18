@@ -8,4 +8,8 @@ helmCharts:
     releaseName: cilium
     namespace: kube-system
     valuesFile: values.yaml
-    includeCRDs: true
+    # No includeCRDs here, deliberately. Verified 2026-08-18: the Cilium chart
+    # ships no crds/ directory and no CustomResourceDefinition templates, while
+    # the cluster has 10 registered cilium.io CRDs. The agent and operator create
+    # them programmatically at startup. includeCRDs would be a no-op that falsely
+    # implies this Kustomization manages them. It does not, and cannot.
