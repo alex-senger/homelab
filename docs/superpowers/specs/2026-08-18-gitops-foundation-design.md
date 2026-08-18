@@ -78,7 +78,8 @@ Two constraints that will not be engineered away, and are documented rather than
   will not be fast. Prometheus scrape intervals and Longhorn replica counts are the knobs.
 - **Replicated storage on one physical host is not redundancy.** All Longhorn replicas land on the
   same NVMe. What replication actually buys here is surviving *node* reboots, which matters
-  because Talos upgrades will be frequent. The README states this plainly.
+  because Talos upgrades will be frequent. The README states this plainly. It is partially
+  mitigated by putting the Longhorn backup target on the separate SATA HDD — see §18.
 
 ## 4. Exposure model
 
@@ -442,17 +443,58 @@ being verified.
 11. `ci:` `renovate.json5` and Renovate App onboarding
 12. `docs:` README caveats, drift-test GIF, badges
 
-## 18. Open items
+## 18. Storage topology
 
-- **Verify NVMe capacity before sub-project #2.** This design assumes the Debian VM's 500 GB data
-  disk sits on the SATA HDD and the NVMe holds VM system disks. If all 600 GB of Debian is on the
-  NVMe, three Talos nodes with useful data disks will not fit and sizing must be revisited:
+Confirmed 2026-08-18 via `pvesm status`:
 
-  ```bash
-  pvesm status
-  qm config <vmid>   # for each VM
-  ```
+| Proxmox storage | Backing device | Total | Used | Available |
+|---|---|---|---|---|
+| `local` (dir) | SATA HDD | 94 GiB | 6.9 GiB | 82 GiB |
+| `local-lvm` (lvmthin) | SATA HDD | 794 GiB | 276 GiB | 518 GiB |
+| `nvme` (lvmthin) | NVMe | 931 GiB | 97.5 GiB | 834 GiB |
+
+The 276 GiB written on `local-lvm` is the Debian VM's 500 GB data disk, thin-provisioned. The
+97.5 GiB on `nvme` accounts for Debian's 100 GB boot disk plus both 34 GB Talos system disks —
+so the NVMe currently carries **168 GiB provisioned against a 931 GiB pool**.
+
+Three Talos nodes with useful data disks therefore fit comfortably:
+
+| Allocation | Size |
+|---|---|
+| Debian boot (existing) | 100 GiB |
+| Talos system disks, 3 × 34 GiB | 102 GiB |
+| Talos data disks for Longhorn, 3 × 100 GiB | 300 GiB |
+| **Provisioned on `nvme`** | **502 GiB of 931 GiB** |
+
+No thin overprovisioning, so no pool-exhaustion risk.
+
+**Two storage tiers, not one.** Two independent physical devices with different characteristics,
+and 518 GiB spare on the HDD, argue for splitting by workload rather than pooling everything:
+
+- **NVMe / Longhorn** — latency-sensitive volumes: Postgres, OpenBao, Prometheus TSDB, Redis.
+- **HDD / bulk tier** — Nextcloud file data and the **Longhorn backup target**, where sequential
+  throughput matters and IOPS do not.
+
+The backup target placement is the significant part. A Longhorn backup target on a *physically
+different device* is the only element of this design that protects against NVMe failure. It
+converts the §3 caveat — replication across VMs on one host is not redundancy — from a flat
+limitation into a documented, mitigated risk. Detailed design belongs to sub-project #3.
+
+## 19. Open items
 
 - **ArgoCD chart version** for appVersion v3.5.x, resolved at implementation time.
-- **Control-plane taint.** `talos-hzi-iqa` is tainted `NoSchedule`, so everything currently runs
-  on the single worker. Untainting is a Talos machine-config change and belongs to sub-project #2.
+- **Third Talos node system disk size.** The two existing nodes use 34 GiB. Talos grows its
+  `EPHEMERAL` partition automatically when the underlying disk grows, and that partition holds
+  container images and etcd. 34 GiB is workable but tight once Nextcloud, Prometheus and Longhorn
+  images are cached; ~60 GiB is the safer size for the new node, with the existing two grown to
+  match. Decided in sub-project #2.
+
+### Resolved
+
+- ~~**Verify NVMe capacity.**~~ Resolved 2026-08-18 — see §18. The assumption held: Debian's
+  500 GB data disk is on the SATA HDD, not the NVMe.
+- ~~**Control-plane taint.**~~ Resolved 2026-08-18 — the `node-role.kubernetes.io/control-plane`
+  `NoSchedule` taint has been removed from `talos-hzi-iqa`, so both nodes are schedulable and
+  workloads spread across ~8 GB rather than 4 GB. Sub-project #2 must persist this in the Talos
+  machine config (`cluster.allowSchedulingOnControlPlanes: true`) so it survives a node rebuild;
+  until then it exists only as live cluster state.
