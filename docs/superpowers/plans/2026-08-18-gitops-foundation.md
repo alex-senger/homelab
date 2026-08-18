@@ -1365,6 +1365,40 @@ jobs:
             -schema-location "$CRD_SCHEMAS" \
             /tmp/rendered.yaml
 
+  # cluster/root.yaml belongs to no Kustomization by design — it is applied by
+  # hand and must not manage itself, so it is excluded from cluster/kustomization.yaml.
+  # That also means the matrix above never sees it. Validate it explicitly, or it
+  # is the one manifest in the repository CI does not check.
+  standalone:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install kubeconform
+        run: |
+          curl -sSfL "https://github.com/yannh/kubeconform/releases/download/v${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" \
+            | sudo tar -xz -C /usr/local/bin kubeconform
+
+      - name: Assert the standalone list is still complete
+        run: |
+          # Every .yaml under cluster/ except root.yaml must be referenced by
+          # cluster/kustomization.yaml. If someone adds another unreferenced
+          # manifest, fail loudly rather than silently skipping it.
+          for f in $(find cluster -name '*.yaml' -not -name 'kustomization.yaml' -not -name 'root.yaml'); do
+            base=$(basename "$f")
+            grep -q "$base" cluster/kustomization.yaml || {
+              echo "::error::$f is not referenced by cluster/kustomization.yaml and is not in the standalone list"
+              exit 1
+            }
+          done
+
+      - name: Validate standalone manifests
+        run: |
+          kubeconform -strict -summary -skip CustomResourceDefinition \
+            -schema-location default \
+            -schema-location "$CRD_SCHEMAS" \
+            cluster/root.yaml
+
   diff:
     needs: prepare
     if: github.event_name == 'pull_request'
