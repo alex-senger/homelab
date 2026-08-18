@@ -7,3 +7,4 @@ resources:
   - projects/infrastructure.yaml
   - projects/apps.yaml
   - applications/argocd.yaml
+  - applications/cilium.yaml
