@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Deliberately nothing but a reference, mirroring bootstrap/argocd.
+#
+# Talos runs cni: none, so on a fresh cluster every node stays NotReady until
+# a CNI exists. ArgoCD cannot schedule, and therefore cannot install Cilium.
+# This breaks that cycle without creating a second definition of Cilium:
+# the Application in cluster/applications/cilium.yaml adopts these exact
+# resources on the first root sync.
+#
+# Apply with:
+#   kustomize build --enable-helm bootstrap/cilium | kubectl apply --server-side -f -
+resources:
+  - ../../infrastructure/cilium
