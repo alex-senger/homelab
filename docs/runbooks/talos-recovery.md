@@ -115,3 +115,51 @@ Running it a second time — even against a different node in the same cluster �
 second etcd cluster and produces split brain. The only remedy for that is resetting every
 node and starting the cluster over from scratch. There is no node-count check that protects
 against this: it is a one-shot command trusted to be run once, by whoever is bootstrapping.
+
+## The ISO must match the schematic
+
+Nodes run a custom Image Factory build carrying `siderolabs/iscsi-tools` and
+`siderolabs/util-linux-tools`. Longhorn needs both: without `iscsid` no volume attaches, and
+without `fstrim` thin-provisioned volumes never release deleted blocks.
+
+Schematic ID:
+
+    613e1592b2da41ae5e265e8789429f22e121aab91cb4deb6bc3c0b6262961245
+
+The matching ISO:
+
+    https://factory.talos.dev/image/613e1592b2da41ae5e265e8789429f22e121aab91cb4deb6bc3c0b6262961245/v1.13.9/metal-amd64.iso
+
+Booting from a **stock** Talos ISO still reaches maintenance mode, so recovery itself is
+unaffected. The trap is reinstalling from stock media: the node comes up without the extensions and
+Longhorn volumes fail to attach on it, which looks like a storage fault rather than boot media.
+
+Reapplying the machine config fixes it, because the install image in `talconfig.yaml` points at the
+factory build — so a reinstall pulls the right one.
+
+Regenerate both URLs after changing the extension list:
+
+    talhelper genurl installer -c talos/talconfig.yaml
+    talhelper genurl image -c talos/talconfig.yaml
+
+## "certificate signed by unknown authority" from talosctl
+
+Almost always the wrong `talosconfig`, not a broken node. A config left over from a previous
+cluster uses the same context name (`roastery`), so talosctl selects it without complaint and then
+fails the TLS handshake against the current nodes:
+
+    x509: certificate signed by unknown authority ... "x509: Ed25519 verification failure"
+
+Compare CA fingerprints to confirm:
+
+    for f in ~/.talos/config clusterconfig/talosconfig; do
+      printf "%-32s " "$f"; grep -m1 'ca:' "$f" | awk '{print $2}' | shasum | cut -c1-12
+    done
+
+If they differ, install the current one:
+
+    cp ~/.talos/config ~/.talos/config.bak-$(date +%s)
+    cp clusterconfig/talosconfig ~/.talos/config
+
+If `clusterconfig/` is missing, regenerate it first — see "Regenerating machine configs" above, and
+remember `-s talos/talsecret.sops.yaml` or talhelper silently mints new certificate authorities.
