@@ -14,3 +14,14 @@ machine:
     hostDNS:
       enabled: true
       forwardKubeDNSToHost: true
+cluster:
+  # Talos deploys kube-proxy by default. Cilium is configured with
+  # kubeProxyReplacement: true and handles Service routing in eBPF, so running
+  # both means two systems programming the same traffic — duplicated rules and
+  # no benefit from the eBPF datapath.
+  #
+  # The pre-rebuild cluster had this disabled; the setting was lost when the
+  # machine config was re-derived, and kube-proxy came back. Declared here so it
+  # cannot be lost again.
+  proxy:
+    disabled: true
