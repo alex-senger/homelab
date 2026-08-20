@@ -21,6 +21,20 @@ clusterSvcNets:
 cniConfig:
   name: none
 
+# All three nodes are control-plane, so one group-level declaration covers the
+# cluster. Longhorn cannot run without these: iscsi-tools provides iscsid, which
+# is how a volume attaches (the engine exposes an iSCSI target the node mounts),
+# and util-linux-tools provides fstrim, which reclaims space from thin-provisioned
+# volumes. Talos cannot install extensions at runtime — they are baked into an
+# Image Factory image and applied by upgrading the node.
+controlPlane:
+  schematic:
+    customization:
+      systemExtensions:
+        officialExtensions:
+          - siderolabs/iscsi-tools
+          - siderolabs/util-linux-tools
+
 patches:
   - "@./patches/all.yaml"
 
