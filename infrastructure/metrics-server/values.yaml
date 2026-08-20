@@ -1,0 +1,16 @@
+# Kubelet serves metrics over TLS with rotating certificates signed by the
+# cluster CA, and kubelet-serving-cert-approver (sync wave 5) approves the
+# CSRs that rotation produces. That is what lets metrics-server verify the
+# kubelet properly rather than running with --kubelet-insecure-tls.
+args:
+  - --kubelet-preferred-address-types=InternalIP,Hostname,ExternalIP
+
+# Sized for 7 GB nodes on a four-thread host. No CPU limit, deliberately:
+# CPU limits cause throttling that presents as a hang, while memory limits
+# are what actually protect the node.
+resources:
+  requests:
+    cpu: 25m
+    memory: 64Mi
+  limits:
+    memory: 192Mi

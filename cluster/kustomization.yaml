@@ -9,3 +9,4 @@ resources:
   - applications/argocd.yaml
   - applications/cilium.yaml
   - applications/kubelet-serving-cert-approver.yaml
+  - applications/metrics-server.yaml
