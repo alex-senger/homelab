@@ -1,0 +1,23 @@
+defaultSettings:
+  # The Talos user volume on /dev/sdb1. Longhorn defaults to /var/lib/longhorn,
+  # which on Talos lives on the EPHEMERAL system partition — replicas would land
+  # on the 40 GB OS disk, fill it, and be wiped on upgrade. It works right up
+  # until the system disk fills, which is why this is the setting to get right.
+  defaultDataPath: /var/mnt/longhorn
+
+  # Two replicas, not three. All copies share one physical NVMe, so replicas buy
+  # node availability rather than durability. The third copy would only cover two
+  # simultaneous node failures, which on a single host means the host is gone.
+  defaultReplicaCount: 2
+
+  # Longhorn defaults to 200%. On one shared NVMe, promising more space than
+  # exists converts a capacity problem into a corruption problem.
+  storageOverProvisioningPercentage: 100
+  storageMinimalAvailablePercentage: 15
+
+persistence:
+  defaultClass: true
+  defaultClassReplicaCount: 2
+  # Delete, the upstream default, while the cluster is still disposable. A
+  # longhorn-retain class arrives with Nextcloud, when the data starts mattering.
+  reclaimPolicy: Delete
