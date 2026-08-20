@@ -11,6 +11,7 @@ single Proxmox host. Everything in the cluster is declared here and reconciled b
 | Kubernetes | v1.36.2 |
 | CNI | Cilium 1.18.0, kube-proxy replacement via eBPF, VXLAN, Hubble |
 | GitOps | ArgoCD v3.5.1, app-of-apps |
+| OS config | talhelper, SOPS-encrypted secrets, three control-plane nodes sharing a VIP |
 | Rendering | Kustomize, with Helm charts inflated via `helmCharts:` |
 | CI | GitHub Actions — render, `kubeconform -strict`, rendered-object diff on every PR |
 | Updates | Renovate, automerge gated on CI |
@@ -21,7 +22,7 @@ single Proxmox host. Everything in the cluster is declared here and reconciled b
     cluster/          ArgoCD control plane: root Application, AppProjects, one Application per component
     infrastructure/   platform component manifests
     apps/             user-facing workloads
-    talos/            machine configuration
+    talos/            machine configuration: talconfig, patches, encrypted secrets
     docs/             bootstrap, runbooks, ADRs, specs and plans
 
 `cluster/applications/` is the map of the cluster: every component and its sync wave, readable
@@ -60,6 +61,15 @@ third node is planned.
 manifests; the agent and operator register the ten `cilium.io` CRDs programmatically at startup.
 Everything else about the CNI is declared here, but those ten resources exist because Cilium put
 them there, not because this repository asked for them.
+
+**The repository holds encrypted secrets, not none.** The Talos machine secrets — the cluster
+certificate authorities and bootstrap tokens — live here in `talos/talsecret.sops.yaml`, encrypted
+with SOPS. The age private key is the one thing held out of band. The property is therefore "no
+plaintext secrets, one key outside the repository", which is the standard arrangement but weaker
+than "no secrets at all", and the distinction is worth stating rather than glossing.
+
+CI enforces it: a job refuses to pass if `clusterconfig/` is ever tracked, or if the committed
+secrets file loses its SOPS metadata or gains a plaintext key block.
 
 ## Design documents
 

@@ -1,0 +1,21 @@
+# metrics-server scrapes the kubelet over TLS with certificates signed by the
+# cluster CA. The kubelet rotates them (rotate-server-certificates in the Talos
+# machine config) and kubelet-serving-cert-approver at sync wave 5 approves the
+# resulting CSRs. That chain is what lets this run without --kubelet-insecure-tls.
+#
+# No args override here, deliberately. The chart already defaults to
+# --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname, which is
+# correct for Talos nodes: they report an InternalIP and it is tried first.
+# The chart's args: key APPENDS to defaultArgs rather than replacing them, so
+# restating the flag emits it twice and leaves resolution to pflag's
+# last-occurrence-wins behaviour. Not worth depending on.
+
+# Sized for 7 GB nodes on a four-thread host. No CPU limit, deliberately:
+# CPU limits cause throttling that presents as a hang, while memory limits
+# are what actually protect the node.
+resources:
+  requests:
+    cpu: 25m
+    memory: 64Mi
+  limits:
+    memory: 192Mi

@@ -1,0 +1,3 @@
+creation_rules:
+  - path_regex: talos/talsecret\.sops\.ya?ml$
+    age: age18cz7evl8pajdm5hs27negvnjc9dr9r77nxj8dpwmvllqscus63usxwtded

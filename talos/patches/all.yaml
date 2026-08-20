@@ -1,0 +1,16 @@
+machine:
+  kubelet:
+    extraArgs:
+      # Kubelet serves metrics over TLS with rotating certs. The CSRs this
+      # produces are approved by kubelet-serving-cert-approver, which lets
+      # metrics-server scrape over verified TLS rather than --kubelet-insecure-tls.
+      rotate-server-certificates: "true"
+  features:
+    # Node-local API server proxy. Cilium points at localhost:7445 through it,
+    # so the CNI does not depend on a Service IP that the CNI itself provides.
+    kubePrism:
+      enabled: true
+      port: 7445
+    hostDNS:
+      enabled: true
+      forwardKubeDNSToHost: true

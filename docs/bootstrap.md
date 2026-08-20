@@ -8,12 +8,24 @@ How to bring the ArgoCD layer of the `roastery` cluster up from nothing.
 - `kustomize` v5 (standalone — `kubectl apply -k` cannot inflate Helm charts)
 - The repository must be **public**. ArgoCD clones over anonymous HTTPS; a private
   repository needs a credential Secret, which this cluster deliberately does not have.
+- The age private key at the path named by `SOPS_AGE_KEY_FILE`, needed only to regenerate Talos
+  machine configs — not to bootstrap Kubernetes.
 
 ## Bootstrap
 
+Talos runs with `cni: none`, so on a fresh cluster every node stays `NotReady` until a CNI exists.
+ArgoCD cannot schedule without one, and therefore cannot be the thing that installs it. Cilium
+goes first.
+
+    kustomize build --enable-helm bootstrap/cilium | kubectl apply --server-side -f -
+    kubectl wait --for=condition=Ready nodes --all --timeout=300s
     kustomize build --enable-helm bootstrap/argocd | kubectl apply --server-side -f -
     kubectl -n argocd rollout status deploy/argocd-server --timeout=300s
     kubectl apply -f cluster/root.yaml
+
+Both bootstrap directories contain nothing but a reference to the corresponding component under
+`infrastructure/`, so there is exactly one definition of each in the repository and the ArgoCD
+Applications adopt precisely these resources on the first root sync.
 
 `--server-side` is required, not optional: ArgoCD's CRDs exceed the 262 144-byte
 `last-applied-configuration` annotation that client-side apply writes. If the apply reports

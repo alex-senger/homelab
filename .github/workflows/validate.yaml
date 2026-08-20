@@ -15,6 +15,8 @@ env:
   KUBECONFORM_VERSION: 0.8.0
   # renovate: datasource=github-releases depName=homeport/dyff
   DYFF_VERSION: 1.12.0
+  # renovate: datasource=github-releases depName=budimanjojo/talhelper
+  TALHELPER_VERSION: 3.1.16
   CRD_SCHEMAS: https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json
 
 jobs:
@@ -93,6 +95,46 @@ jobs:
             -schema-location default \
             -schema-location "$CRD_SCHEMAS" \
             cluster/root.yaml
+
+  talos:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install talhelper
+        run: |
+          curl -sSfL "https://github.com/budimanjojo/talhelper/releases/download/v${TALHELPER_VERSION}/talhelper_linux_amd64.tar.gz" \
+            | sudo tar -xz -C /usr/local/bin talhelper
+
+      - name: Validate talconfig
+        run: talhelper validate talconfig talos/talconfig.yaml
+
+      - name: Refuse tracked plaintext machine configs
+        run: |
+          if git ls-files | grep -qE '^clusterconfig/'; then
+            echo "::error::clusterconfig/ is tracked. It contains plaintext CA private keys."
+            exit 1
+          fi
+          if git ls-files | grep -qE '^(talos/talsecret\.yaml|talenv\.yaml)$'; then
+            echo "::error::An unencrypted secrets file is tracked."
+            exit 1
+          fi
+          echo "No plaintext secret files tracked."
+
+      - name: Prove the committed secrets file is encrypted
+        run: |
+          f=talos/talsecret.sops.yaml
+          test -f "$f" || { echo "::error::$f is missing."; exit 1; }
+          grep -q '^sops:' "$f" || { echo "::error::$f has no SOPS metadata."; exit 1; }
+          if grep -qE 'BEGIN [A-Z ]*PRIVATE KEY' "$f"; then
+            echo "::error::$f contains a plaintext private key block."
+            exit 1
+          fi
+          if grep -qE '^\s+(token|secret|secretboxEncryptionSecret):\s+[A-Za-z0-9+/]{16,}={0,2}\s*$' "$f"; then
+            echo "::error::$f appears to contain unencrypted secret values."
+            exit 1
+          fi
+          echo "$f is encrypted."
 
   diff:
     needs: prepare
