@@ -1,0 +1,88 @@
+clusterName: roastery
+talosVersion: v1.13.9
+kubernetesVersion: v1.36.2
+
+# The layer-2 VIP, not a node address. Control-plane nodes elect a holder
+# through etcd and the address follows the winner, so losing any single node
+# does not cost API access.
+endpoint: https://192.168.178.19:6443
+
+# Three control-plane nodes on a four-thread host: all of them must run
+# workloads or there is nowhere to schedule.
+allowSchedulingOnControlPlanes: true
+
+clusterPodNets:
+  - 10.244.0.0/16
+clusterSvcNets:
+  - 10.96.0.0/12
+
+# Cilium is installed by bootstrap/cilium immediately after bootstrap.
+# Nodes stay NotReady until then, which is expected.
+cniConfig:
+  name: none
+
+patches:
+  - "@./patches/all.yaml"
+
+nodes:
+  - hostname: roastery-cp-1
+    ipAddress: 192.168.178.16
+    controlPlane: true
+    installDisk: /dev/sda
+    networkInterfaces:
+      - deviceSelector:
+          physical: true
+        dhcp: false
+        addresses:
+          - 192.168.178.16/24
+        routes:
+          - network: 0.0.0.0/0
+            gateway: 192.168.178.1
+        vip:
+          ip: 192.168.178.19
+    userVolumes: &vols
+      - name: longhorn
+        provisioning:
+          # Size is the ONLY attribute distinguishing the data disk from the
+          # system disk: both are virtio "QEMU HARDDISK" with empty serial and
+          # WWID. system_disk is belt-and-braces on top of the size bound.
+          diskSelector:
+            match: disk.size > 100u * GB && !system_disk
+          minSize: 90GiB
+          maxSize: 105GiB
+        filesystem:
+          type: xfs
+
+  - hostname: roastery-cp-2
+    ipAddress: 192.168.178.17
+    controlPlane: true
+    installDisk: /dev/sda
+    networkInterfaces:
+      - deviceSelector:
+          physical: true
+        dhcp: false
+        addresses:
+          - 192.168.178.17/24
+        routes:
+          - network: 0.0.0.0/0
+            gateway: 192.168.178.1
+        vip:
+          ip: 192.168.178.19
+    userVolumes: *vols
+
+  - hostname: roastery-cp-3
+    ipAddress: 192.168.178.18
+    controlPlane: true
+    installDisk: /dev/sda
+    networkInterfaces:
+      - deviceSelector:
+          physical: true
+        dhcp: false
+        addresses:
+          - 192.168.178.18/24
+        routes:
+          - network: 0.0.0.0/0
+            gateway: 192.168.178.1
+        vip:
+          ip: 192.168.178.19
+    userVolumes: *vols
