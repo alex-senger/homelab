@@ -1,0 +1,32 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: longhorn
+  namespace: argocd
+  annotations:
+    # Wave 10: the platform tier, after ArgoCD (0), the cert approver (5) and
+    # metrics-server (6).
+    argocd.argoproj.io/sync-wave: "10"
+  # Finalizer present, unlike Cilium. Deleting this Application should cascade:
+  # orphaned volumes and CRDs are worse than a clean removal, and unlike the CNI,
+  # removing storage does not sever access to the cluster.
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: infrastructure
+
+  source:
+    repoURL: https://github.com/alex-senger/homelab.git
+    targetRevision: main
+    path: infrastructure/longhorn
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: longhorn-system
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
