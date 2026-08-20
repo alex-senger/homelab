@@ -4,3 +4,7 @@ charts/
 
 # OS
 .DS_Store
+
+# Local agent/plugin tooling artifacts — not part of the cluster definition
+.claude-flow/
+ruvector.db
