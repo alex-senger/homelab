@@ -54,8 +54,16 @@ backup target on a physically separate SATA disk.
 **The host is modest.** An Intel i5-3550S: four threads shared between the Talos nodes and a
 Debian VM. It works. It is not fast, and Prometheus scrape intervals are tuned accordingly.
 
-**One control-plane node.** etcd has no quorum, so a control-plane reboot is an API outage. A
-third node is planned.
+**Three control-plane nodes, one physical host.** etcd holds quorum, so any single node can be
+lost without an API outage, and the control-plane VIP is elected rather than assigned — it moves to
+a surviving node on its own. Verified 2026-08-20 by shutting down the node that held the VIP:
+`kubectl` kept working through the VIP throughout, etcd held 2/3 and moved leadership, and only
+that node's own workloads were affected.
+
+That resilience is real inside the cluster and still fictional below it. All three nodes are VMs on
+one machine, with one power supply and one NVMe. What this buys is tolerance of node reboots —
+which matters, because Talos upgrades reboot nodes one at a time — not tolerance of hardware
+failure.
 
 **Cilium's CRDs are not declarative.** The Cilium chart ships no CustomResourceDefinition
 manifests; the agent and operator register the ten `cilium.io` CRDs programmatically at startup.
