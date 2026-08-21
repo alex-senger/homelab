@@ -1,16 +1,7 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-# Deliberately nothing but a reference.
-#
-# There is exactly one definition of ArgoCD in this repository, at
-# infrastructure/argocd. The usual failure of a self-managing ArgoCD is a
-# bootstrap manifest that drifts from the GitOps-managed one, leaving the
-# Application permanently OutOfSync. Keeping this file empty of content makes
-# that impossible.
-#
-# Apply with (kubectl apply -k cannot inflate Helm charts, and ArgoCD's CRDs
-# exceed the annotation size limit that client-side apply writes):
+# Apply with:
 #   kustomize build --enable-helm bootstrap/argocd | kubectl apply --server-side -f -
 resources:
   - ../../infrastructure/argocd

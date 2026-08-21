@@ -7,8 +7,6 @@ kubernetesVersion: v1.36.2
 # does not cost API access.
 endpoint: https://192.168.178.19:6443
 
-# Three control-plane nodes on a four-thread host: all of them must run
-# workloads or there is nowhere to schedule.
 allowSchedulingOnControlPlanes: true
 
 clusterPodNets:
@@ -21,12 +19,7 @@ clusterSvcNets:
 cniConfig:
   name: none
 
-# All three nodes are control-plane, so one group-level declaration covers the
-# cluster. Longhorn cannot run without these: iscsi-tools provides iscsid, which
-# is how a volume attaches (the engine exposes an iSCSI target the node mounts),
-# and util-linux-tools provides fstrim, which reclaims space from thin-provisioned
-# volumes. Talos cannot install extensions at runtime — they are baked into an
-# Image Factory image and applied by upgrading the node.
+# required by Longhorn
 controlPlane:
   schematic:
     customization:

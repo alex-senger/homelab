@@ -24,6 +24,4 @@ spec:
       prune: true
       selfHeal: true
     syncOptions:
-      # ArgoCD's CRDs exceed the 262144-byte annotation that client-side
-      # apply writes. Without this, self-management fails on the CRDs.
       - ServerSideApply=true

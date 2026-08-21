@@ -21,16 +21,6 @@ spec:
     server: https://kubernetes.default.svc
     namespace: argocd
 
-  # ArgoCD manages finalizers on the Applications it creates, adding its own
-  # beyond whatever Git declares. A chart shipping Helm pre-delete hooks — Longhorn
-  # does — gets pre-delete-finalizer.argocd.argoproj.io and its /cleanup companion
-  # attached by the controller. Git declares one finalizer, the live object then has
-  # three, and root reports permanent drift it can never reconcile because the
-  # controller re-adds them on every pass.
-  #
-  # Diffing on a controller-owned field is the bug, not the extra finalizers.
-  # The declared resources-finalizer is still applied on creation; this only stops
-  # root treating the controller's additions as drift. Observed 2026-08-20.
   ignoreDifferences:
     - group: argoproj.io
       kind: Application
