@@ -21,3 +21,18 @@ persistence:
   # Delete, the upstream default, while the cluster is still disposable. A
   # longhorn-retain class arrives with Nextcloud, when the data starts mattering.
   reclaimPolicy: Delete
+
+# Longhorn ships a "pre-upgrade checker" as a Helm pre-upgrade hook. ArgoCD
+# translates Helm hooks into Argo hooks, so it runs as PreSync — before the main
+# sync creates the ServiceAccount the Job needs. On a fresh install the Job is
+# therefore stuck forever with:
+#
+#   Error creating: pods "longhorn-pre-upgrade-" is forbidden:
+#     serviceaccount "longhorn-service-account" not found
+#
+# and the whole Application hangs in a Running sync. There is nothing to
+# pre-upgrade on a first install, and under GitOps the chart version is pinned
+# in Git and reviewed on a pull request, which is where an upgrade check belongs.
+# Observed on the 2026-08-20 deployment.
+preUpgradeChecker:
+  jobEnabled: false
