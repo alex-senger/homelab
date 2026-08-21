@@ -2,11 +2,6 @@ apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:
   annotations:
-    # Wave -10: AppProjects must exist before any Application that references
-    # them. Cilium sits at wave -1 so the CNI precedes everything else, which
-    # without this would sort it ahead of its own project and fail the first
-    # sync of a fresh cluster with "referencing project ... which does not
-    # exist". Observed on the 2026-08-20 rebuild.
     argocd.argoproj.io/sync-wave: "-10"
   name: infrastructure
   namespace: argocd

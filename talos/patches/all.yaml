@@ -6,8 +6,6 @@ machine:
       # metrics-server scrape over verified TLS rather than --kubelet-insecure-tls.
       rotate-server-certificates: "true"
   features:
-    # Node-local API server proxy. Cilium points at localhost:7445 through it,
-    # so the CNI does not depend on a Service IP that the CNI itself provides.
     kubePrism:
       enabled: true
       port: 7445
@@ -15,13 +13,5 @@ machine:
       enabled: true
       forwardKubeDNSToHost: true
 cluster:
-  # Talos deploys kube-proxy by default. Cilium is configured with
-  # kubeProxyReplacement: true and handles Service routing in eBPF, so running
-  # both means two systems programming the same traffic — duplicated rules and
-  # no benefit from the eBPF datapath.
-  #
-  # The pre-rebuild cluster had this disabled; the setting was lost when the
-  # machine config was re-derived, and kube-proxy came back. Declared here so it
-  # cannot be lost again.
   proxy:
-    disabled: true
+    disabled: true  # required by Cilium

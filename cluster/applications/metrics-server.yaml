@@ -4,8 +4,6 @@ metadata:
   name: metrics-server
   namespace: argocd
   annotations:
-    # After kubelet-serving-cert-approver (5): scraping over verified TLS
-    # depends on the kubelet's rotated serving certs being approved.
     argocd.argoproj.io/sync-wave: "6"
   finalizers:
     - resources-finalizer.argocd.argoproj.io

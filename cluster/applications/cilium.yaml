@@ -24,26 +24,15 @@ spec:
     server: https://kubernetes.default.svc
     namespace: kube-system
 
-  # Adoption completed 2026-08-18: a manual sync was reviewed and returned clean,
-  # with no pod restarts and no certificate rotation.
   syncPolicy:
     automated:
-      # prune stays false permanently, not as temporary caution. Removing a
-      # Cilium resource must be a deliberate human act, never a consequence of
-      # a transient render failure — pruning a CNI resource takes down cluster
-      # networking.
       prune: false
       selfHeal: true
     syncOptions:
       - ServerSideApply=true
       - RespectIgnoreDifferences=true
 
-  # The Cilium chart's default hubble.tls.auto.method is "helm", which generates
-  # certificates at template time. Every render therefore produces different key
-  # material. Without these rules ArgoCD reports permanent drift and rotates
-  # Hubble's certificates on every single sync.
-  #
-  # Sub-project #3 replaces this by moving Hubble TLS to cert-manager.
+  # Without this, Argo shows a permanent drift.
   ignoreDifferences:
     - group: ""
       kind: Secret

@@ -1,38 +1,14 @@
 defaultSettings:
-  # The Talos user volume on /dev/sdb1. Longhorn defaults to /var/lib/longhorn,
-  # which on Talos lives on the EPHEMERAL system partition — replicas would land
-  # on the 40 GB OS disk, fill it, and be wiped on upgrade. It works right up
-  # until the system disk fills, which is why this is the setting to get right.
   defaultDataPath: /var/mnt/longhorn
-
-  # Two replicas, not three. All copies share one physical NVMe, so replicas buy
-  # node availability rather than durability. The third copy would only cover two
-  # simultaneous node failures, which on a single host means the host is gone.
   defaultReplicaCount: 2
-
-  # Longhorn defaults to 200%. On one shared NVMe, promising more space than
-  # exists converts a capacity problem into a corruption problem.
   storageOverProvisioningPercentage: 100
   storageMinimalAvailablePercentage: 15
 
 persistence:
   defaultClass: true
   defaultClassReplicaCount: 2
-  # Delete, the upstream default, while the cluster is still disposable. A
-  # longhorn-retain class arrives with Nextcloud, when the data starts mattering.
   reclaimPolicy: Delete
 
-# Longhorn ships a "pre-upgrade checker" as a Helm pre-upgrade hook. ArgoCD
-# translates Helm hooks into Argo hooks, so it runs as PreSync — before the main
-# sync creates the ServiceAccount the Job needs. On a fresh install the Job is
-# therefore stuck forever with:
-#
-#   Error creating: pods "longhorn-pre-upgrade-" is forbidden:
-#     serviceaccount "longhorn-service-account" not found
-#
-# and the whole Application hangs in a Running sync. There is nothing to
-# pre-upgrade on a first install, and under GitOps the chart version is pinned
-# in Git and reviewed on a pull request, which is where an upgrade check belongs.
-# Observed on the 2026-08-20 deployment.
+# Needed for Argo CD compatibility
 preUpgradeChecker:
   jobEnabled: false
