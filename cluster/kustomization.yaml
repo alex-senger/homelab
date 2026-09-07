@@ -15,3 +15,4 @@ resources:
   - applications/cert-manager.yaml
   - applications/cert-manager-issuers.yaml
   - applications/longhorn.yaml
+  - applications/gateway.yaml
