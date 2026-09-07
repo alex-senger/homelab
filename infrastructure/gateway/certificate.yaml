@@ -1,0 +1,15 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: wildcard-senger-solutions
+  namespace: gateway
+spec:
+  secretName: wildcard-senger-solutions-tls
+  # Start on staging; flip issuerRef.name to letsencrypt-prod in Step 8.
+  issuerRef:
+    name: letsencrypt-staging
+    kind: ClusterIssuer
+  commonName: "*.senger-solutions.com"
+  dnsNames:
+    - "*.senger-solutions.com"
+    - "senger-solutions.com"

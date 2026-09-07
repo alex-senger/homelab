@@ -1,0 +1,13 @@
+apiVersion: cilium.io/v2alpha1
+kind: CiliumL2AnnouncementPolicy
+metadata:
+  name: lan-l2
+spec:
+  # Announce LoadBalancer IPs (not externalIPs) on the LAN interface ens18,
+  # confirmed present on all three nodes on 2026-09-08.
+  loadBalancerIPs: true
+  interfaces:
+    - ^ens18$
+  nodeSelector:
+    matchLabels:
+      kubernetes.io/os: linux

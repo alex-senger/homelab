@@ -1,0 +1,9 @@
+apiVersion: cilium.io/v2
+kind: CiliumLoadBalancerIPPool
+metadata:
+  name: lan-pool
+spec:
+  # Reserved out of DHCP since sub-project #2. See talos declarative spec §5.
+  blocks:
+    - start: 192.168.178.201
+      stop: 192.168.178.220
