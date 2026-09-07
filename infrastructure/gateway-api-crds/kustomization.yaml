@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Cilium 1.18 requires Gateway API v1.3.0 standard-channel CRDs, applied before
+# the Cilium operator's Gateway controller starts (Application sync-wave -2).
+# TLSRoute (experimental channel) is intentionally omitted: this cluster
+# terminates TLS at the Gateway with HTTPS listeners, it does not do TLS
+# passthrough. Cilium ships no Gateway API CRDs of its own.
+resources:
+  # renovate: datasource=github-releases depName=kubernetes-sigs/gateway-api
+  - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.3.0/config/crd/standard/gateway.networking.k8s.io_gatewayclasses.yaml
+  - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.3.0/config/crd/standard/gateway.networking.k8s.io_gateways.yaml
+  - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.3.0/config/crd/standard/gateway.networking.k8s.io_httproutes.yaml
+  - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.3.0/config/crd/standard/gateway.networking.k8s.io_referencegrants.yaml
+  - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.3.0/config/crd/standard/gateway.networking.k8s.io_grpcroutes.yaml
