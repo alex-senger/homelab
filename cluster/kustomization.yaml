@@ -13,4 +13,5 @@ resources:
   - applications/kubelet-serving-cert-approver.yaml
   - applications/metrics-server.yaml
   - applications/cert-manager.yaml
+  - applications/cert-manager-issuers.yaml
   - applications/longhorn.yaml
