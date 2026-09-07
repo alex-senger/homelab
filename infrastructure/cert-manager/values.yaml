@@ -1,0 +1,27 @@
+# CRDs ship as ordinary templates gated by crds.enabled (chart default false).
+# Enabling it here is what installs the CRDs; there is no Helm crds/ directory,
+# so --include-crds would be a no-op — same situation documented for argo-cd.
+crds:
+  enabled: true
+
+# Modest footprint for a 6-vCPU cluster.
+resources:
+  requests:
+    cpu: 10m
+    memory: 32Mi
+  limits:
+    memory: 128Mi
+webhook:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      memory: 64Mi
+cainjector:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      memory: 128Mi

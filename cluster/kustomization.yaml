@@ -12,4 +12,5 @@ resources:
   - applications/gateway-api-crds.yaml
   - applications/kubelet-serving-cert-approver.yaml
   - applications/metrics-server.yaml
+  - applications/cert-manager.yaml
   - applications/longhorn.yaml
