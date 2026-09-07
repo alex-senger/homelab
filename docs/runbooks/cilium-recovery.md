@@ -54,3 +54,21 @@ Do not add a finalizer to Cilium's Application.
 Do not paste an unredacted `dyff` of rendered Cilium output anywhere. The chart generates Hubble
 TLS certificates at template time, so the diff of a Secret's `data` field is a private key. Pipe
 through `sed -E 's/[A-Za-z0-9+\/]{60,}=*/<REDACTED>/g'` first.
+
+## Config changes require a rollout restart
+
+Changing `infrastructure/cilium/values.yaml` and syncing through ArgoCD updates the
+`cilium-config` ConfigMap in `kube-system`. That is all it does. The chart puts no config
+checksum annotation on the operator Deployment's or agent DaemonSet's pod template, so ArgoCD has
+nothing that changes on those pods and does not restart them. A feature that is only a config flag
+away — Gateway API support, L2 announcements, anything else read from `cilium-config` at
+startup — stays inactive until the pods that read it are recreated.
+
+After a values change lands, restart both by hand:
+
+    kubectl -n kube-system rollout restart deployment/cilium-operator daemonset/cilium
+
+The operator restart is datapath-safe — the operator does not sit in the packet path, so restarting
+it does not interrupt existing traffic. The agent restart is not: each agent pod briefly drops the
+node's datapath while it re-initializes, so expect a short per-node connectivity blip as the
+DaemonSet rolls, one node at a time.

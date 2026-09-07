@@ -15,6 +15,9 @@ single Proxmox host. Everything in the cluster is declared here and reconciled b
 | Rendering | Kustomize, with Helm charts inflated via `helmCharts:` |
 | CI | GitHub Actions — render, `kubeconform -strict`, rendered-object diff on every PR |
 | Updates | Renovate, automerge gated on CI |
+| Gateway API | Cilium's Gateway controller, v1.3.0 standard-channel CRDs |
+| TLS issuance | cert-manager v1.21.1, Let's Encrypt via Cloudflare DNS-01 |
+| External ingress | VPS + WireGuard → Cilium Gateway (LAN path live; VPS hop pending) |
 
 ## Layout
 
@@ -78,6 +81,24 @@ than "no secrets at all", and the distinction is worth stating rather than gloss
 
 CI enforces it: a job refuses to pass if `clusterconfig/` is ever tracked, or if the committed
 secrets file loses its SOPS metadata or gains a plaintext key block.
+
+**External reach is only half built.** The in-cluster half — Gateway API, LB-IPAM and L2
+announcement of a LAN IP, and cert-manager issuing a real wildcard certificate via Cloudflare
+DNS-01 — works today, on the LAN. The VPS and WireGuard tunnel that would expose that same Gateway
+to the public internet are designed (see [ADR 0003](docs/decisions/0003-external-reach-vps-wireguard.md))
+but not yet implemented, so nothing in this cluster is reachable from outside the LAN yet.
+
+## Roadmap
+
+| # | Sub-project | Status |
+|---|---|---|
+| 1 | Repository foundation, ArgoCD, CI, Renovate | Done |
+| 2 | Declarative Talos layer, three control-plane nodes | Done |
+| 3 | Longhorn replicated storage | Done |
+| 4 | External reach — Gateway API, cert-manager, VPS + WireGuard ingress | In progress — LAN path done, VPS hop pending |
+| 5 | Secrets — External Secrets Operator + OpenBao | Planned |
+| 6 | Observability — kube-prometheus-stack, Loki, Hubble | Planned |
+| 7 | Applications — website → Authelia → Nextcloud | Planned |
 
 ## Design documents
 

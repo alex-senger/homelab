@@ -32,9 +32,11 @@ kubectl apply -f -` to the command above.
 
 ### `wg-ingress-key` (namespace `wg-ingress`)
 
-The persistent WireGuard private key for the cluster end of the VPS tunnel (`infrastructure/wg-ingress`).
-Persistent and not per-pod: a rescheduled pod re-dials the VPS using the same key, so the VPS-side
-peer configuration never needs to change.
+The persistent WireGuard private key for the cluster end of the VPS tunnel — the in-cluster
+`wg-ingress` pod described in [ADR 0003](../decisions/0003-external-reach-vps-wireguard.md), part
+of the pending VPS phase of sub-project #4 and not yet built. Persistent and not per-pod: a
+rescheduled pod re-dials the VPS using the same key, so the VPS-side peer configuration never
+needs to change.
 
 To recreate:
 
@@ -45,8 +47,11 @@ To recreate:
     shred -u /tmp/wg-ingress.key   # do not leave the private key on disk
 
 The public key printed to `/tmp/wg-ingress.pub` must then be added to the VPS's WireGuard peer
-config (out of scope here — see `vps/`). Rotating this key requires updating the VPS side too, or
-the tunnel will not re-establish.
+config. That is part of the pending VPS phase of sub-project #4 (see
+[ADR 0003](../decisions/0003-external-reach-vps-wireguard.md)) and is not yet built — there is no
+`wg-ingress` workload in this repository today, and this section documents the Secret shape it
+will need once it exists. Rotating this key once the tunnel exists will require updating the VPS
+side too, or the tunnel will not re-establish.
 
 ## Checking the WireGuard tunnel handshake
 
