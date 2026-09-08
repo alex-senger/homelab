@@ -39,6 +39,10 @@ posture elsewhere in this cluster. HA would buy little against that failure mode
 simplest to run and to unseal. `longhorn-retain` (`reclaimPolicy: Retain`) exists so a PVC delete
 never takes the raft data with it.
 
+"Single-node" here refers only to OpenBao running a single application replica; the underlying
+`longhorn-retain` volume still keeps `numberOfReplicas: "2"` Longhorn storage replicas, so raft
+data itself is not single-copy.
+
 **Auto-unseal via a companion Deployment (`openbao-unsealer`), not a KMS seal.** No cloud KMS is
 available here, and Talos reboots every node in turn, so OpenBao restarts — and re-seals — often
 enough that manual unsealing would be real toil. The companion decrypts a SOPS-encrypted file of

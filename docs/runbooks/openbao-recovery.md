@@ -55,7 +55,7 @@ To create it:
 Run once, against a freshly deployed, uninitialized OpenBao:
 
     export KUBECONFIG=/tmp/rk.yaml
-    kubectl -n openbao exec -it deploy/openbao -- \
+    kubectl -n openbao exec -it openbao-0 -- \
       bao operator init -key-shares=<N> -key-threshold=<M>
 
 This prints `<N>` unseal keys and one root token. **Capture all of it immediately — it is shown
@@ -82,9 +82,9 @@ exactly once and cannot be retrieved from OpenBao afterward.**
    role.
 5. Seed the two adopted secrets:
 
-       kubectl -n openbao exec -it deploy/openbao -- sh -c \
+       kubectl -n openbao exec -it openbao-0 -- sh -c \
          'BAO_TOKEN=<root-token> bao kv put secret/cert-manager/cloudflare-api-token api-token=<CLOUDFLARE_TOKEN>'
-       kubectl -n openbao exec -it deploy/openbao -- sh -c \
+       kubectl -n openbao exec -it openbao-0 -- sh -c \
          'BAO_TOKEN=<root-token> bao kv put secret/wg-ingress/wg-ingress-key wg0.conf=@/path/to/wg0.conf'
 
 6. Confirm the `ExternalSecret`s resolve:
@@ -115,8 +115,8 @@ unseal keys in hand (decrypt the committed file locally with the dedicated age k
 them from wherever they were first recorded):
 
     export KUBECONFIG=/tmp/rk.yaml
-    kubectl -n openbao exec -it deploy/openbao -- bao operator unseal   # repeat M times, one key per invocation
-    kubectl -n openbao exec -it deploy/openbao -- bao status            # confirm Sealed: false
+    kubectl -n openbao exec -it openbao-0 -- bao operator unseal   # repeat M times, one key per invocation
+    kubectl -n openbao exec -it openbao-0 -- bao status            # confirm Sealed: false
 
 Never paste unseal keys or the root token into a file inside this repository, encrypted or not,
 outside the one committed `unseal-keys.sops.yaml`.
@@ -126,7 +126,7 @@ outside the one committed `unseal-keys.sops.yaml`.
 The root token is only needed for the initial `bao operator init` flow and for re-running
 `openbao-config` after a policy change. It should not sit live indefinitely:
 
-    kubectl -n openbao exec -it deploy/openbao -- bao token revoke -self
+    kubectl -n openbao exec -it openbao-0 -- bao token revoke -self
 
 Re-create `openbao-root-token` (and generate a fresh root token via `bao operator generate-root`
 if the CLI is unavailable) only when the bootstrap Job needs to run again — for example, after
@@ -153,6 +153,6 @@ If an `ExternalSecret` reports an auth error, check that:
 
     export KUBECONFIG=/tmp/rk.yaml
     kubectl -n openbao get pods
-    kubectl -n openbao exec -it deploy/openbao -- bao status
+    kubectl -n openbao exec -it openbao-0 -- bao status
     kubectl -n external-secrets get pods
     kubectl get clustersecretstore openbao -o yaml

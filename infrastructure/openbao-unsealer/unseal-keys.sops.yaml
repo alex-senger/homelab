@@ -1,5 +1,6 @@
 # PLACEHOLDER: replaced at bring-up with real SOPS-encrypted keys
-# (see task-3-brief.md Step 8). Not actually SOPS-encrypted yet —
+# (see docs/runbooks/openbao-recovery.md, "One-time init (bao operator init)").
+# Not actually SOPS-encrypted yet —
 # the dedicated age keypair for this file is generated at bring-up.
 unseal_key_1: PLACEHOLDER
 unseal_key_2: PLACEHOLDER
