@@ -254,3 +254,11 @@ jobs:
         if: steps.render.outputs.found == '1'
         with:
           directory: /tmp/lint
+
+  ansible:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Lint the VPS Ansible
+        run: pipx run ansible-lint vps/

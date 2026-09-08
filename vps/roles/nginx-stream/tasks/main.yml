@@ -1,0 +1,56 @@
+---
+# Debian splits nginx's stream module into its own package
+# (libnginx-mod-stream) loaded via /etc/nginx/modules-enabled/*.conf, which
+# the stock nginx.conf already includes — installing it is enough to make
+# the `stream` directive available, no manual load_module line needed.
+- name: Install nginx and the stream module
+  ansible.builtin.apt:
+    name:
+      - nginx
+      - libnginx-mod-stream
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Create the stream config directory
+  ansible.builtin.file:
+    path: /etc/nginx/stream.conf.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+# `stream {}` is a top-level block, a sibling of `http {}` — it cannot live
+# under /etc/nginx/modules-enabled (load_module directives only) or under
+# conf.d/sites-enabled (both included inside the http {} context). So the
+# config goes in its own directory, included once from nginx.conf's
+# top level, above the events {} block.
+- name: Template the stream relay config
+  ansible.builtin.template:
+    src: stream.conf.j2
+    dest: /etc/nginx/stream.conf.d/stream.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload nginx
+
+- name: Include the stream config directory from the top level of nginx.conf
+  ansible.builtin.blockinfile:
+    path: /etc/nginx/nginx.conf
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - stream relay include"
+    insertbefore: "^events"
+    block: |
+      include /etc/nginx/stream.conf.d/*.conf;
+  notify: Reload nginx
+
+- name: Validate the nginx configuration
+  ansible.builtin.command: nginx -t
+  register: nginx_config_check
+  changed_when: false
+  failed_when: nginx_config_check.rc != 0
+
+- name: Enable and start nginx
+  ansible.builtin.systemd:
+    name: nginx
+    enabled: true
+    state: started

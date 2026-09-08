@@ -1,0 +1,7 @@
+---
+- name: Configure the VPS public front door (WireGuard + nginx stream relay)
+  hosts: vps
+  become: true
+  roles:
+    - wireguard
+    - nginx-stream
