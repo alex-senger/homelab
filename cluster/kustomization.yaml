@@ -16,5 +16,6 @@ resources:
   - applications/cert-manager-issuers.yaml
   - applications/longhorn.yaml
   - applications/storage-classes.yaml
+  - applications/openbao.yaml
   - applications/gateway.yaml
   - applications/wg-ingress.yaml

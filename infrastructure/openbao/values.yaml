@@ -1,0 +1,42 @@
+# Single-node raft. HA machinery with replicas 1 gives raft storage without a
+# quorum; a brief outage during this node's reboot is tolerable (synced k8s
+# Secrets persist).
+global:
+  enabled: true
+injector:
+  enabled: false   # ESO handles secret delivery; the agent injector is unused
+server:
+  image:
+    # chart default registry is already quay.io; repository must NOT repeat it
+    # (server.image.registry + "/" + server.image.repository), or the
+    # rendered image becomes quay.io/quay.io/openbao/openbao.
+    repository: openbao/openbao
+    tag: "2.6.2"
+  ha:
+    enabled: true
+    replicas: 1
+    raft:
+      enabled: true
+      setNodeId: true
+      config: |
+        ui = true
+        listener "tcp" {
+          address     = "[::]:8200"
+          cluster_address = "[::]:8201"
+          tls_disable = true
+        }
+        storage "raft" {
+          path = "/openbao/data"
+        }
+        service_registration "kubernetes" {}
+  dataStorage:
+    enabled: true
+    size: 2Gi
+    storageClass: longhorn-retain
+    accessMode: ReadWriteOnce
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      memory: 256Mi
