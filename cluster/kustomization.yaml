@@ -16,3 +16,4 @@ resources:
   - applications/cert-manager-issuers.yaml
   - applications/longhorn.yaml
   - applications/gateway.yaml
+  - applications/wg-ingress.yaml

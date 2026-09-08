@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wg-ingress
+  namespace: wg-ingress
+  labels:
+    app: wg-ingress
+spec:
+  # Single tunnel: the persistent key means a reschedule just re-dials the same
+  # VPS peer, no VPS-side change needed.
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wg-ingress
+  template:
+    metadata:
+      labels:
+        app: wg-ingress
+    spec:
+      containers:
+        # Dials out to the VPS over WireGuard; brings up wg0 at 10.10.0.2/24 in
+        # the pod's (shared) network namespace using the hand-created client
+        # conf. Client mode: PEERS is intentionally unset.
+        - name: wireguard
+          # renovate: datasource=docker depName=linuxserver/wireguard
+          image: linuxserver/wireguard:1.0.20260223-r0-ls121
+          env:
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: TZ
+              value: Etc/UTC
+          securityContext:
+            capabilities:
+              add:
+                - NET_ADMIN
+                - SYS_MODULE
+          volumeMounts:
+            - name: wg-config
+              mountPath: /config/wg_confs/wg0.conf
+              subPath: wg0.conf
+              readOnly: true
+            - name: dev-net-tun
+              mountPath: /dev/net/tun
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+        # L4 byte relay: forwards the PROXY-protocol-prefixed stream the VPS
+        # hands over the tunnel straight to the Gateway's Envoy, untouched.
+        - name: relay
+          # renovate: datasource=docker depName=alpine/socat
+          image: alpine/socat:1.8.1.3
+          args:
+            - -d
+            - TCP-LISTEN:443,fork,reuseaddr
+            - TCP:cilium-gateway-external.gateway.svc.cluster.local:443
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+      volumes:
+        # Hand-created by a human out-of-band (see docs/runbooks); never
+        # committed here. Key wg0.conf holds the client tunnel config.
+        - name: wg-config
+          secret:
+            secretName: wg-ingress-key
+        - name: dev-net-tun
+          hostPath:
+            path: /dev/net/tun
+            type: CharDevice
