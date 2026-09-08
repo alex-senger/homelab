@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: openbao
+
+configMapGenerator:
+  - name: unseal-script
+    files:
+      - unseal.sh
+  - name: unseal-keys-enc
+    files:
+      - unseal-keys.sops.yaml
+
+generatorOptions:
+  disableNameSuffixHash: false
+
+resources:
+  - deployment.yaml

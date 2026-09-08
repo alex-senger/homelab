@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openbao-unsealer
+  namespace: openbao
+  labels:
+    app: openbao-unsealer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: openbao-unsealer
+  template:
+    metadata:
+      labels:
+        app: openbao-unsealer
+    spec:
+      # Decrypts the SOPS-encrypted Shamir unseal keys into a tmpfs emptyDir
+      # that only this pod's containers can see; nothing touches disk.
+      initContainers:
+        - name: decrypt
+          # renovate: datasource=docker depName=ghcr.io/getsops/sops
+          image: ghcr.io/getsops/sops:v3.10.2-alpine
+          command:
+            - sh
+            - -c
+            - "sops -d /enc/unseal-keys.sops.yaml > /keys/unseal-keys.yaml"
+          env:
+            - name: SOPS_AGE_KEY_FILE
+              value: /age/key.txt
+          volumeMounts:
+            - name: unseal-keys-enc
+              mountPath: /enc
+              readOnly: true
+            - name: unseal-age-key
+              mountPath: /age
+              readOnly: true
+            - name: keys
+              mountPath: /keys
+      containers:
+        # Loops calling the unseal API against OpenBao until it reports
+        # sealed=false; harmless no-op once already unsealed.
+        - name: unsealer
+          image: quay.io/openbao/openbao:2.6.2
+          command:
+            - /bin/sh
+            - /scripts/unseal.sh
+          env:
+            - name: BAO_ADDR
+              value: http://openbao.openbao.svc:8200
+          volumeMounts:
+            - name: keys
+              mountPath: /keys
+            - name: unseal-script
+              mountPath: /scripts
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+      volumes:
+        - name: unseal-keys-enc
+          configMap:
+            name: unseal-keys-enc
+        - name: unseal-script
+          configMap:
+            name: unseal-script
+            defaultMode: 0755
+        # Hand-created by a human out-of-band at bring-up; dedicated to this
+        # unsealer (not the Talos age key). Never committed here.
+        - name: unseal-age-key
+          secret:
+            secretName: openbao-unseal-age-key
+        - name: keys
+          emptyDir:
+            medium: Memory

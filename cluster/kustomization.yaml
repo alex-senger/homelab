@@ -17,5 +17,6 @@ resources:
   - applications/longhorn.yaml
   - applications/storage-classes.yaml
   - applications/openbao.yaml
+  - applications/openbao-unsealer.yaml
   - applications/gateway.yaml
   - applications/wg-ingress.yaml
