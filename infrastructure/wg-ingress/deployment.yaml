@@ -41,8 +41,6 @@ spec:
               mountPath: /config/wg_confs/wg0.conf
               subPath: wg0.conf
               readOnly: true
-            - name: dev-net-tun
-              mountPath: /dev/net/tun
           resources:
             requests:
               cpu: 10m
@@ -72,7 +70,3 @@ spec:
         - name: wg-config
           secret:
             secretName: wg-ingress-key
-        - name: dev-net-tun
-          hostPath:
-            path: /dev/net/tun
-            type: CharDevice
