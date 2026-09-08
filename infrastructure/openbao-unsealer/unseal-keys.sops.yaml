@@ -1,7 +1,18 @@
-# PLACEHOLDER: replaced at bring-up with real SOPS-encrypted keys
-# (see docs/runbooks/openbao-recovery.md, "One-time init (bao operator init)").
-# Not actually SOPS-encrypted yet —
-# the dedicated age keypair for this file is generated at bring-up.
-unseal_key_1: PLACEHOLDER
-unseal_key_2: PLACEHOLDER
-unseal_key_3: PLACEHOLDER
+unseal_key_1: ENC[AES256_GCM,data:9oz3TUo1QFftQssk8mFkzbW2W3oOshBYWoI3/O1cWtO5h83ADUO8HHgQQgg=,iv:Ja8s8LtwQcI9O0N+pO07BVl+mfudcNpCGhEwl+/bKo4=,tag:hV73j/QZcmgjvPs3Psqzyw==,type:str]
+unseal_key_2: ENC[AES256_GCM,data:NX/eact+LGSiOGYb+CAx0TDm268KKtCCxKepX4K2SrhiNasMYLm5Q4V0uY8=,iv:hugZZXcOMUBx64L+0rJaBglYmFvhTKxow5MMEzuAtvY=,tag:fKSjM9wGDCvbGZ5YsAZ5tA==,type:str]
+unseal_key_3: ENC[AES256_GCM,data:OoUv2hSOCUiNt3/Neg9Ns2Brnox4Gme3bjE5CrLxb3OcsrCeqrquZSSsnjQ=,iv:PXssdYLM9p0eJJaDU262pKvb6XTJOZh6bIZ/OKtbbUA=,tag:m198qxoxjlOeSXl3LpTsAQ==,type:str]
+sops:
+    age:
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSB3OThIajdBV2E2OUFvdFVy
+            N2JFdktoVGhyaEh1TjFGaGJDTlJIaTViSWtnCmhaV3pIQ3pQWUpGTUIxbVpvV29v
+            TGd6S1NVNjhDT2xsbjFIb012cE5hM0UKLS0tIG5aSXFQUU1hQWJ4azVtcUdEejQ4
+            d2RzdzZwZWdYb1l4aEt2aTFwVXJITkEKgB5DtfdhCAZPtHW0h4Gl2MAJ0X6+7Wrf
+            FgmspnAH3zfsncxwbcHBhzm1AJvkKBG8EfNu/c+Lj5XFAOUXf38DaA==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age1s32vpmraeaf22k2twqquxc6g8n27psxwv27fste2u3td3tyra5fszatcqa
+    lastmodified: "2026-09-08T15:05:28Z"
+    mac: ENC[AES256_GCM,data:T6V3Sbb2sNwFRqiQFm2QUJng0qmFkSiQhXV5N8jb6x6qrHfGjChCzXeeSn/KhxtCe8/k9Ct4Ip734lLuwwqSM0i0vUmtnjqDI9lLbwgKP/JnvOnFYknmlfYCWeeK+BliNF+Y/vaZUAMnublC+dD7DrHFvH8Q64Npjj2HKvjAIwY=,iv:mACUjZ4RSuqGXm3wByRl53gnTwqUWk+m4fBts7V7a8c=,tag:qPZCxVrLBi7xndM3DyhczQ==,type:str]
+    unencrypted_suffix: _unencrypted
+    version: 3.13.3
