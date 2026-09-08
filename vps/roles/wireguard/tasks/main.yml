@@ -13,7 +13,7 @@
     owner: root
     group: root
     mode: "0600"
-  notify: restart wireguard
+  notify: Restart wireguard
 
 # The VPS only ever dials out to nothing — the cluster's wg-ingress pod
 # initiates the tunnel to this box. No forwarding or NAT is needed here,
