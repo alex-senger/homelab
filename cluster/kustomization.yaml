@@ -18,5 +18,6 @@ resources:
   - applications/storage-classes.yaml
   - applications/openbao.yaml
   - applications/openbao-unsealer.yaml
+  - applications/openbao-config.yaml
   - applications/gateway.yaml
   - applications/wg-ingress.yaml

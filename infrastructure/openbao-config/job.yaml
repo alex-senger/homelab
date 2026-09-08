@@ -1,0 +1,43 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: openbao-config
+  namespace: openbao
+  annotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  backoffLimit: 10
+  template:
+    metadata:
+      labels:
+        app: openbao-config
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: openbao-config
+          image: quay.io/openbao/openbao:2.6.2
+          command:
+            - /bin/sh
+            - /scripts/configure.sh
+          env:
+            - name: BAO_ADDR
+              value: http://openbao.openbao.svc:8200
+            - name: BAO_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: openbao-root-token
+                  key: token
+          volumeMounts:
+            - name: config-script
+              mountPath: /scripts
+            - name: policies
+              mountPath: /policies
+      volumes:
+        - name: config-script
+          configMap:
+            name: openbao-config-script
+            defaultMode: 0755
+        - name: policies
+          configMap:
+            name: openbao-policies
