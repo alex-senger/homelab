@@ -34,8 +34,11 @@ spec:
           securityContext:
             capabilities:
               add:
+                # NET_ADMIN only. SYS_MODULE is refused by Talos's container
+                # runtime (RunContainerError: unable to apply caps) and is
+                # unnecessary — the wireguard kernel module is already loaded
+                # on Talos nodes, so kernel-mode WireGuard needs no module load.
                 - NET_ADMIN
-                - SYS_MODULE
           volumeMounts:
             - name: wg-config
               mountPath: /config/wg_confs/wg0.conf
