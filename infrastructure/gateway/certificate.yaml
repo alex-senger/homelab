@@ -7,7 +7,7 @@ spec:
   secretName: wildcard-senger-solutions-tls
   # Start on staging; flip issuerRef.name to letsencrypt-prod in Step 8.
   issuerRef:
-    name: letsencrypt-staging
+    name: letsencrypt-prod
     kind: ClusterIssuer
   commonName: "*.senger-solutions.com"
   dnsNames:
