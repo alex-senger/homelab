@@ -1,0 +1,37 @@
+---
+- name: Install wireguard
+  ansible.builtin.apt:
+    name: wireguard
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Template the wg1 interface config
+  ansible.builtin.template:
+    src: wg1.conf.j2
+    dest: /etc/wireguard/wg1.conf
+    owner: root
+    group: root
+    mode: "0600"
+  notify: Restart wireguard
+
+# The VPS only ever dials out to nothing — the cluster's wg-ingress pod
+# initiates the tunnel to this box. No forwarding or NAT is needed here,
+# so there is no sysctl/ip_forward change and no firewall FORWARD chain
+# to manage; opening the listen port below is the whole story.
+#
+# Firewall: this box already runs UFW for everything else, managed by the
+# operator. Add a single additive allow rule rather than templating a full
+# ruleset — never reset or flush UFW from this role.
+- name: Allow the WireGuard tunnel through ufw
+  community.general.ufw:
+    rule: allow
+    port: "51821"
+    proto: udp
+    comment: "WireGuard - k8s cluster tunnel"
+
+- name: Enable and start wg-quick@wg1
+  ansible.builtin.systemd:
+    name: wg-quick@wg1
+    enabled: true
+    state: started

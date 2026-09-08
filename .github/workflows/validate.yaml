@@ -254,3 +254,18 @@ jobs:
         if: steps.render.outputs.found == '1'
         with:
           directory: /tmp/lint
+
+  ansible:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install the community.general collection
+        # The wireguard role uses community.general.ufw; ansible-lint's
+        # syntax-check cannot resolve it unless the collection is installed.
+        run: |
+          python -m pip install --upgrade ansible-core
+          ansible-galaxy collection install -r vps/requirements.yml
+
+      - name: Lint the VPS Ansible
+        run: pipx run ansible-lint vps/

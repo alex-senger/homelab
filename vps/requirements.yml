@@ -1,0 +1,5 @@
+---
+# The wireguard role uses community.general.ufw. ansible-lint and the operator
+# both need this collection installed: `ansible-galaxy collection install -r vps/requirements.yml`.
+collections:
+  - name: community.general
