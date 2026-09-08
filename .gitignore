@@ -33,3 +33,5 @@ vps/group_vars/vps/
 vps/*.vault
 vps/*vault*.yml
 vps/*vault*.yaml
+
+.ansible/
