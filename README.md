@@ -18,6 +18,7 @@ single Proxmox host. Everything in the cluster is declared here and reconciled b
 | Gateway API | Cilium's Gateway controller, v1.3.0 standard-channel CRDs |
 | TLS issuance | cert-manager v1.21.1, Let's Encrypt via Cloudflare DNS-01 |
 | External ingress | VPS + WireGuard → Cilium Gateway (LAN path live; VPS hop pending) |
+| Secrets | Self-hosted OpenBao (KV v2) + External Secrets Operator (manifests merged; init/seed pending) |
 
 ## Layout
 
@@ -96,7 +97,7 @@ but not yet implemented, so nothing in this cluster is reachable from outside th
 | 2 | Declarative Talos layer, three control-plane nodes | Done |
 | 3 | Longhorn replicated storage | Done |
 | 4 | External reach — Gateway API, cert-manager, VPS + WireGuard ingress | In progress — LAN path done, VPS hop pending |
-| 5 | Secrets — External Secrets Operator + OpenBao | Planned |
+| 5 | Secrets — External Secrets Operator + OpenBao | In progress — manifests merged, OpenBao init/seed pending |
 | 6 | Observability — kube-prometheus-stack, Loki, Hubble | Planned |
 | 7 | Applications — website → Authelia → Nextcloud | Planned |
 
