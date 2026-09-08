@@ -6,50 +6,32 @@
     update_cache: true
     cache_valid_time: 3600
 
-- name: Template the wg0 interface config
+- name: Template the wg1 interface config
   ansible.builtin.template:
-    src: wg0.conf.j2
-    dest: /etc/wireguard/wg0.conf
+    src: wg1.conf.j2
+    dest: /etc/wireguard/wg1.conf
     owner: root
     group: root
     mode: "0600"
-  notify: Restart wg-quick@wg0
+  notify: restart wireguard
 
-- name: Enable IPv4 forwarding persistently
-  ansible.posix.sysctl:
-    name: net.ipv4.ip_forward
-    value: "1"
-    sysctl_set: true
-    state: present
-    reload: true
+# The VPS only ever dials out to nothing — the cluster's wg-ingress pod
+# initiates the tunnel to this box. No forwarding or NAT is needed here,
+# so there is no sysctl/ip_forward change and no firewall FORWARD chain
+# to manage; opening the listen port below is the whole story.
+#
+# Firewall: this box already runs UFW for everything else, managed by the
+# operator. Add a single additive allow rule rather than templating a full
+# ruleset — never reset or flush UFW from this role.
+- name: Allow the WireGuard tunnel through ufw
+  community.general.ufw:
+    rule: allow
+    port: "51821"
+    proto: udp
+    comment: "WireGuard - k8s cluster tunnel"
 
-- name: Install nftables
-  ansible.builtin.apt:
-    name: nftables
-    state: present
-
-# Firewall choice: nftables (Debian's default nft-based successor to
-# iptables/ufw). Ships a single declarative ruleset at /etc/nftables.conf
-# loaded by the nftables.service unit — no separate rule-persistence package
-# needed, unlike iptables-legacy. ufw would also work but is one more layer
-# on top of nftables for no benefit on a single-purpose box like this.
-- name: Template the nftables ruleset
-  ansible.builtin.template:
-    src: nftables.conf.j2
-    dest: /etc/nftables.conf
-    owner: root
-    group: root
-    mode: "0644"
-  notify: Reload nftables
-
-- name: Enable and start nftables
+- name: Enable and start wg-quick@wg1
   ansible.builtin.systemd:
-    name: nftables
-    enabled: true
-    state: started
-
-- name: Enable and start wg-quick@wg0
-  ansible.builtin.systemd:
-    name: wg-quick@wg0
+    name: wg-quick@wg1
     enabled: true
     state: started

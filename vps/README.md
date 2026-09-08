@@ -1,20 +1,29 @@
-# VPS: public front door
+# VPS: WireGuard tunnel to the cluster
 
-Ansible for the Debian VPS that terminates the public internet side of external reach:
-`internet -> VPS:443 (nginx stream, PROXY protocol) -> WireGuard tunnel -> cluster wg-ingress pod
-(10.10.0.2:443) -> Cilium Gateway`. The cluster dials out to this VPS — the VPS is the WireGuard
-"server" and listens on UDP `51820`; it never initiates a connection into the cluster.
+Ansible for the Debian VPS's side of the WireGuard tunnel that lets the cluster's `wg-ingress`
+pod reach the outside world. This box is the user's existing production VPS — it already runs a
+containerized nginx on `:443` and uses UFW for its firewall. This Ansible does **not** touch
+either of those; it manages exactly one thing: the `wg1` WireGuard interface and the single UFW
+rule that opens its port.
+
+The cluster dials out to this VPS — the VPS is the WireGuard "server" and listens on UDP
+`51821`; it never initiates a connection into the cluster, so no IP forwarding or NAT is
+configured here.
 
 Tunnel subnet `10.10.0.0/24`: VPS = `10.10.0.1`, cluster `wg-ingress` pod = `10.10.0.2`.
 
-Two roles:
+One role:
 
-- **`wireguard`** — installs WireGuard, brings up `wg0` at `10.10.0.1/24`, enables IPv4
-  forwarding, and opens the ports this box needs (SSH, WireGuard, the nginx listener) via
-  `nftables`, with a default-deny inbound policy otherwise.
-- **`nginx-stream`** — installs nginx with the stream module and relays every TCP `:443` byte
-  over the tunnel to `10.10.0.2:443` with `proxy_protocol on`, so the cluster's Envoy can recover
-  the real client address. This box never terminates TLS.
+- **`wireguard`** — installs WireGuard, templates `/etc/wireguard/wg1.conf`, opens UDP `51821`
+  via a single additive `ufw allow` rule (never resets or flushes UFW — that firewall is the
+  operator's, shared with everything else on the box), and enables/starts `wg-quick@wg1`.
+
+## nginx routing is not managed here
+
+Routing cluster hostnames over the tunnel to `10.10.0.2:443` is a change the operator makes to
+their own, already-running nginx `stream {}` block — this repo does not install, template, or
+reload nginx. See `reference/nginx-stream-snippet.conf` for a copy of the SNI-routing snippet
+actually in use, kept here only so the mapping is documented.
 
 ## Secret hygiene
 
@@ -43,12 +52,12 @@ wg genkey | tee privatekey | wg pubkey > publickey
 
 - **VPS keypair**: generate this one *on the VPS itself* (or anywhere, then copy the private key
   over securely). The private key goes into `group_vars/vps.yml` as `wg_vps_private_key` and is
-  templated into `/etc/wireguard/wg0.conf` on the VPS. The public key is what the cluster side
-  needs as *its* peer's key — hand it to whoever configures Task 8 (the `wg-ingress` pod's peer
-  list).
-- **Cluster keypair**: generated separately as part of Task 8 (the in-cluster `wg-ingress` pod).
-  Its private key stays in a Kubernetes Secret and never appears here. Its **public** key is what
-  you paste into `group_vars/vps.yml` as `wg_cluster_public_key` on this side.
+  templated into `/etc/wireguard/wg1.conf` on the VPS. The public key is what the cluster side
+  needs as *its* peer's key — hand it to whoever configures the in-cluster `wg-ingress` pod's
+  peer list.
+- **Cluster keypair**: generated separately as part of the cluster-side `wg-ingress` setup. Its
+  private key stays in a Kubernetes Secret and never appears here. Its **public** key is what you
+  paste into `group_vars/vps.yml` as `wg_cluster_public_key` on this side.
 
 In short: this role only ever holds the VPS's private key and the cluster's public key — never
 the cluster's private key, and never the VPS's key on the cluster side. Delete any temporary
@@ -62,6 +71,7 @@ cd vps
 cp inventory.ini inventory.local.ini   # then edit with the real IP and SSH user
 $EDITOR group_vars/vps.yml             # create it, with the two keys above
 
+ansible-galaxy collection install community.general
 ansible-playbook -i inventory.local.ini playbook.yml
 ```
 
@@ -73,21 +83,17 @@ default inventory) so `-i inventory.local.ini` is mostly a safety-net override i
 
 ```bash
 # On the VPS:
-sudo wg show                 # wg0 present, listening :51820, peer configured
-sudo nginx -t && sudo ss -tlnp | grep :443
+sudo wg show           # wg1 present, listening :51821, peer configured
+sudo ufw status         # udp/51821 allowed, comment "WireGuard - k8s cluster tunnel"
 ```
 
-No WireGuard handshake will appear until the cluster's `wg-ingress` pod (Task 8) is also up and
-dialing out to this VPS — that's expected until both sides exist.
+No WireGuard handshake will appear until the cluster's `wg-ingress` pod is also up and dialing
+out to this VPS — that's expected until both sides exist.
 
 ## Firewall
 
-This role uses **nftables** (Debian's default nft-based firewall), not `ufw`, because Debian
-ships it directly with no extra rule-persistence layer needed — `/etc/nftables.conf` loaded by
-`nftables.service` is the whole story. The templated ruleset (see
-`roles/wireguard/templates/nftables.conf.j2`) default-denies inbound traffic and explicitly
-allows: loopback, established/related connections, ICMP/ICMPv6 essentials, SSH (`ssh_port`,
-default `22`), the WireGuard listener (`wg_listen_port`, default `51820`), and the nginx stream
-listener (`stream_port`, default `443`). Override `ssh_port` in `group_vars/vps.yml` if the VPS
-uses a non-default SSH port — getting this wrong before applying the playbook risks locking
-yourself out.
+This role uses **UFW**, because that's what the VPS already runs for everything else on the
+box — the role must never introduce a second, competing firewall layer (e.g. nftables) that could
+conflict with rules the operator manages elsewhere. It adds exactly one rule
+(`community.general.ufw`, `rule=allow port=51821 proto=udp`) and never resets, flushes, or
+otherwise takes ownership of the ruleset as a whole.

@@ -1,8 +1,0 @@
----
-# SSH port to keep open in the nftables ruleset. Override in
-# inventory.local.ini or a host_vars file if the VPS uses a non-default port.
-# No secret here — just an operational default, safe to commit.
-ssh_port: 22
-
-wg_listen_port: 51820
-stream_port: 443

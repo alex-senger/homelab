@@ -1,7 +1,6 @@
 ---
-- name: Configure the VPS public front door (WireGuard + nginx stream relay)
+- name: Configure the VPS side of the WireGuard tunnel to the cluster
   hosts: vps
   become: true
   roles:
     - wireguard
-    - nginx-stream
