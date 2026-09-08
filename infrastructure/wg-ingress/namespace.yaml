@@ -3,6 +3,6 @@ kind: Namespace
 metadata:
   name: wg-ingress
   labels:
-    # WireGuard needs NET_ADMIN/SYS_MODULE and /dev/net/tun; baseline PSA forbids
-    # both. Same precedent as infrastructure/longhorn/namespace.yaml.
+    # WireGuard needs NET_ADMIN, which baseline PSA forbids. Same precedent as
+    # infrastructure/longhorn/namespace.yaml.
     pod-security.kubernetes.io/enforce: privileged

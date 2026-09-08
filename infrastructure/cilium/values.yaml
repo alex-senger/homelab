@@ -39,10 +39,9 @@ securityContext:
 # --- External reach (sub-project #4) ---
 
 # Gateway API controller. CRDs are installed separately by
-# infrastructure/gateway-api-crds (Cilium ships none). enableProxyProtocol is
-# turned on later, in the wg-ingress task, once the VPS prepends the PROXY
-# header — turning it on now would make every LAN request to the Gateway
-# without a PROXY header be rejected.
+# infrastructure/gateway-api-crds (Cilium ships none). enableProxyProtocol stays
+# false: the VPS shares :443 with Pangolin via SNI and cannot add a PROXY header,
+# so the Gateway must not expect one (the trade-off is no real client IP).
 gatewayAPI:
   enabled: true
   enableProxyProtocol: false

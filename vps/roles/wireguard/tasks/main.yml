@@ -15,14 +15,8 @@
     mode: "0600"
   notify: Restart wireguard
 
-# The VPS only ever dials out to nothing — the cluster's wg-ingress pod
-# initiates the tunnel to this box. No forwarding or NAT is needed here,
-# so there is no sysctl/ip_forward change and no firewall FORWARD chain
-# to manage; opening the listen port below is the whole story.
-#
-# Firewall: this box already runs UFW for everything else, managed by the
-# operator. Add a single additive allow rule rather than templating a full
-# ruleset — never reset or flush UFW from this role.
+# UFW is operator-managed on this box: add a single additive allow rule, never
+# reset or flush it. No forwarding/NAT needed — the cluster dials out to us.
 - name: Allow the WireGuard tunnel through ufw
   community.general.ufw:
     rule: allow

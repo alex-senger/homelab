@@ -18,9 +18,7 @@ spec:
         app: wg-ingress
     spec:
       containers:
-        # Dials out to the VPS over WireGuard; brings up wg0 at 10.10.0.2/24 in
-        # the pod's (shared) network namespace using the hand-created client
-        # conf. Client mode: PEERS is intentionally unset.
+        # Dials out to the VPS and brings up wg0 from the hand-created client conf.
         - name: wireguard
           # renovate: datasource=docker depName=linuxserver/wireguard
           image: linuxserver/wireguard:1.0.20260223-r0-ls121
@@ -34,10 +32,8 @@ spec:
           securityContext:
             capabilities:
               add:
-                # NET_ADMIN only. SYS_MODULE is refused by Talos's container
-                # runtime (RunContainerError: unable to apply caps) and is
-                # unnecessary — the wireguard kernel module is already loaded
-                # on Talos nodes, so kernel-mode WireGuard needs no module load.
+                # NET_ADMIN only — Talos's runtime refuses SYS_MODULE, and the
+                # wireguard module is already loaded on the node.
                 - NET_ADMIN
           volumeMounts:
             - name: wg-config
@@ -51,8 +47,7 @@ spec:
             limits:
               cpu: 100m
               memory: 128Mi
-        # L4 byte relay: forwards the PROXY-protocol-prefixed stream the VPS
-        # hands over the tunnel straight to the Gateway's Envoy, untouched.
+        # L4 byte relay from the tunnel to the Gateway's Envoy.
         - name: relay
           # renovate: datasource=docker depName=alpine/socat
           image: alpine/socat:1.8.1.3
