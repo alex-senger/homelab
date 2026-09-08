@@ -15,5 +15,11 @@ resources:
   - applications/cert-manager.yaml
   - applications/cert-manager-issuers.yaml
   - applications/longhorn.yaml
+  - applications/storage-classes.yaml
+  - applications/openbao.yaml
+  - applications/openbao-unsealer.yaml
+  - applications/openbao-config.yaml
   - applications/gateway.yaml
   - applications/wg-ingress.yaml
+  - applications/external-secrets.yaml
+  - applications/external-secrets-store.yaml
