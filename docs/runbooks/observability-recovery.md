@@ -77,6 +77,7 @@ Note this as a follow-up optimization only, not a required bring-up step.
 - Metrics PVC fills → bounded by 30d retention + 10Gi; raise size or shorten
   retention in `infrastructure/monitoring/values.yaml`.
 - Hubble metrics missing after merge → the rollout restart in step 2 was not run.
-- Grafana login fails → the `grafana-admin` Secret is empty; confirm step 1 ran
-  and the `ExternalSecret` is `SecretSynced` (`kubectl -n monitoring get
-  externalsecret`).
+- Grafana pod fails to start with `CreateContainerConfigError` → the OpenBao key
+  from step 1 is missing, so the `ExternalSecret` never created the
+  `grafana-admin` Secret. Confirm step 1 ran and check that the `ExternalSecret`
+  is `SecretSynced` (`kubectl -n monitoring get externalsecret`).

@@ -64,6 +64,7 @@ k8sClientRateLimit:
 # non-empty metrics set also makes Cilium create the hubble-metrics Service
 # (kube-system, port hubble-metrics/9965).
 hubble:
+  enabled: true
   metrics:
     enabled:
       - dns
