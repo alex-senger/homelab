@@ -6,6 +6,9 @@ namespace: monitoring
 resources:
   - namespace.yaml
   - grafana-externalsecret.yaml
+  - scrapes/cert-manager.yaml
+  - scrapes/longhorn.yaml
+  - scrapes/cilium-envoy.yaml
 
 helmCharts:
   - name: victoria-metrics-k8s-stack
