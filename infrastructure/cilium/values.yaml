@@ -56,3 +56,20 @@ l2announcements:
 k8sClientRateLimit:
   qps: 10
   burst: 20
+
+# --- Hubble metrics (sub-project #6) ---
+# Enabling metrics is a cilium-config change: ArgoCD updates the ConfigMap but
+# does NOT roll the operator/agents (no checksum). After merge, run the manual
+# rollout restart documented in docs/runbooks/cilium-recovery.md. Enabling a
+# non-empty metrics set also makes Cilium create the hubble-metrics Service
+# (kube-system, port hubble-metrics/9965).
+hubble:
+  enabled: true
+  metrics:
+    enabled:
+      - dns
+      - drop
+      - tcp
+      - flow
+      - port-distribution
+      - httpV2

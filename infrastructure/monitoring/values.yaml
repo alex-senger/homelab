@@ -1,0 +1,131 @@
+# victoria-metrics-k8s-stack 0.92.1 — single-node, memory-budgeted.
+# See docs/superpowers/specs/2026-09-09-observability-victoriametrics-design.md
+
+# --- VM operator ---
+victoria-metrics-operator:
+  enabled: true
+  crds:
+    # CRDs are installed separately by infrastructure/monitoring-crds (mirrors
+    # gateway-api-crds). Disable the k8s-stack's own CRD machinery so this
+    # Application renders only the operator + custom resources. crds.enabled
+    # takes effect only together with crds.plain: false (chart limitation).
+    enabled: false
+    plain: false
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      memory: 128Mi
+
+# --- Metrics store: VMSingle ---
+vmsingle:
+  enabled: true
+  spec:
+    retentionPeriod: "30d"          # spec §3
+    replicaCount: 1
+    storage:
+      accessModes:
+        - ReadWriteOnce
+      storageClassName: longhorn    # default Delete class; metrics are reproducible
+      resources:
+        requests:
+          storage: 10Gi             # spec §3
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        memory: 512Mi
+    # Steer off the busiest node (cp-1); preferred so it still schedules if the
+    # other two are full. All three nodes run workloads (no NoSchedule taint).
+    affinity:
+      nodeAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            preference:
+              matchExpressions:
+                - key: kubernetes.io/hostname
+                  operator: NotIn
+                  values:
+                    - roastery-cp-1
+
+# --- Scrape agent: VMAgent ---
+vmagent:
+  enabled: true
+  spec:
+    selectAllByDefault: true        # auto-select every VMServiceScrape/VMPodScrape
+    scrapeInterval: 30s
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        memory: 256Mi
+
+# --- Alerting: deferred (spec §10) ---
+alertmanager:
+  enabled: false
+vmalert:
+  enabled: false
+defaultRules:
+  enabled: false                    # no evaluator without vmalert
+
+# --- Grafana ---
+grafana:
+  enabled: true
+  persistence:
+    enabled: false                  # stateless; dashboards provisioned from configmaps
+  testFramework:
+    enabled: false                  # no test-hook pod
+  admin:
+    existingSecret: grafana-admin   # materialised by the ExternalSecret in Task 2
+    userKey: admin-user
+    passwordKey: admin-password
+  service:
+    type: LoadBalancer
+    port: 80
+    annotations:
+      io.cilium/lb-ipam-ips: "192.168.178.202"   # pin LAN IP (see gateway/gateway.yaml)
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      memory: 256Mi
+
+# --- Dashboards (node/kube/object) ---
+defaultDashboards:
+  enabled: true
+
+# --- Built-in scrapes: enable only what Talos actually serves ---
+kubelet:
+  enabled: true
+kubeApiServer:
+  enabled: true
+coreDns:
+  enabled: true                     # scrapes kube-dns:9153
+kubeControllerManager:
+  enabled: false                    # Talos: binds to loopback, not scrapable
+kubeScheduler:
+  enabled: false                    # Talos: binds to loopback, not scrapable
+kubeEtcd:
+  enabled: false                    # Talos: needs client certs, out of scope
+kubeProxy:
+  enabled: false                    # no kube-proxy (Cilium replacement)
+
+# --- Dependency chart resource trims ---
+kube-state-metrics:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      memory: 128Mi
+prometheus-node-exporter:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 24Mi
+    limits:
+      memory: 64Mi

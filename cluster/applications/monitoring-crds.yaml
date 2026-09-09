@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: monitoring-crds
+  namespace: argocd
+  annotations:
+    # Wave 19: VictoriaMetrics operator CRDs must exist before the monitoring
+    # stack's custom resources (VMSingle/VMAgent/VMServiceScrape) at wave 20.
+    argocd.argoproj.io/sync-wave: "19"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: infrastructure
+  source:
+    repoURL: https://github.com/alex-senger/homelab.git
+    targetRevision: main
+    path: infrastructure/monitoring-crds
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
