@@ -5,7 +5,7 @@ metadata:
   namespace: gateway
   annotations:
     # Pin the Gateway's LoadBalancer Service to the reserved front-door IP.
-    io.cilium/lb-ipam-ips: "192.168.178.201"
+    io.cilium/lb-ipam-ips: "192.168.178.3"
 spec:
   gatewayClassName: cilium
   listeners:

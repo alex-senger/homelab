@@ -45,7 +45,7 @@ property that is the reason Talos was chosen in the first place (sub-project #2)
 ## Consequences
 
 As of this ADR, the LAN half of sub-project #4 is implemented and verified: Cilium Gateway API
-(v1.3.0 CRDs), LB-IPAM and L2 announcement of the reserved `192.168.178.201–.220` range,
+(v1.3.0 CRDs), LB-IPAM and L2 announcement of the reserved `192.168.178.3–.9` range,
 cert-manager with Cloudflare DNS-01, and a Gateway serving a wildcard certificate all work end to
 end on the LAN. `https://whoami.senger-solutions.com` resolves and serves a valid certificate from
 inside the network today.
@@ -56,7 +56,7 @@ deliver external reach, only the in-cluster half of it. `docs/runbooks/external-
 tracks the remaining work as the pending VPS phase.
 
 Once built, the VPS is a single point of failure — but only for **external** reach. LAN access via
-the Gateway's LoadBalancer IP (`192.168.178.201`) does not route through the VPS or the tunnel at
+the Gateway's LoadBalancer IP (`192.168.178.3`) does not route through the VPS or the tunnel at
 all, so a VPS outage degrades the cluster from "reachable from anywhere" to "reachable from the
 LAN," not to "unreachable." The VPS also holds no certificate material and does no TLS, so its
 compromise does not expose the wildcard private key — the blast radius of losing it is limited to
