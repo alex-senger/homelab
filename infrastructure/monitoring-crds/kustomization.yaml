@@ -1,0 +1,14 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# VictoriaMetrics operator CRDs, installed before the monitoring stack's custom
+# resources (sync-wave 19, ahead of monitoring at 20). The
+# victoria-metrics-k8s-stack chart does not render CRD manifests under
+# `kustomize build --enable-helm`, so they are inflated here from the dedicated
+# CRDs chart — mirrors infrastructure/gateway-api-crds.
+helmCharts:
+  - name: victoria-metrics-operator-crds
+    repo: https://victoriametrics.github.io/helm-charts/
+    # renovate: datasource=helm depName=victoria-metrics-operator-crds registryUrl=https://victoriametrics.github.io/helm-charts/
+    version: 0.14.0
+    releaseName: vm-crds

@@ -21,5 +21,6 @@ resources:
   - applications/openbao-config.yaml
   - applications/gateway.yaml
   - applications/wg-ingress.yaml
+  - applications/monitoring-crds.yaml
   - applications/external-secrets.yaml
   - applications/external-secrets-store.yaml
