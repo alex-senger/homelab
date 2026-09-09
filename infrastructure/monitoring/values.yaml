@@ -5,10 +5,12 @@
 victoria-metrics-operator:
   enabled: true
   crds:
-    plain: true          # render CRDs as plain manifests (ArgoCD/kustomize friendly)
-    cleanup:
-      enabled: false     # do NOT render the pre-delete hook Job: kustomize strips
-                         # helm-hook semantics, so ArgoCD would run it and delete CRDs
+    # CRDs are installed separately by infrastructure/monitoring-crds (mirrors
+    # gateway-api-crds). Disable the k8s-stack's own CRD machinery so this
+    # Application renders only the operator + custom resources. crds.enabled
+    # takes effect only together with crds.plain: false (chart limitation).
+    enabled: false
+    plain: false
   resources:
     requests:
       cpu: 25m
