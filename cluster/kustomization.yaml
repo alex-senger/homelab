@@ -24,3 +24,4 @@ resources:
   - applications/monitoring-crds.yaml
   - applications/external-secrets.yaml
   - applications/external-secrets-store.yaml
+  - applications/monitoring.yaml
