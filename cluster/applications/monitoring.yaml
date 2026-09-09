@@ -23,3 +23,18 @@ spec:
     syncOptions:
       - ServerSideApply=true
       - CreateNamespace=false
+  # The VM operator injects its own CA into its admission webhook at runtime and
+  # populates its validation Secret, so both drift from the rendered manifests.
+  # Without these, the app is permanently OutOfSync and selfHeal fights the
+  # operator over the caBundle. Ignore the operator-managed fields.
+  ignoreDifferences:
+    - group: admissionregistration.k8s.io
+      kind: ValidatingWebhookConfiguration
+      name: vm-victoria-metrics-operator-admission
+      jqPathExpressions:
+        - '.webhooks[].clientConfig.caBundle'
+    - group: ""
+      kind: Secret
+      name: vm-victoria-metrics-operator-validation
+      jsonPointers:
+        - /data

@@ -35,7 +35,7 @@ sync-wave 20). Chart: victoria-metrics-k8s-stack 0.92.1.
 - VMAgent targets healthy: port-forward VMSingle
   (`kubectl -n monitoring port-forward svc/vmsingle-vm 8429:8429`) — or use the
   VMAgent `/targets` page — and confirm `up` for kube-apiserver, kubelet,
-  cAdvisor, node-exporter, kube-state-metrics, coredns, cert-manager, longhorn,
+  cAdvisor, node-exporter, kube-state-metrics, coredns, cert-manager,
   cilium-envoy, and hubble.
 - A dashboard shows real node CPU/memory and Hubble flow data.
 
@@ -69,6 +69,25 @@ Note this as a follow-up optimization only, not a required bring-up step.
 - **OpenBao** — exposes Prometheus telemetry only with
   `telemetry.unauthenticated_metrics_access` or a scoped token; a deliberate
   security decision, deferred.
+- **Longhorn** — deferred. The `longhorn-backend` Service port 9500 (`manager`)
+  is the longhorn-manager API bound to the pod IP, not a Prometheus endpoint — a
+  scrape of `:9500/metrics` hangs (verified 2026-09-10, longhorn-manager v1.12.1).
+  Revisit with the correct Longhorn metrics endpoint before re-adding a scrape.
+
+## Bring-up notes (2026-09-10)
+
+- **node-exporter needs the `privileged` PodSecurity label.** Talos enforces
+  `baseline` cluster-wide; node-exporter's hostNetwork/hostPID/hostPath/hostPort
+  are rejected under it, leaving the DaemonSet at DESIRED n / CURRENT 0. The
+  `monitoring` namespace therefore carries
+  `pod-security.kubernetes.io/enforce: privileged`
+  (`infrastructure/monitoring/namespace.yaml`), same as longhorn-system.
+- **VM operator admission-webhook drift is ignored, not fought.** The operator
+  injects its own CA into `vm-victoria-metrics-operator-admission` and populates
+  its validation Secret at runtime, so both drift from the rendered manifests.
+  `cluster/applications/monitoring.yaml` lists them under `ignoreDifferences`
+  (webhook `caBundle` + the Secret's `/data`); without it the app stays
+  OutOfSync and selfHeal fights the operator.
 
 ## Failure modes
 

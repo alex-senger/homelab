@@ -2,3 +2,10 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: monitoring
+  labels:
+    # Talos enforces PodSecurity "baseline" cluster-wide and exempts only
+    # kube-system. node-exporter runs with hostNetwork/hostPID, hostPath mounts
+    # (/proc, /sys, /) and hostPort 9100, so without this label its DaemonSet
+    # pods are rejected at admission (DESIRED n / CURRENT 0). Same pattern as
+    # infrastructure/longhorn/namespace.yaml. Verified 2026-09-10.
+    pod-security.kubernetes.io/enforce: privileged
