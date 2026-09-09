@@ -72,3 +72,6 @@ The operator restart is datapath-safe — the operator does not sit in the packe
 it does not interrupt existing traffic. The agent restart is not: each agent pod briefly drops the
 node's datapath while it re-initializes, so expect a short per-node connectivity blip as the
 DaemonSet rolls, one node at a time.
+
+> Hubble metrics (sub-project #6) rely on this same rollout-restart step after a
+> `cilium-config` change. See docs/runbooks/observability-recovery.md.
