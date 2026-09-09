@@ -30,7 +30,7 @@ sync-wave 20). Chart: victoria-metrics-k8s-stack 0.92.1.
 - Pods Running: `kubectl -n monitoring get pods` — VMSingle, VMAgent, Grafana,
   kube-state-metrics up; node-exporter on all three nodes.
 - Grafana on the LAN: `kubectl -n monitoring get svc` shows the Grafana Service
-  with EXTERNAL-IP `192.168.178.202`; browse `http://192.168.178.202` and log in
+  with EXTERNAL-IP `192.168.178.4`; browse `http://192.168.178.4` and log in
   with the OpenBao-sourced admin credential (this proves the ESO path).
 - VMAgent targets healthy: port-forward VMSingle
   (`kubectl -n monitoring port-forward svc/vmsingle-vm 8429:8429`) — or use the

@@ -3,7 +3,11 @@ kind: CiliumLoadBalancerIPPool
 metadata:
   name: lan-pool
 spec:
-  # Reserved out of DHCP since sub-project #2. See talos declarative spec §5.
+  # Static band BELOW the FritzBox DHCP range (which starts at .21) and below
+  # its WireGuard VPN peer range (.201+). The original .201–.220 pool collided
+  # with FritzBox VPN clients — a peer assigned .201 conflicted with the Gateway
+  # and made LB IPs unreachable over the VPN. Nodes/API VIP sit at .16–.19; .2
+  # and .10–.19 are already taken, so this pool is .3–.9.
   blocks:
-    - start: 192.168.178.201
-      stop: 192.168.178.220
+    - start: 192.168.178.3
+      stop: 192.168.178.9
