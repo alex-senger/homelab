@@ -1,6 +1,6 @@
 # Single-node consolidation — migration runbook
 
-Rebuilds `roastery` from three control-plane VMs to one node `roastery-cp-1` at
+Rebuilds `roastery` from three control-plane VMs to one node `roastery-1` at
 192.168.178.16 (control-plane + schedulable, single etcd), Longhorn single-replica
 on a ~300 GB NVMe volume. Clean rebuild: ArgoCD replays all apps; OpenBao is
 re-seeded. Spec: docs/superpowers/specs/2026-09-10-single-node-consolidation-design.md.
@@ -27,20 +27,35 @@ cluster's ArgoCD reconciles the single-node config.
 In Proxmox, snapshot or back up ALL THREE current VMs. This is the only rollback:
 if bring-up fails, restore them and the old cluster returns at VIP .19.
 
-## 2. Reconfigure the VM in Proxmox
+## 2. Provision the VM in Proxmox
 
-- Pick one VM to keep (the future `roastery-cp-1`); delete the other two.
-- Set it to **4 vCPU, 28 GB RAM**.
-- Keep the ~40 GB NVMe system disk. Replace/attach the Longhorn data disk as a
-  **~300 GB disk on the NVMe datastore** (the old ~100 GB HDD data disk is no
-  longer the Longhorn disk; leave it detached or keep for #7d).
-- Wipe the existing Talos install on the system disk (so it provisions clean).
+Create a **fresh VM** `roastery-1` (cleaner than reusing one — the old VMs stay as
+rollback). The 32 GB host can't run the old three (~24 GB) plus a new 28 GB VM, so
+first **stop** (do not delete) the old VMs to free RAM and the `.16` address; keep
+them stopped for rollback and delete only after §6 passes.
+
+New VM settings (Talos v1.13.9 `metal-amd64` ISO):
+- Machine **q35**, SCSI controller **VirtIO SCSI single**, CPU type **host** with
+  **4 cores**, **28 GB** RAM with **ballooning OFF** (etcd dislikes it).
+- **System disk on SCSI (`scsi0` → `/dev/sda`, matches `installDisk`)**, ~50 GB on
+  the **NVMe** datastore, Discard + SSD emulation on. (VirtIO Block gives `/dev/vda`
+  and breaks the install disk — use SCSI.)
+- **Longhorn data disk** `scsi1`, **~300 GB** on the **NVMe** datastore, Discard +
+  SSD emulation. (This is the disk the `disk.size > 200u * GB` selector claims.)
+- **VirtIO** NIC on the LAN bridge. Leave the HDD out — it's the #7d backup target.
+
+Boot the VM from the ISO; it comes up in **maintenance mode** on a **DHCP** address
+(not `.16` yet — the static `.16` applies once the config installs). Note that
+DHCP address from the console; call it `MAINT_IP`.
 
 ## 3. Provision Talos (single node)
 
 ```bash
 talhelper genconfig                 # regenerates machineconfig from talconfig + talsecret
-talosctl apply-config --insecure -n 192.168.178.16 -f clusterconfig/roastery-roastery-cp-1.yaml
+# FIRST apply targets the maintenance DHCP IP — the node is NOT at .16 yet:
+talosctl apply-config --insecure -n <MAINT_IP> -f clusterconfig/roastery-roastery-1.yaml
+# the node installs (with the extension image) and reboots to 192.168.178.16;
+# every command after this targets .16:
 talosctl --talosconfig clusterconfig/talosconfig config endpoint 192.168.178.16
 talosctl --talosconfig clusterconfig/talosconfig config node 192.168.178.16
 talosctl bootstrap -n 192.168.178.16
@@ -88,7 +103,7 @@ OpenBao comes up **uninitialised and sealed** — that is expected.
 
 ## 6. Verify (acceptance)
 
-- `kubectl get nodes` → one `roastery-cp-1` Ready; kubeconfig endpoint is .16.
+- `kubectl get nodes` → one `roastery-1` Ready; kubeconfig endpoint is .16.
 - `kubectl get applications -n argocd` → all Synced/Healthy.
 - Longhorn: `defaultReplicaCount 1`; a PVC binds; data path `/var/mnt/longhorn` on
   the NVMe volume; `kubectl get volumes.longhorn.io -A` healthy.
