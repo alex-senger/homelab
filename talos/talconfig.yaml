@@ -31,7 +31,7 @@ patches:
   - "@./patches/all.yaml"
 
 nodes:
-  - hostname: roastery-cp-1
+  - hostname: roastery-1
     ipAddress: 192.168.178.16
     controlPlane: true
     installDisk: /dev/sda
