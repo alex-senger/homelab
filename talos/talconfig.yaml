@@ -2,10 +2,9 @@ clusterName: roastery
 talosVersion: v1.13.9
 kubernetesVersion: v1.36.2
 
-# The layer-2 VIP, not a node address. Control-plane nodes elect a holder
-# through etcd and the address follows the winner, so losing any single node
-# does not cost API access.
-endpoint: https://192.168.178.19:6443
+# Single-node cluster: the node's own address is the API endpoint (no VIP —
+# there is only one control-plane node).
+endpoint: https://192.168.178.16:6443
 
 allowSchedulingOnControlPlanes: true
 
@@ -45,51 +44,16 @@ nodes:
         routes:
           - network: 0.0.0.0/0
             gateway: 192.168.178.1
-        vip:
-          ip: 192.168.178.19
-    userVolumes: &vols
+    userVolumes:
       - name: longhorn
         provisioning:
-          # Size is the ONLY attribute distinguishing the data disk from the
-          # system disk: both are virtio "QEMU HARDDISK" with empty serial and
-          # WWID. system_disk is belt-and-braces on top of the size bound.
+          # The Longhorn data disk is the ~300 GB NVMe volume — the only disk
+          # larger than 200 GB and not the ~40 GB system disk. The >200 GB
+          # bound also excludes the ~100 GB HDD backup disk (mounted later in
+          # #7d).
           diskSelector:
-            match: disk.size > 100u * GB && !system_disk
-          minSize: 90GiB
-          maxSize: 105GiB
+            match: disk.size > 200u * GB && !system_disk
+          minSize: 200GiB
+          maxSize: 270GiB
         filesystem:
           type: xfs
-
-  - hostname: roastery-cp-2
-    ipAddress: 192.168.178.17
-    controlPlane: true
-    installDisk: /dev/sda
-    networkInterfaces:
-      - deviceSelector:
-          physical: true
-        dhcp: false
-        addresses:
-          - 192.168.178.17/24
-        routes:
-          - network: 0.0.0.0/0
-            gateway: 192.168.178.1
-        vip:
-          ip: 192.168.178.19
-    userVolumes: *vols
-
-  - hostname: roastery-cp-3
-    ipAddress: 192.168.178.18
-    controlPlane: true
-    installDisk: /dev/sda
-    networkInterfaces:
-      - deviceSelector:
-          physical: true
-        dhcp: false
-        addresses:
-          - 192.168.178.18/24
-        routes:
-          - network: 0.0.0.0/0
-            gateway: 192.168.178.1
-        vip:
-          ip: 192.168.178.19
-    userVolumes: *vols

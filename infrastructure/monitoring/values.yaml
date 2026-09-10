@@ -37,19 +37,6 @@ vmsingle:
         memory: 256Mi
       limits:
         memory: 512Mi
-    # Steer off the busiest node (cp-1); preferred so it still schedules if the
-    # other two are full. All three nodes run workloads (no NoSchedule taint).
-    affinity:
-      nodeAffinity:
-        preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
-            preference:
-              matchExpressions:
-                - key: kubernetes.io/hostname
-                  operator: NotIn
-                  values:
-                    - roastery-cp-1
-
 # --- Scrape agent: VMAgent ---
 vmagent:
   enabled: true

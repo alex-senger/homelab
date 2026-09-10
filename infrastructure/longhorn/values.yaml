@@ -1,12 +1,12 @@
 defaultSettings:
   defaultDataPath: /var/mnt/longhorn
-  defaultReplicaCount: 2
+  defaultReplicaCount: 1
   storageOverProvisioningPercentage: 100
   storageMinimalAvailablePercentage: 15
 
 persistence:
   defaultClass: true
-  defaultClassReplicaCount: 2
+  defaultClassReplicaCount: 1
   reclaimPolicy: Delete
 
 # Needed for Argo CD compatibility
