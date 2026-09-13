@@ -29,12 +29,17 @@ namespace `databases`, Postgres 17 on `longhorn-retain`.
   state`, 1/1 ready; the PVC is bound on `longhorn-retain`.
 - Database + role: `kubectl -n databases get database authelia` is applied; the
   role exists — from a psql session (below) `\du` shows `authelia`.
-- Credential path: connect as the app role and confirm the OpenBao password works:
+- Credential path: prove OpenBao → ESO → managed.roles end to end with a
+  throwaway psql pod that authenticates using the password from the
+  ESO-materialised `authelia-db` Secret (connecting as `authelia` without a
+  password will just hang on a prompt, which doesn't prove anything):
 
-      kubectl -n databases exec -it pg-1 -- psql -U authelia -d authelia -c '\conninfo'
+      PW=$(kubectl -n databases get secret authelia-db -o jsonpath='{.data.password}' | base64 -d)
+      kubectl -n databases run psql-check --rm -it --restart=Never --image=ghcr.io/cloudnative-pg/postgresql:17 \
+        --env=PGPASSWORD="$PW" -- psql -h pg-rw.databases.svc -U authelia -d authelia -c '\conninfo'
 
-  (Or run a throwaway psql pod against `pg-rw.databases.svc`.) A successful
-  connect proves OpenBao → ESO → managed.roles end to end.
+  A successful, non-interactive connect confirms the OpenBao password reached
+  the role via ESO.
 - Metrics: the `pg` instance appears in Grafana (a `cnpg_*` / `up` series for
   namespace `databases`).
 
