@@ -1,0 +1,29 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: pg
+  namespace: databases
+spec:
+  instances: 1
+  imageName: ghcr.io/cloudnative-pg/postgresql:17
+
+  storage:
+    size: 5Gi
+    storageClass: longhorn-retain
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
+
+  # Declarative role management: create/own the authelia role, password from
+  # the ESO-materialised basic-auth secret.
+  managed:
+    roles:
+      - name: authelia
+        ensure: present
+        login: true
+        passwordSecret:
+          name: authelia-db
