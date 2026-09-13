@@ -26,3 +26,4 @@ resources:
   - applications/external-secrets-store.yaml
   - applications/monitoring.yaml
   - applications/cnpg-operator.yaml
+  - applications/postgres.yaml
