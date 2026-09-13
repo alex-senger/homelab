@@ -73,3 +73,9 @@ hubble:
       - flow
       - port-distribution
       - httpV2
+
+# --- Single-node cluster ---
+# Default operator replicas is 2 with anti-affinity; on one node the second is
+# permanently Pending. One node ⇒ one operator.
+operator:
+  replicas: 1
