@@ -145,7 +145,7 @@ No further operator action is needed once the three Secrets above exist:
   `Cluster pg`'s `.spec.plugins` entry (`isWALArchiver: true`) reconciles. The `pg-daily`
   `ScheduledBackup` (`databases`, `method: plugin`, cron `0 0 2 * * *` = daily 02:00) takes
   the first base backup on its own schedule; `ObjectStore.spec.retentionPolicy: "7d"` prunes
-  older WAL/base backups.
+  older WAL/base backups. Note: CNPG's `ScheduledBackup.spec.schedule` uses a **6-field** cron format with a leading **seconds** field (robfig/cron), not the 5-field Kubernetes CronJob format — so `0 0 2 * * *` means second 0, minute 0, hour 2, which is **daily at 02:00**.
 
 ## Acceptance / verification
 
@@ -153,7 +153,7 @@ No further operator action is needed once the three Secrets above exist:
 
       kubectl -n garage get pods
       kubectl -n garage exec deploy/garage -- /garage status
-      talosctl -n 192.168.178.16 read /var/mnt/garage   # or df -h on the mount; usage grows after backups run
+      talosctl -n 192.168.178.16 get mountstatus | grep garage   # or df -h on the mount; usage grows after backups run
 
   S3 reachable in-cluster (from any pod, or a throwaway one):
 
