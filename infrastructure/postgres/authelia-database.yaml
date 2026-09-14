@@ -1,0 +1,10 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: authelia
+  namespace: databases
+spec:
+  name: authelia
+  owner: authelia
+  cluster:
+    name: pg
