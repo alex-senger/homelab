@@ -57,3 +57,13 @@ nodes:
           maxSize: 270GiB
         filesystem:
           type: xfs
+      - name: garage
+        provisioning:
+          # The HDD-backed backup disk — the only rotational disk (NVMe disks
+          # are non-rotational). Kept off Longhorn on purpose.
+          diskSelector:
+            match: disk.rotational && !system_disk
+          minSize: 150GiB
+          maxSize: 195GiB
+        filesystem:
+          type: xfs
