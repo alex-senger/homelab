@@ -11,6 +11,13 @@ spec:
     size: 5Gi
     storageClass: longhorn-retain
 
+  # WAL archiver + backup plugin, backed by the Garage ObjectStore.
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: pg-backups
+
   resources:
     requests:
       cpu: 100m

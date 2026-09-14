@@ -1,0 +1,21 @@
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: pg-backups
+  namespace: databases
+spec:
+  retentionPolicy: "7d"
+  configuration:
+    destinationPath: s3://backups/pg
+    endpointURL: http://garage.garage.svc:3900
+    s3Credentials:
+      accessKeyId:
+        name: garage-s3
+        key: ACCESS_KEY_ID
+      secretAccessKey:
+        name: garage-s3
+        key: ACCESS_SECRET_KEY
+    wal:
+      compression: gzip
+    data:
+      compression: gzip
