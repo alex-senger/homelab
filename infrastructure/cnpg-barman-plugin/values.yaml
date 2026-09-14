@@ -1,0 +1,8 @@
+# Barman Cloud Plugin defaults: the chart self-provisions its own
+# cert-manager self-signed Issuer (plugin-barman-cloud-selfsigned-issuer)
+# plus client/server Certificates for the mTLS connection between the
+# plugin and the CNPG operator (CNPG-I gRPC sidecar). No issuerRef override
+# to the repo's ACME ClusterIssuers (letsencrypt-prod/staging, meant for
+# public-facing certs) is needed or offered by the chart's values schema.
+# No webhook is rendered, so there is no runtime-injected caBundle to
+# ignoreDifferences on the Application.

@@ -27,4 +27,5 @@ resources:
   - applications/garage.yaml
   - applications/monitoring.yaml
   - applications/cnpg-operator.yaml
+  - applications/cnpg-barman-plugin.yaml
   - applications/postgres.yaml
