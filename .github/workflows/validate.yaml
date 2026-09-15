@@ -25,7 +25,7 @@ jobs:
     outputs:
       dirs: ${{ steps.discover.outputs.dirs }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Discover every Kustomization
         id: discover
@@ -43,12 +43,12 @@ jobs:
       matrix:
         dir: ${{ fromJson(needs.prepare.outputs.dirs) }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - uses: azure/setup-helm@v4
+      - uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4
 
       - name: Cache Helm chart downloads
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: ~/.cache/helm
           key: helm-${{ hashFiles('**/kustomization.yaml') }}
@@ -72,7 +72,7 @@ jobs:
   standalone:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Install kubeconform
         run: |
@@ -99,7 +99,7 @@ jobs:
   talos:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Install talhelper
         run: |
@@ -155,9 +155,9 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - uses: azure/setup-helm@v4
+      - uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4
 
       - name: Install kustomize
         run: |
@@ -181,7 +181,7 @@ jobs:
             echo "::notice title=kube-linter::No workloads under apps/ yet, so there is nothing to lint. Platform components under infrastructure/ are deliberately out of scope — see the comment above this job."
           fi
 
-      - uses: stackrox/kube-linter-action@v1
+      - uses: stackrox/kube-linter-action@87802a2f4e01abebb3ee3c67a3002fea71f6eae5 # v1
         if: steps.render.outputs.found == '1'
         with:
           directory: /tmp/lint
@@ -189,7 +189,7 @@ jobs:
   ansible:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Install the community.general collection
         # The wireguard role uses community.general.ufw; ansible-lint's
