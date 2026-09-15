@@ -78,14 +78,24 @@ spec:
               path: /api/authz/ext-authz/
               # Authelia Envoy ext_authz contract (authorization_request.allowed_headers):
               # https://www.authelia.com/integration/proxies/envoy/
+              # Per Authelia's ExtAuthz implementation notes
+              # (https://www.authelia.com/reference/guides/proxy-authorization/), the
+              # ext-authz endpoint reads the `host` header (not x-forwarded-host) to
+              # determine the target hostname for access_control `domain` matching, and
+              # `x-forwarded-proto` for scheme + `x-forwarded-for` for the client IP. Without
+              # `host` forwarded here, Authelia cannot match `domain: whoami.senger-solutions.com`
+              # and falls through to `default_policy: bypass`, serving whoami unauthenticated.
               allowedHeaders:
                 - authorization
                 - proxy-authorization
                 - cookie
                 - accept
-              # Authelia's ext_authz response carries identity as remote-* headers
-              # (remote-user, remote-groups, remote-name, remote-email) plus any
-              # authelia-* headers; forward both prefixes to the backend.
+                - host
+                - x-forwarded-proto
+                - x-forwarded-for
+              # Authelia's ext_authz response carries identity as exact remote-* headers
+              # (remote-user, remote-groups, remote-name, remote-email); this CRD field is
+              # exact-match only (no prefix support), so only these four are listed here.
               allowedResponseHeaders:
                 - remote-user
                 - remote-groups

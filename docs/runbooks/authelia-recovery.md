@@ -58,12 +58,13 @@ both already merged ahead of this branch:
    `httproutes.gateway.networking.k8s.io` CRD (Task 6 of this sub-project hit this as a hard
    blocker before the CRD swap: the standard-channel v1.6.1 bundle's filter `type` enum has no
    `ExternalAuth` member and no `externalAuth` object field at all). The experimental bundle also
-   carries `ReferenceGrant` v1, `TLSRoute`, and `BackendTLSPolicy` — **Cilium 1.20's Gateway
-   controller requires all of these to be present or it aborts reconciliation entirely** (not just
-   for the new feature — it will stop syncing Gateway TLS secrets cluster-wide, taking down every
-   route on the `external` Gateway, not only `whoami`). Do not "trim" the experimental CRD list
-   down to just `httproutes`/`referencegrants` — install the full set the kustomization already
-   pulls in.
+   carries `GRPCRoute`, `ReferenceGrant` v1, `TLSRoute`, and `BackendTLSPolicy` — **Cilium 1.20's
+   Gateway controller requires all of these to be present or it aborts reconciliation entirely**
+   (not just for the new feature — it will stop syncing Gateway TLS secrets cluster-wide, taking
+   down every route on the `external` Gateway, not only `whoami`). The component pulls all 7
+   Gateway API CRDs (`gatewayclasses`, `gateways`, `httproutes`, `grpcroutes`, `referencegrants`,
+   `tlsroutes`, `backendtlspolicies`); do not "trim" the experimental CRD list down to just
+   `httproutes`/`referencegrants` — install the full set the kustomization already pulls in.
 
 **Cilium restart required after either lands** (this is the general rule from
 [cilium-recovery.md](cilium-recovery.md) — a `values.yaml`/CRD change updates config but nothing
@@ -238,6 +239,21 @@ Then remove the copies from inside the pod and shred the local plaintext, same d
    traefik/whoami's output. This confirms the `ExternalAuth` filter, the `ReferenceGrant`, and
    Authelia's `/api/authz/ext-authz/` endpoint are all wired correctly end to end.
 
+   Also confirm the target host is actually reaching Authelia, not just that *some* challenge
+   appeared: trigger a whoami request, then tail Authelia's access log —
+
+       kubectl -n authelia logs deploy/authelia | grep -i whoami
+
+   — and confirm the log line shows the `whoami.senger-solutions.com` host and that the
+   `whoami → one_factor` `access_control` rule matched, not a `default_policy: bypass`
+   fall-through (Authelia logs which rule/policy it applied per request at `debug` level).
+   **If `https://whoami.senger-solutions.com` loads immediately with NO auth challenge at all,**
+   the Host/authority is most likely never reaching Authelia — check that `host` and the
+   `x-forwarded-*` headers Authelia's ExtAuthz implementation needs (`x-forwarded-proto`,
+   `x-forwarded-for`) are present in the whoami `HTTPRoute`'s
+   `externalAuth.http.allowedHeaders` (`infrastructure/gateway/whoami.yaml`) before assuming the
+   fails-open behavior below is in play.
+
 ## Fails-open verification (do this — it's a known Cilium 1.20 limitation, not optional)
 
 GEP-1494's `ExternalAuth` field documentation states the filter **must fail closed** if the auth
@@ -269,7 +285,7 @@ Scale Authelia back up regardless of the result:
 
 | Symptom | Likely cause | Check |
 | --- | --- | --- |
-| `whoami.senger-solutions.com` loads with no auth challenge at all | `ExternalAuth` filter not applied — Cilium not yet restarted after the CRD/config change, or still on the standard-channel CRDs | `kubectl explain httproute.spec.rules.filters.type` (must list `ExternalAuth`); `kubectl -n gateway get httproute whoami -o yaml` (filter block present and not rejected) |
+| `whoami.senger-solutions.com` loads with no auth challenge at all | `ExternalAuth` filter not applied — Cilium not yet restarted after the CRD/config change, or still on the standard-channel CRDs; **or** the filter is applied but the target host / `X-Forwarded-*` headers aren't reaching Authelia (not in `allowedHeaders`), so `default_policy: bypass` matched instead of the `whoami → one_factor` rule | `kubectl explain httproute.spec.rules.filters.type` (must list `ExternalAuth`); `kubectl -n gateway get httproute whoami -o yaml` (filter block present and not rejected, `http.allowedHeaders` includes `host`/`x-forwarded-proto`/`x-forwarded-for`); `kubectl -n authelia logs deploy/authelia \| grep -i whoami` (confirm the host and matched rule) |
 | `whoami` request hangs then 5xx, or ArgoCD/Authelia TLS handshakes fail right after a Cilium restart | Wildcard cert not yet re-synced into `cilium-secrets` | `kubectl -n cilium-secrets get secrets`; restart `cilium-operator` again if empty |
 | ArgoCD OIDC login redirects back to ArgoCD but session isn't admin (falls back to readonly) | `groups` claim not reaching ArgoCD, or `argocd-admins` not on the user in `users_database.yml` | Check `requestedIDTokenClaims.groups.essential: true` rendered into `argocd-cm`; check the user's `groups:` list in the seeded `users_database.yml`; check ArgoCD server logs for the parsed ID token claims |
 | OIDC login fails with a redirect_uri / state / host mismatch error | `redirect_uris` in `configmap.yaml` (`https://argocd.senger-solutions.com/auth/callback`, `http://localhost:8085/auth/callback`) don't match what ArgoCD actually requests, or DNS for `argocd.` isn't pointed at the Gateway yet | Compare the error's `redirect_uri` param against `configmap.yaml`'s `clients[0].redirect_uris`; confirm `argocd.senger-solutions.com` resolves to `192.168.178.3` |
