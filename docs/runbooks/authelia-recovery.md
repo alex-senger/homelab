@@ -139,8 +139,14 @@ running Authelia expects to verify against):
 
     openssl rand -hex 32 > argocd-client-secret.plain
     docker run --rm authelia/authelia:4.39.26 authelia crypto hash generate argon2 \
-      --password "$(cat argocd-client-secret.plain)" | tee argocd-client-secret.hash
-    # -> prints a $argon2id$... digest; keep both the plaintext file and the digest
+      --password "$(cat argocd-client-secret.plain)" | sed -n 's/^Digest: //p' > argocd-client-secret.hash
+    head -c 12 argocd-client-secret.hash   # sanity: MUST print "$argon2id$"
+    # The CLI prints "Digest: $argon2id$..."; strip the "Digest: " label so the file
+    # holds ONLY the $argon2id$ digest. Seeding the whole line (or letting the shell
+    # expand the $ signs) leaves Authelia an unparseable value it treats as a
+    # PLAINTEXT secret -> ArgoCD OIDC token exchange fails with `invalid_client`.
+    # This is why the hash is copied into the pod and seeded via @file below, never
+    # inline in the `sh -c`.
 
 Admin user's password, same way, then build `users_database.yml` (file authentication backend,
 path `/users/users_database.yml`). Give the admin user the `argocd-admins` group so ArgoCD's
@@ -149,6 +155,8 @@ admin on login:
 
     docker run --rm authelia/authelia:4.39.26 authelia crypto hash generate argon2 \
       --password '<CHOOSE_ADMIN_PASSWORD>'
+    # Output is "Digest: $argon2id$...". Paste ONLY the $argon2id$... part below
+    # (drop the "Digest: " label), quoted, so Authelia parses it as a real hash.
     cat > users_database.yml <<'EOF'
     users:
       admin:
@@ -171,6 +179,7 @@ multi-line files in first (matches the existing `wg0.conf=@/path/...` pattern in
     export KUBECONFIG=/tmp/rk.yaml
     kubectl -n openbao cp issuer-private-key.pem openbao-0:/tmp/issuer-private-key.pem
     kubectl -n openbao cp users_database.yml openbao-0:/tmp/users_database.yml
+    kubectl -n openbao cp argocd-client-secret.hash openbao-0:/tmp/argocd-client-secret.hash
 
 ### 3. Write the KV entries
 
@@ -188,14 +197,14 @@ access under `secret/authelia/*`):
          hmac='"$(cat oidc-hmac.secret)"' \
          issuer-private-key=@/tmp/issuer-private-key.pem \
          argocd-client-secret='"$(cat argocd-client-secret.plain)"' \
-         argocd-client-secret-hash='"$(cat argocd-client-secret.hash)"
+         argocd-client-secret-hash=@/tmp/argocd-client-secret.hash'
     kubectl -n openbao exec -it openbao-0 -- sh -c \
       'BAO_TOKEN=<root-token> bao kv put secret/authelia/users users-yaml=@/tmp/users_database.yml'
 
 Then remove the copies from inside the pod and shred the local plaintext, same discipline as
 `openbao-recovery.md` uses for other secret material:
 
-    kubectl -n openbao exec -it openbao-0 -- rm -f /tmp/issuer-private-key.pem /tmp/users_database.yml
+    kubectl -n openbao exec -it openbao-0 -- rm -f /tmp/issuer-private-key.pem /tmp/users_database.yml /tmp/argocd-client-secret.hash
     shred -u session.secret storage-encryption-key.secret jwt.secret oidc-hmac.secret \
       issuer-private-key.pem argocd-client-secret.plain argocd-client-secret.hash users_database.yml
 
@@ -289,6 +298,8 @@ Scale Authelia back up regardless of the result:
 | `whoami` request hangs then 5xx, or ArgoCD/Authelia TLS handshakes fail right after a Cilium restart | Wildcard cert not yet re-synced into `cilium-secrets` | `kubectl -n cilium-secrets get secrets`; restart `cilium-operator` again if empty |
 | ArgoCD OIDC login redirects back to ArgoCD but session isn't admin (falls back to readonly) | `groups` claim not reaching ArgoCD, or `argocd-admins` not on the user in `users_database.yml` | Check `requestedIDTokenClaims.groups.essential: true` rendered into `argocd-cm`; check the user's `groups:` list in the seeded `users_database.yml`; check ArgoCD server logs for the parsed ID token claims |
 | OIDC login fails with a redirect_uri / state / host mismatch error | `redirect_uris` in `configmap.yaml` (`https://argocd.senger-solutions.com/auth/callback`, `http://localhost:8085/auth/callback`) don't match what ArgoCD actually requests, or DNS for `argocd.` isn't pointed at the Gateway yet | Compare the error's `redirect_uri` param against `configmap.yaml`'s `clients[0].redirect_uris`; confirm `argocd.senger-solutions.com` resolves to `192.168.178.3` |
+| ArgoCD login: `failed to query provider "https://auth.senger-solutions.com": 525` (long hang first) | argocd-server does OIDC discovery SERVER-SIDE; `auth.` resolves publicly to Cloudflare/VPS from in-cluster and the TLS leg fails. Fixed by `global.hostAliases` in `infrastructure/argocd/values.yaml` pinning `auth.senger-solutions.com` → `192.168.178.3` | `kubectl -n argocd exec deploy/argocd-server -- cat /etc/hosts` (must list `192.168.178.3 auth.senger-solutions.com`); roll argocd-server after adding it |
+| ArgoCD login: `failed to get token: oauth2: "invalid_client"` | The `client_secret` Authelia stores for `argocd` isn't a valid `$argon2id$` hash of the plaintext ArgoCD sends — usually the seeded `argocd-client-secret-hash` still has the `Digest: ` label or was `$`-mangled by the shell (Authelia then logs it as "plaintext" at startup) | `kubectl -n authelia get secret authelia-secrets -o jsonpath='{.data.OIDC_ARGOCD_CLIENT_SECRET_HASH}' \| base64 -d \| head -c 12` (MUST be `$argon2id$`); if not, re-hash the existing plaintext (`kubectl -n argocd get secret argocd-secret -o jsonpath='{.data.oidc\.argocd\.clientSecret}' \| base64 -d`) with `... \| sed -n 's/^Digest: //p' > ach.hash`, `bao kv patch secret/authelia/oidc argocd-client-secret-hash=@/tmp/ach.hash`, force-sync ESO, restart Authelia |
 | Authelia pod `CrashLoopBackOff` after `CreateContainerConfigError` clears, storage errors in logs | Postgres unreachable, or `STORAGE_PASSWORD` doesn't match `secret/databases/authelia` | `kubectl -n authelia logs deploy/authelia`; `kubectl -n databases get cluster pg`; re-verify `authelia-db` `ExternalSecret` resolved the same password Authelia was seeded with |
 | whoami always redirects to Authelia but Authelia itself returns 401/redirect loop for a valid session | Session cookie domain scope mismatch — `session.cookies[0].domain: senger-solutions.com` must be a suffix match for both `auth.` and `whoami.` hosts | Inspect the `authelia_session` cookie's `Domain=` attribute in the browser; confirm it's `senger-solutions.com`, not `auth.senger-solutions.com` |
 | Authelia pod `CreateContainerConfigError` never clears even after OpenBao is seeded | `authelia-secrets` / `authelia-users` `ExternalSecret` still not `Ready`, or a key name typo when seeding (`secretKey` in the `ExternalSecret` must exist as written in the `remoteRef.property`) | `kubectl -n authelia describe externalsecret authelia-secrets`; `kubectl -n openbao exec -it openbao-0 -- sh -c 'BAO_TOKEN=<token> bao kv get secret/authelia/oidc'` and diff the property names against `secrets-externalsecret.yaml` |
