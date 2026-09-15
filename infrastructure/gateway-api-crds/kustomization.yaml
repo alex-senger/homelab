@@ -1,18 +1,6 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-# Gateway API standard-channel CRDs (Cilium ships none), applied before its
-# Gateway controller starts (sync-wave -2).
-#
-# Pinned to v1.6.1: Cilium 1.20's Gateway controller REQUIRES ReferenceGrant
-# v1, TLSRoute, and BackendTLSPolicy to exist, or it aborts at startup with
-# "Required GatewayAPI resources are not found" and never registers Gateway
-# TLS secret sync into cilium-secrets — so the Gateway's Envoy listener gets no
-# cert and every TLS connection resets. v1.3.0 (the Cilium 1.18 set) had
-# ReferenceGrant only at v1beta1 and omitted TLSRoute/BackendTLSPolicy. By
-# v1.6.1 TLSRoute and BackendTLSPolicy have graduated to the standard channel,
-# so no experimental channel is needed. We still terminate TLS at the Gateway;
-# TLSRoute is installed only because Cilium's controller requires the CRD.
 resources:
   # renovate: datasource=github-releases depName=kubernetes-sigs/gateway-api
   - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.1/config/crd/standard/gateway.networking.k8s.io_gatewayclasses.yaml
