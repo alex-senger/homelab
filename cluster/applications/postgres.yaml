@@ -25,3 +25,41 @@ spec:
     syncOptions:
       - ServerSideApply=true
       - CreateNamespace=false
+  # The CNPG operator defaults ~21 top-level Cluster.spec fields at admission
+  # and normalises two we do set (adds `enabled` to the WAL-archiver plugin,
+  # and `connectionLimit`/`inherit` to managed roles). These are operator-owned
+  # and absent from managedFields (so managedFieldsManagers can't target them),
+  # leaving the Cluster permanently OutOfSync. Ignore exactly those paths —
+  # derived from the live `argocd`/spec diff, not guessed. If a CNPG upgrade
+  # adds a new default field, this list may need one more entry.
+  ignoreDifferences:
+    - group: postgresql.cnpg.io
+      kind: Cluster
+      name: pg
+      namespace: databases
+      jqPathExpressions:
+        - .spec.plugins[].enabled
+        - .spec.managed.roles[].connectionLimit
+        - .spec.managed.roles[].inherit
+      jsonPointers:
+        - /spec/affinity
+        - /spec/bootstrap
+        - /spec/enablePDB
+        - /spec/enableSuperuserAccess
+        - /spec/failoverDelay
+        - /spec/logLevel
+        - /spec/maxSyncReplicas
+        - /spec/minSyncReplicas
+        - /spec/monitoring
+        - /spec/postgresGID
+        - /spec/postgresUID
+        - /spec/postgresql
+        - /spec/primaryUpdateMethod
+        - /spec/primaryUpdateStrategy
+        - /spec/probes
+        - /spec/replicationSlots
+        - /spec/smartShutdownTimeout
+        - /spec/startDelay
+        - /spec/stopDelay
+        - /spec/storage/resizeInUseVolumes
+        - /spec/switchoverDelay
