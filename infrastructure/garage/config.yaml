@@ -9,6 +9,8 @@ data:
     data_dir = "/var/lib/garage/data"
     db_engine = "sqlite"
     replication_factor = 1
+    # Required by Garage even single-node; rpc_secret comes from GARAGE_RPC_SECRET.
+    rpc_bind_addr = "[::]:3901"
     [s3_api]
     s3_region = "garage"
     api_bind_addr = "[::]:3900"
