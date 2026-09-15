@@ -1,3 +1,9 @@
+global:
+  hostAliases:
+    - ip: 192.168.178.3
+      hostnames:
+        - auth.senger-solutions.com
+
 configs:
   cm:
     kustomize.buildOptions: --enable-helm
