@@ -39,8 +39,14 @@ isolation the design relies on. Boot (or hot-add + rescan) so Talos can see it.
     cd /Users/asg/workspaces/homelab
     git checkout main && git merge feat/backups-garage   # or merge the PR
     talhelper genconfig
-    talosctl apply-config -n 192.168.178.16 -e 192.168.178.16 \
-      --file clusterconfig/roastery-cluster-roastery-1.yaml
+    # roastery-1 is already running/joined, so it requires the admin client
+    # cert — do NOT pass --insecure (that's maintenance-mode only and fails
+    # with "tls: certificate required" on a live node). The genconfig output
+    # is clusterconfig/<cluster>-<node>.yaml = roastery-roastery-1.yaml.
+    talosctl apply-config \
+      -e 192.168.178.16 -n 192.168.178.16 \
+      --talosconfig clusterconfig/talosconfig \
+      -f clusterconfig/roastery-roastery-1.yaml
 
 Talos provisions the new `garage` userVolume (`minSize: 180GiB`, `maxSize: 195GiB`,
 `filesystem.type: xfs`) on the disk matched in step 1, mounting it at `/var/mnt/garage` (the
