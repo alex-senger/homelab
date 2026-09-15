@@ -16,7 +16,7 @@ env:
   # renovate: datasource=github-releases depName=homeport/dyff
   DYFF_VERSION: 1.12.0
   # renovate: datasource=github-releases depName=budimanjojo/talhelper
-  TALHELPER_VERSION: 3.1.16
+  TALHELPER_VERSION: 3.1.17
   CRD_SCHEMAS: https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json
 
 jobs:
