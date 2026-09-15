@@ -1,0 +1,27 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: authelia
+  namespace: argocd
+  annotations:
+    # Wave 22: after the ESO ClusterSecretStore (18) and postgres (21) so the
+    # authelia DB/role and ExternalSecrets can resolve.
+    argocd.argoproj.io/sync-wave: "22"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: infrastructure
+  source:
+    repoURL: https://github.com/alex-senger/homelab.git
+    targetRevision: main
+    path: infrastructure/authelia
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: authelia
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
+      - CreateNamespace=false
