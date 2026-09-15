@@ -47,12 +47,13 @@ nodes:
     userVolumes:
       - name: longhorn
         provisioning:
-          # The Longhorn data disk is the ~300 GB NVMe volume — the only disk
-          # larger than 200 GB and not the ~40 GB system disk. The >200 GB
-          # bound also excludes the ~100 GB HDD backup disk (mounted later in
-          # #7d).
+          # The Longhorn data disk is the ~300 GB NVMe volume: non-rotational,
+          # larger than 200 GB, and not the ~40 GB system disk. The
+          # !disk.rotational bound is what keeps this disjoint from the garage
+          # HDD below — the #7d backup disk is ~200 GB and would otherwise also
+          # satisfy the >200 GB size bound, matching both selectors.
           diskSelector:
-            match: disk.size > 200u * GB && !system_disk
+            match: '!disk.rotational && disk.size > 200u * GB && !system_disk'
           minSize: 200GiB
           maxSize: 270GiB
         filesystem:
