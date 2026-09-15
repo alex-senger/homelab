@@ -46,6 +46,16 @@ gatewayAPI:
   enabled: true
   enableProxyProtocol: false
 
+# Cilium 1.20's chart defaults the standalone cilium-envoy DaemonSet to the new
+# "ads" xDS server (xdsnew), which fails to deliver Gateway L7 config (the
+# external Envoy gets NetworkPolicy but times out on Listener/Route/Cluster/
+# Secret, so the Gateway resets every TLS connection — cilium #48548, #48132).
+# Pin the stable per-resource-type xDS server (the pre-1.20 default) until the
+# ADS path is fixed upstream. Changing this needs a rollout restart of
+# cilium/cilium-envoy to take effect (see docs/runbooks/cilium-recovery.md).
+envoy:
+  xdsMode: split
+
 # L2 announcements answer ARP for LoadBalancer IPs on the LAN, so a
 # CiliumLoadBalancerIPPool address becomes reachable from other hosts.
 l2announcements:
