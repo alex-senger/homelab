@@ -59,6 +59,38 @@ spec:
         - path:
             type: PathPrefix
             value: /
+      # Gate whoami behind Authelia via the native GEP-1494 HTTPRoute ExternalAuth
+      # filter (Cilium 1.20 / Gateway API v1.6.1 experimental channel). Verified
+      # live 2026-09-15 with `kubectl explain httproute.spec.rules.filters.externalAuth
+      # --recursive`. Requires a ReferenceGrant in the authelia namespace so this
+      # route (ns gateway) may reference the authelia Service cross-namespace.
+      filters:
+        - type: ExternalAuth
+          externalAuth:
+            protocol: HTTP
+            backendRef:
+              group: ""
+              kind: Service
+              name: authelia
+              namespace: authelia
+              port: 9091
+            http:
+              path: /api/authz/ext-authz/
+              # Authelia Envoy ext_authz contract (authorization_request.allowed_headers):
+              # https://www.authelia.com/integration/proxies/envoy/
+              allowedHeaders:
+                - authorization
+                - proxy-authorization
+                - cookie
+                - accept
+              # Authelia's ext_authz response carries identity as remote-* headers
+              # (remote-user, remote-groups, remote-name, remote-email) plus any
+              # authelia-* headers; forward both prefixes to the backend.
+              allowedResponseHeaders:
+                - remote-user
+                - remote-groups
+                - remote-name
+                - remote-email
       backendRefs:
         - group: ""
           kind: Service
