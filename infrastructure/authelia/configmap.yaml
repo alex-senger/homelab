@@ -20,7 +20,6 @@ data:
       cookies:
         - domain: senger-solutions.com
           authelia_url: https://auth.senger-solutions.com
-          default_redirection_url: https://auth.senger-solutions.com
     storage:
       postgres:
         address: tcp://pg-rw.databases.svc:5432

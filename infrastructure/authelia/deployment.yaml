@@ -13,6 +13,12 @@ spec:
     metadata:
       labels: { app: authelia }
     spec:
+      # Kubernetes injects Docker-link service env vars (AUTHELIA_PORT,
+      # AUTHELIA_SERVICE_HOST, AUTHELIA_PORT_9091_TCP_*) for the same-namespace
+      # `authelia` Service. Authelia reads AUTHELIA_*-prefixed env as config, so
+      # AUTHELIA_PORT gets parsed as the deprecated `port` key and then collides
+      # with server.address -> fatal config error. Disable the injection.
+      enableServiceLinks: false
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000
