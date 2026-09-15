@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: authelia-config
+  namespace: authelia
+data:
+  configuration.yml: |
+    server:
+      address: 'tcp://:9091'
+    log:
+      level: info
+    theme: dark
+    totp:
+      issuer: senger-solutions.com
+    session:
+      name: authelia_session
+      same_site: lax
+      expiration: 1h
+      inactivity: 5m
+      cookies:
+        - domain: senger-solutions.com
+          authelia_url: https://auth.senger-solutions.com
+          default_redirection_url: https://auth.senger-solutions.com
+    storage:
+      postgres:
+        address: tcp://pg-rw.databases.svc:5432
+        database: authelia
+        username: authelia
+    authentication_backend:
+      file:
+        path: /users/users_database.yml
+        password:
+          algorithm: argon2
+    notifier:
+      filesystem:
+        filename: /data/notification.txt
+    access_control:
+      default_policy: bypass
+      rules:
+        - domain: auth.senger-solutions.com
+          policy: bypass
+        - domain: whoami.senger-solutions.com
+          policy: one_factor
+    identity_providers:
+      oidc:
+        jwks:
+          - key_id: primary
+            algorithm: RS256
+            use: sig
+            key: {{ secret "/secrets/OIDC_ISSUER_PRIVATE_KEY" | mindent 14 "|" | msquote }}
+        clients:
+          - client_id: argocd
+            client_name: ArgoCD
+            client_secret: {{ secret "/secrets/OIDC_ARGOCD_CLIENT_SECRET_HASH" | mindent 14 "|" | msquote }}
+            public: false
+            authorization_policy: one_factor
+            redirect_uris:
+              - https://argocd.senger-solutions.com/auth/callback
+              - http://localhost:8085/auth/callback
+            scopes: [openid, profile, groups, email]
+            grant_types: [authorization_code]
+            response_types: [code]
+            userinfo_signed_response_alg: none

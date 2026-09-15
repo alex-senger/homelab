@@ -5,3 +5,4 @@ resources:
   - namespace.yaml
   - secrets-externalsecret.yaml
   - users-externalsecret.yaml
+  - configmap.yaml
