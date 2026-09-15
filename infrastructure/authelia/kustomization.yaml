@@ -6,3 +6,5 @@ resources:
   - secrets-externalsecret.yaml
   - users-externalsecret.yaml
   - configmap.yaml
+  - deployment.yaml
+  - service.yaml
