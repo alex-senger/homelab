@@ -2,6 +2,21 @@ configs:
   cm:
     kustomize.buildOptions: --enable-helm
     application.resourceTrackingMethod: annotation
+    url: https://argocd.senger-solutions.com
+    oidc.config: |
+      name: Authelia
+      issuer: https://auth.senger-solutions.com
+      clientID: argocd
+      clientSecret: $oidc.argocd.clientSecret
+      requestedScopes: [openid, profile, email, groups]
+      requestedIDTokenClaims:
+        groups:
+          essential: true
+
+  rbac:
+    policy.default: ""
+    policy.csv: |
+      g, argocd-admins, role:admin
 
   params:
     # TLS terminates at the Gateway from sub-project #3 onward. Until then
@@ -9,7 +24,7 @@ configs:
     # avoids the self-signed-certificate warning loop.
     server.insecure: true
 
-# Dex returns in sub-project #6, when Authelia becomes the OIDC provider.
+# Dex stays disabled; Authelia is the OIDC provider (#7b).
 dex:
   enabled: false
 

@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: authelia
+  namespace: authelia
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels: { app: authelia }
+  template:
+    metadata:
+      labels: { app: authelia }
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+        - name: authelia
+          # renovate: datasource=docker depName=authelia/authelia
+          image: authelia/authelia:4.39.26
+          args: ["--config", "/config/configuration.yml"]
+          env:
+            # Plain scalar secrets: Authelia's standard `_FILE` secret
+            # convention works for these (confirmed against
+            # https://www.authelia.com/configuration/methods/secrets/).
+            - { name: AUTHELIA_SESSION_SECRET_FILE, value: /secrets/SESSION_SECRET }
+            - { name: AUTHELIA_STORAGE_ENCRYPTION_KEY_FILE, value: /secrets/STORAGE_ENCRYPTION_KEY }
+            - { name: AUTHELIA_STORAGE_POSTGRES_PASSWORD_FILE, value: /secrets/STORAGE_PASSWORD }
+            - { name: AUTHELIA_IDENTITY_VALIDATION_RESET_PASSWORD_JWT_SECRET_FILE, value: /secrets/JWT_SECRET }
+            - { name: AUTHELIA_IDENTITY_PROVIDERS_OIDC_HMAC_SECRET_FILE, value: /secrets/OIDC_HMAC_SECRET }
+            # NOTE: there is no indexed `_FILE` env-var form for values inside
+            # list-of-object sections (oidc.jwks[], oidc.clients[]) -- the
+            # docs state explicitly this is unsupported. The jwks private key
+            # and client secret are instead injected via the Go "template"
+            # config filter (see configmap.yaml, which references these same
+            # /secrets/* paths using `{{ secret "..." }}`). This env var turns
+            # that filter on.
+            - { name: X_AUTHELIA_CONFIG_FILTERS, value: template }
+          ports:
+            - { name: http, containerPort: 9091 }
+          readinessProbe:
+            httpGet: { path: /api/health, port: 9091 }
+            initialDelaySeconds: 10
+          livenessProbe:
+            httpGet: { path: /api/health, port: 9091 }
+            initialDelaySeconds: 30
+          volumeMounts:
+            - { name: config, mountPath: /config }
+            - { name: users, mountPath: /users }
+            - { name: secrets, mountPath: /secrets }
+            - { name: data, mountPath: /data }
+          resources:
+            requests: { cpu: 50m, memory: 128Mi }
+            limits: { memory: 256Mi }
+      volumes:
+        - { name: config, configMap: { name: authelia-config } }
+        - { name: users, secret: { secretName: authelia-users } }
+        - { name: secrets, secret: { secretName: authelia-secrets } }
+        - { name: data, emptyDir: {} }

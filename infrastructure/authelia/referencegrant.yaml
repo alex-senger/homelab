@@ -1,0 +1,22 @@
+# Allows the whoami HTTPRoute (namespace: gateway) to reference the authelia
+# Service in this namespace as the ExternalAuth backendRef (GEP-1494). Gateway
+# API requires an explicit ReferenceGrant for any cross-namespace reference
+# other than route-to-Gateway attachment. Lives in the TARGET namespace
+# (authelia), per spec. apiVersion confirmed live 2026-09-15: the installed
+# CRD serves both v1 and v1beta1, with v1beta1 as the storage version
+# (`kubectl get crd referencegrants.gateway.networking.k8s.io -o
+# jsonpath='{.spec.versions[*]}'`), so v1beta1 is used here.
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: whoami-httproute-to-authelia-service
+  namespace: authelia
+spec:
+  from:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      namespace: gateway
+  to:
+    - group: ""
+      kind: Service
+      name: authelia
