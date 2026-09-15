@@ -5,6 +5,8 @@ namespace: longhorn-system
 
 resources:
   - namespace.yaml
+  - backup-credential-externalsecret.yaml
+  - recurringjob-backup.yaml
 
 helmCharts:
   - name: longhorn

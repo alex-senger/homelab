@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: cnpg-system
+
+helmCharts:
+  - name: plugin-barman-cloud
+    repo: https://cloudnative-pg.github.io/charts
+    # Chart 0.8.0 packages plugin app version v0.15.0 (the version the task
+    # brief names). "0.15.0" is the plugin's app version, not its chart
+    # version -- chart 0.15.0 does not exist in this repo.
+    # renovate: datasource=helm depName=plugin-barman-cloud registryUrl=https://cloudnative-pg.github.io/charts
+    version: 0.8.0
+    releaseName: plugin-barman-cloud
+    namespace: cnpg-system
+    valuesFile: values.yaml

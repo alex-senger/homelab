@@ -1,0 +1,16 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: pg-daily
+  namespace: databases
+spec:
+  # 6-field CNPG cron (leading seconds field). Daily 03:00 — deliberately one
+  # hour after the Longhorn RecurringJob (02:00) so the two heavy backup
+  # workloads don't contend for the single HDD-backed Garage.
+  schedule: "0 0 3 * * *"        # 6-field CNPG cron: daily 03:00
+  backupOwnerReference: self
+  cluster:
+    name: pg
+  method: plugin
+  pluginConfiguration:
+    name: barman-cloud.cloudnative-pg.io

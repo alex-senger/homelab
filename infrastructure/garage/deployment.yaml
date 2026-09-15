@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: garage
+  namespace: garage
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels: { app: garage }
+  template:
+    metadata:
+      labels: { app: garage }
+    spec:
+      containers:
+        - name: garage
+          # renovate: datasource=docker depName=dxflrs/garage
+          image: dxflrs/garage:v2.3.0
+          args: ["server"]
+          env:
+            - name: GARAGE_CONFIG_FILE
+              value: /etc/garage/garage.toml
+            - name: GARAGE_RPC_SECRET
+              valueFrom: { secretKeyRef: { name: garage-tokens, key: rpc-secret } }
+            - name: GARAGE_ADMIN_TOKEN
+              valueFrom: { secretKeyRef: { name: garage-tokens, key: admin-token } }
+          ports:
+            - { name: s3, containerPort: 3900 }
+            - { name: admin, containerPort: 3903 }
+          volumeMounts:
+            - { name: config, mountPath: /etc/garage }
+            - { name: data, mountPath: /var/lib/garage }
+          resources:
+            requests: { cpu: 50m, memory: 128Mi }
+            limits: { memory: 512Mi }
+      volumes:
+        - { name: config, configMap: { name: garage-config } }
+        - { name: data, persistentVolumeClaim: { claimName: garage-data } }

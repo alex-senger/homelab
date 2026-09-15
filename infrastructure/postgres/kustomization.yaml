@@ -6,6 +6,9 @@ namespace: databases
 resources:
   - namespace.yaml
   - authelia-role-externalsecret.yaml
+  - garage-s3-externalsecret.yaml
+  - objectstore.yaml
   - cluster.yaml
+  - scheduledbackup.yaml
   - authelia-database.yaml
   - vmpodscrape.yaml

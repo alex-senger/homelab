@@ -24,6 +24,8 @@ resources:
   - applications/monitoring-crds.yaml
   - applications/external-secrets.yaml
   - applications/external-secrets-store.yaml
+  - applications/garage.yaml
   - applications/monitoring.yaml
   - applications/cnpg-operator.yaml
+  - applications/cnpg-barman-plugin.yaml
   - applications/postgres.yaml
