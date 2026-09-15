@@ -63,7 +63,12 @@ nodes:
           # are non-rotational). Kept off Longhorn on purpose.
           diskSelector:
             match: disk.rotational && !system_disk
-          minSize: 150GiB
+          # minSize must be >= the garage-data PV/PVC capacity (180Gi) and the
+          # `garage layout assign -c 180G` in the runbook: a local PV does not
+          # enforce capacity, so a smaller volume would let Garage believe it
+          # has space it lacks and fail once backups grow. Attach a >=180GiB
+          # (~200 GB) HDD; a too-small disk is rejected loudly here instead.
+          minSize: 180GiB
           maxSize: 195GiB
         filesystem:
           type: xfs

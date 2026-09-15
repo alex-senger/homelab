@@ -42,7 +42,7 @@ isolation the design relies on. Boot (or hot-add + rescan) so Talos can see it.
     talosctl apply-config -n 192.168.178.16 -e 192.168.178.16 \
       --file clusterconfig/roastery-cluster-roastery-1.yaml
 
-Talos provisions the new `garage` userVolume (`minSize: 150GiB`, `maxSize: 195GiB`,
+Talos provisions the new `garage` userVolume (`minSize: 180GiB`, `maxSize: 195GiB`,
 `filesystem.type: xfs`) on the disk matched in step 1, mounting it at `/var/mnt/garage` (the
 path `infrastructure/garage/garage-pv.yaml`'s local PV points at, pinned to node
 `roastery-1`). Confirm the mount came up before relying on it:
@@ -60,8 +60,8 @@ up but **cannot actually start** yet: its container needs `GARAGE_RPC_SECRET` an
 `GARAGE_ADMIN_TOKEN` from a Secret named `garage-tokens`, which doesn't exist until the
 `ExternalSecret` of the same name resolves against OpenBao — and OpenBao doesn't have
 `secret/garage/tokens` yet. This is the same bootstrap order as OpenBao's own `eso`
-authentication: expect `kubectl -n garage get pods` to show `garage-0`/the `garage`
-Deployment stuck in `CreateContainerConfigError` (missing secret keys) until step 4 below is
+authentication: expect `kubectl -n garage get pods` to show the `garage` Deployment's pod
+(`garage-<hash>`) stuck in `CreateContainerConfigError` (missing secret keys) until step 4 below is
 done. That's expected — do not troubleshoot it as a bug.
 
 ### 4. OpenBao: seed the two Garage paths (chicken/egg, in this order)
@@ -117,7 +117,7 @@ ESO now fills three separate Secrets from these two OpenBao paths:
 | OpenBao path | ExternalSecret (namespace) | Target Secret | Consumer |
 |---|---|---|---|
 | `secret/garage/tokens` | `garage-tokens` (`garage`) | `garage-tokens` | Garage container env (`GARAGE_RPC_SECRET`/`GARAGE_ADMIN_TOKEN`) |
-| `secret/garage/s3` | `garage-s3` (`databases`) | `garage-s3` | CNPG `ObjectStore pg-backups` (`ACCESS_KEY_ID`/`ACCESS_SECRET_KEY`) |
+| `secret/garage/s3` | `garage-s3` (`databases`) | `garage-s3` | CNPG `ObjectStore pg-backups` (`ACCESS_KEY_ID`/`ACCESS_SECRET_KEY`; `REGION` is added as a literal `garage` by the ExternalSecret template — not from OpenBao — because Garage enforces its `s3_region` in the SigV4 signature) |
 | `secret/garage/s3` | `longhorn-backup-credential` (`longhorn-system`) | `longhorn-backup-credential` | Longhorn backup target (templated to `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY`/`AWS_ENDPOINTS`) |
 
 Check all three resolve:
@@ -143,9 +143,11 @@ No further operator action is needed once the three Secrets above exist:
   operator, and it needs cert-manager live), starts WAL archiving against `ObjectStore
   pg-backups` (`s3://backups/pg`, endpoint `http://garage.garage.svc:3900`) as soon as
   `Cluster pg`'s `.spec.plugins` entry (`isWALArchiver: true`) reconciles. The `pg-daily`
-  `ScheduledBackup` (`databases`, `method: plugin`, cron `0 0 2 * * *` = daily 02:00) takes
+  `ScheduledBackup` (`databases`, `method: plugin`, cron `0 0 3 * * *` = daily 03:00) takes
   the first base backup on its own schedule; `ObjectStore.spec.retentionPolicy: "7d"` prunes
-  older WAL/base backups. Note: CNPG's `ScheduledBackup.spec.schedule` uses a **6-field** cron format with a leading **seconds** field (robfig/cron), not the 5-field Kubernetes CronJob format — so `0 0 2 * * *` means second 0, minute 0, hour 2, which is **daily at 02:00**.
+  older WAL/base backups. CNPG's base backup runs at **03:00**, deliberately one hour after
+  the Longhorn RecurringJob (02:00), so the two heavy backup workloads don't contend for the
+  single HDD-backed Garage. Note: CNPG's `ScheduledBackup.spec.schedule` uses a **6-field** cron format with a leading **seconds** field (robfig/cron), not the 5-field Kubernetes CronJob format — so `0 0 3 * * *` means second 0, minute 0, hour 3, which is **daily at 03:00**.
 
 ## Acceptance / verification
 
@@ -176,7 +178,7 @@ No further operator action is needed once the three Secrets above exist:
       kubectl -n databases get cluster pg -o jsonpath='{.status.conditions}' | jq .
                                                   # look for a "ContinuousArchiving" condition True
       kubectl -n databases get backup
-                                                  # pg-daily-<ts> phase: completed (after 02:00, or trigger one early — see below)
+                                                  # pg-daily-<ts> phase: completed (after 03:00, or trigger one early — see below)
 
   Force an out-of-schedule base backup to verify sooner:
 
@@ -256,7 +258,7 @@ guessed from the CRD — track this as a deferred follow-up.
 | Failure | Effect | Notes |
 |---|---|---|
 | Garage down (pod crash, node reboot) | Backups pause; Longhorn/CNPG retry and catch up once it's back | Live workloads are unaffected — Garage is a backup target only, nothing reads from it on the hot path |
-| S3 endpoint or credential misconfigured | Longhorn `backuptarget` shows an error; CNPG `ContinuousArchiving` condition goes False / `Backup` objects fail | Check, in order: the `garage-s3` Secret actually has `ACCESS_KEY_ID`/`ACCESS_SECRET_KEY` (CNPG) or `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY`/`AWS_ENDPOINTS` (Longhorn) populated; the bucket policy (`garage bucket info backups` shows `backup-key` with read+write); the endpoint URL matches `http://garage.garage.svc:3900` exactly (no trailing slash, correct scheme) |
+| S3 endpoint or credential misconfigured | Longhorn `backuptarget` shows an error; CNPG `ContinuousArchiving` condition goes False / `Backup` objects fail | Check, in order: the `garage-s3` Secret actually has `ACCESS_KEY_ID`/`ACCESS_SECRET_KEY`/`REGION` (CNPG) or `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY`/`AWS_ENDPOINTS` (Longhorn) populated; that the region matches Garage's `s3_region` (`garage`) on both sides — a mismatch fails with `AuthorizationHeaderMalformed`; the bucket policy (`garage bucket info backups` shows `backup-key` with read+write); the endpoint URL matches `http://garage.garage.svc:3900` exactly (no trailing slash, correct scheme) |
 | Barman Cloud Plugin not in `cnpg-system` | Plugin never registers with the CNPG operator; `isWALArchiver` plugin config silently fails to attach | The plugin **must** run in the same namespace as the CNPG operator (`cnpg-system`) — this is a hard CNPG-I requirement, not a preference |
 | cert-manager down or missing | Barman Cloud Plugin fails to start (its webhook/gRPC serving certs come from cert-manager) | Plugin depends on cert-manager being live at wave 14; check `kubectl -n cert-manager get pods` first if the plugin pod isn't Ready |
 | HDD physically fails | All backups on it are lost — Garage data, Longhorn snapshots, CNPG WAL/base backups, all at once | On-host limitation, accepted by design for #7d: this protects against *logical* loss (bad deploy, accidental delete, NVMe failure) and operator error, not against losing the whole VM/host. Off-host replication is out of scope here |

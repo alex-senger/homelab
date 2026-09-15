@@ -15,6 +15,13 @@ spec:
       secretAccessKey:
         name: garage-s3
         key: ACCESS_SECRET_KEY
+      # Garage validates the SigV4 region against its configured s3_region
+      # ("garage"); without this Barman signs with a default (us-east-1) and
+      # uploads are rejected. The REGION key is materialised as a literal by
+      # the garage-s3 ExternalSecret.
+      region:
+        name: garage-s3
+        key: REGION
     wal:
       compression: gzip
     data:
