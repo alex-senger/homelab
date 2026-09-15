@@ -46,6 +46,9 @@ gatewayAPI:
   enabled: true
   enableProxyProtocol: false
 
+envoy:
+  xdsMode: split
+
 # L2 announcements answer ARP for LoadBalancer IPs on the LAN, so a
 # CiliumLoadBalancerIPPool address becomes reachable from other hosts.
 l2announcements:
