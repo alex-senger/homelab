@@ -13,6 +13,7 @@ spec:
     metadata:
       labels: { app: authelia }
     spec:
+      enableServiceLinks: false
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000
