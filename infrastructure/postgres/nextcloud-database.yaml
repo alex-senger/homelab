@@ -1,0 +1,10 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: nextcloud
+  namespace: databases
+spec:
+  name: nextcloud
+  owner: nextcloud
+  cluster:
+    name: pg

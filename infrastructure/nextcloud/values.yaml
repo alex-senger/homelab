@@ -1,0 +1,69 @@
+image:
+  repository: nextcloud
+  tag: 33.0.8-apache
+
+replicaCount: 1
+
+nextcloud:
+  host: nextcloud.senger-solutions.com
+  existingSecret:
+    enabled: true
+    secretName: nextcloud-app
+    usernameKey: nextcloud-username
+    passwordKey: nextcloud-password
+    tokenKey: nextcloud-token
+  configs:
+    proxy.config.php: |-
+      <?php
+      $CONFIG = array (
+        'overwriteprotocol' => 'https',
+        'overwrite.cli.url' => 'https://nextcloud.senger-solutions.com',
+        'overwritehost' => 'nextcloud.senger-solutions.com',
+        'trusted_domains' => array('nextcloud.senger-solutions.com'),
+        'trusted_proxies' => array('10.0.0.0/8'),
+        'default_phone_region' => 'DE',
+        'memcache.local' => '\\OC\\Memcache\\APCu',
+      );
+  phpConfigs:
+    zz-uploads.ini: |-
+      upload_max_filesize=2G
+      post_max_size=2G
+      memory_limit=1G
+
+internalDatabase:
+  enabled: false
+
+externalDatabase:
+  enabled: true
+  type: postgresql
+  host: pg-rw.databases.svc:5432
+  database: nextcloud
+  existingSecret:
+    enabled: true
+    secretName: nextcloud-app
+    usernameKey: db-username
+    passwordKey: db-password
+    hostKey: db-host
+    databaseKey: db-name
+
+redis:
+  enabled: false
+
+cronjob:
+  enabled: true
+
+persistence:
+  enabled: true
+  storageClass: longhorn-retain
+  size: 10Gi
+  nextcloudData:
+    enabled: true
+    storageClass: longhorn-retain
+    size: 150Gi
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+  limits:
+    memory: 2Gi

@@ -30,3 +30,4 @@ resources:
   - applications/cnpg-barman-plugin.yaml
   - applications/postgres.yaml
   - applications/authelia.yaml
+  - applications/nextcloud.yaml

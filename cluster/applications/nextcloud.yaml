@@ -1,0 +1,27 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: nextcloud
+  namespace: argocd
+  annotations:
+    # Wave 23: after postgres (21) and authelia (22) so the DB, ESO secrets,
+    # and OIDC client exist before Nextcloud starts.
+    argocd.argoproj.io/sync-wave: "23"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: infrastructure
+  source:
+    repoURL: https://github.com/alex-senger/homelab.git
+    targetRevision: main
+    path: infrastructure/nextcloud
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: nextcloud
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
+      - CreateNamespace=false
