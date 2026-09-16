@@ -18,8 +18,7 @@ helmCharts:
     valuesFile: values.yaml
 
 # The chart has no hostAliases support. The pod does OIDC discovery + token
-# exchange server-side, but auth.senger-solutions.com resolves publicly and the
-# hairpin fails (cf. argocd #44) — pin it to the in-cluster Gateway.
+# exchange server-side, but auth.senger-solutions.com resolves publicly.
 patches:
   - target:
       kind: Deployment
