@@ -34,3 +34,8 @@ spec:
         login: true
         passwordSecret:
           name: authelia-db
+      - name: nextcloud
+        ensure: present
+        login: true
+        passwordSecret:
+          name: nextcloud-db

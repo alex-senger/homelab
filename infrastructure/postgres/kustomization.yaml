@@ -12,3 +12,5 @@ resources:
   - scheduledbackup.yaml
   - authelia-database.yaml
   - vmpodscrape.yaml
+  - nextcloud-database.yaml
+  - nextcloud-role-externalsecret.yaml
