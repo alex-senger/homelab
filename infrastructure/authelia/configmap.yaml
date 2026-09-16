@@ -40,6 +40,8 @@ data:
           policy: bypass
         - domain: whoami.senger-solutions.com
           policy: one_factor
+        - domain: nextcloud.senger-solutions.com
+          policy: bypass
     identity_providers:
       oidc:
         jwks:
@@ -56,6 +58,17 @@ data:
             redirect_uris:
               - https://argocd.senger-solutions.com/auth/callback
               - http://localhost:8085/auth/callback
+            scopes: [openid, profile, groups, email]
+            grant_types: [authorization_code]
+            response_types: [code]
+            userinfo_signed_response_alg: none
+          - client_id: nextcloud
+            client_name: Nextcloud
+            client_secret: {{ secret "/secrets/OIDC_NEXTCLOUD_CLIENT_SECRET_HASH" | mindent 14 "|" | msquote }}
+            public: false
+            authorization_policy: one_factor
+            redirect_uris:
+              - https://nextcloud.senger-solutions.com/apps/user_oidc/code
             scopes: [openid, profile, groups, email]
             grant_types: [authorization_code]
             response_types: [code]
