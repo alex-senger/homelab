@@ -1,66 +1,32 @@
 # PostgreSQL (CloudNativePG) — bring-up & recovery
 
-Sub-project #7c. Components: `infrastructure/cnpg-operator` (app `cnpg-operator`,
-wave 12) and `infrastructure/postgres` (app `postgres`, wave 21). Operator chart
-`cloudnative-pg` 0.29.0 (app 1.30.0); shared single-instance `Cluster pg` in
-namespace `databases`, Postgres 17 on `longhorn-retain`.
+#7c. `infrastructure/cnpg-operator` (app `cnpg-operator`, wave 12) + `infrastructure/postgres` (app
+`postgres`, wave 21). Operator chart `cloudnative-pg` 0.29.0; shared single-instance `Cluster pg`
+in ns `databases`, Postgres 17 on `longhorn-retain`. Per-app DB/role added by each consumer.
 
-## One-time bring-up (operator steps, after merge)
+## Bring-up (after merge)
+Seed each app's role password in OpenBao (never in Git), e.g.:
+    kubectl exec -n openbao openbao-0 -- sh -c 'BAO_TOKEN=<root> bao kv put secret/databases/authelia password=<strong>'
+→ ESO materialises a `kubernetes.io/basic-auth` Secret the cluster's `managed.roles` uses. Then let
+ArgoCD sync `cnpg-operator` then `postgres` (hard-refresh if it lags).
 
-1. **Create the authelia role password in OpenBao** (never in Git):
-
-       kubectl exec -n openbao openbao-0 -- sh -c \
-         'BAO_TOKEN=<root-or-admin-token> bao kv put secret/databases/authelia \
-            password=<choose-a-strong-password>'
-
-   The `ExternalSecret` `authelia-db` (ns `databases`) then materialises a
-   `kubernetes.io/basic-auth` Secret (`username=authelia` + that password), which
-   the cluster's `managed.roles` uses to set the role password.
-
-2. Let ArgoCD sync `cnpg-operator` then `postgres` (or
-   `kubectl -n argocd annotate app postgres argocd.argoproj.io/refresh=hard
-   --overwrite` if it lags a reconcile behind the merge).
-
-## Acceptance checks
-
-- Operator: `kubectl -n cnpg-system get pods` Running; CRDs `kubectl get crd |
-  grep postgresql.cnpg.io` present (11).
-- Cluster: `kubectl -n databases get cluster pg` reports `Cluster in healthy
-  state`, 1/1 ready; the PVC is bound on `longhorn-retain`.
-- Database + role: `kubectl -n databases get database authelia` is applied; the
-  role exists — from a psql session (below) `\du` shows `authelia`.
-- Credential path: prove OpenBao → ESO → managed.roles end to end with a
-  throwaway psql pod that authenticates using the password from the
-  ESO-materialised `authelia-db` Secret (connecting as `authelia` without a
-  password will just hang on a prompt, which doesn't prove anything):
+## Verify
+- Operator: `kubectl -n cnpg-system get pods` Running; `kubectl get crd | grep postgresql.cnpg.io` (11).
+- Cluster: `kubectl -n databases get cluster pg` healthy, 1/1; PVC bound on `longhorn-retain`.
+- Credential path end-to-end (a passwordless connect just hangs, proving nothing):
 
       PW=$(kubectl -n databases get secret authelia-db -o jsonpath='{.data.password}' | base64 -d)
       kubectl -n databases run psql-check --rm -it --restart=Never --image=ghcr.io/cloudnative-pg/postgresql:17 \
         --env=PGPASSWORD="$PW" -- psql -h pg-rw.databases.svc -U authelia -d authelia -c '\conninfo'
 
-  A successful, non-interactive connect confirms the OpenBao password reached
-  the role via ESO.
-- Metrics: the `pg` instance appears in Grafana (a `cnpg_*` / `up` series for
-  namespace `databases`).
-
 ## Notes
-
-- **Webhook drift is ignored, not fought.** The operator injects its serving CA
-  into `cnpg-mutating-webhook-configuration` and
-  `cnpg-validating-webhook-configuration` at runtime; `cluster/applications/cnpg-operator.yaml`
-  lists them under `ignoreDifferences` so the app does not sit OutOfSync.
-- **The app-side connection Secret is the consuming app's job.** #7c creates the
-  database, the role, and the role password in `databases`. Authelia (#7b) adds
-  its own `ExternalSecret` in the `authelia` namespace, pulling the same OpenBao
-  path, to get a libpq connection Secret pointing at `pg-rw.databases.svc:5432`.
+- Operator mutates its webhook caBundles at runtime → `cluster/applications/cnpg-operator.yaml`
+  `ignoreDifferences` (else OutOfSync). The `Cluster pg` app itself also ignores CNPG-defaulted
+  spec fields (`cluster/applications/postgres.yaml`).
+- Backups (WAL + PITR) via #7d — see backups-recovery.md.
 
 ## Failure modes
-
-- Operator down → no DB/role reconciliation; running Postgres unaffected;
-  restarts under ArgoCD selfHeal.
-- Postgres instance down (node reboot) → DB unavailable ~30–60s; CNPG restarts
-  it; single-instance trade-off.
-- ESO can't fetch the password → role/Secret not materialised; fails safe (no
-  default password); re-`put` in OpenBao and let ESO resync.
-- PVC lost → data lost; `longhorn-retain` prevents accidental delete; off-host
-  backups + PITR arrive with #7d.
+- Operator down → no DB/role reconciliation; running Postgres unaffected.
+- Instance down (node reboot) → DB unavailable ~30–60s (single-instance trade-off); CNPG restarts it.
+- ESO can't fetch the password → role/Secret not materialised; fails safe; re-`put` and resync.
+- PVC lost → data lost; `longhorn-retain` guards accidental delete; recover via #7d PITR.
