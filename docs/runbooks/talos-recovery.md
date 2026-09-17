@@ -1,165 +1,59 @@
-# Runbook: Talos node or machine-config recovery
+# Runbook: Talos node / machine-config recovery
 
-## Symptoms
+Single node `roastery-1` @ `192.168.178.16` (no VIP).
 
-A node stuck `NotReady` with no obvious Kubernetes-side cause, a node unreachable at its
-static address after a config change, the VIP not answering, or SOPS refusing to decrypt
-`talos/talsecret.sops.yaml`.
+## Bad machine config
+The ISO stays attached — reboot from it to reach maintenance mode (ignores on-disk config, uses
+DHCP). Regenerate + apply directly:
 
-## Recovering a node with a bad machine config
+    talhelper gencommand apply --extra-flags=--insecure -n roastery-1
 
-The Talos ISO stays attached to every VM, so a node with a broken config can always be
-recovered by rebooting it from the ISO. Booting from the ISO reaches maintenance mode, which
-ignores whatever is on disk and comes up on DHCP instead. From there, regenerate the config
-and apply it directly:
+`--insecure` because maintenance mode presents no client cert. The static address still comes up
+(FritzBox reservation for `.16`) — try the normal address first.
 
-    talhelper gencommand apply --extra-flags=--insecure -n roastery-cp-1
-
-Maintenance mode presents no client certificate — there is nothing yet to authenticate a
-normal `talosctl` connection against — which is why `--insecure` is required here and would
-not be for a node already running its real config.
-
-## Static addressing did not come up
-
-If a node's static network config is itself the thing that is broken, maintenance mode's
-DHCP fallback still finds it: the Fritzbox holds address reservations for `.16`, `.17` and
-`.18`, so a node that boots to maintenance mode after an ISO boot is reachable at its usual
-address regardless of what its on-disk config says. There is no need to discover a new IP —
-try the node's normal address first.
-
-## Inspecting a node without a valid talosconfig
-
-`talosctl --insecure` is a per-command flag, `-i`, and it goes after the subcommand, not
-before it:
+## Inspect without a valid talosconfig
+`-i` (insecure) is per-command, *after* the subcommand:
 
     talosctl get disks -i -n 192.168.178.16 -e 192.168.178.16
-    talosctl version -i -n 192.168.178.16 -e 192.168.178.16
 
-This works against a node in maintenance mode, or any node whose certificate the local
-talosconfig no longer matches.
+Works against a maintenance-mode node or any node whose cert the local talosconfig no longer matches.
 
-## The VIP does not answer
-
-`192.168.178.19` is a Layer 2 VIP: it is elected among the three control-plane nodes, not
-statically assigned to one of them, and the election depends on etcd quorum. If quorum is
-lost, nothing holds the VIP and it stops answering ARP for it. Check quorum first, against a
-node's own address rather than the VIP:
-
-    talosctl -n 192.168.178.16 etcd members
-
-If quorum is genuinely lost, the VIP will not come back until it is restored. In the
-meantime, reach the API server directly on a node that is still up:
-
-    kubectl --server https://192.168.178.16:6443 get nodes
-
-## Regenerating machine configs
-
+## Regenerate machine configs — ALWAYS pass `-s`
     talhelper genconfig -s talos/talsecret.sops.yaml
 
-`talhelper genconfig` resolves its secret file relative to the current working directory,
-not to `talconfig.yaml`'s directory. Run it from the repo root without `-s` and it will not
-find `talos/talsecret.sops.yaml` — and instead of failing, it prints a warning and silently
-mints a brand-new set of CAs. A cluster built from configs generated that way works fine on
-its own, but its CAs no longer match what is committed to the repository, which quietly
-destroys the repository's ability to rebuild the cluster from source. Always pass
-`-s talos/talsecret.sops.yaml` explicitly.
-
-Because the failure is silent, verify it rather than trust it. Generate to a second
-directory and compare a fingerprint of the cluster CA between the two outputs:
+Without `-s` (e.g. from the repo root) talhelper doesn't fail — it silently mints a **new set of
+CAs**, quietly destroying the repo's ability to rebuild the cluster. Verify by diffing the
+cluster-CA fingerprint of two outputs:
 
     talhelper genconfig -s talos/talsecret.sops.yaml -o /tmp/talos-check
-    diff <(openssl x509 -noout -fingerprint -in clusterconfig/roastery-cp-1.yaml 2>/dev/null) \
-         <(openssl x509 -noout -fingerprint -in /tmp/talos-check/roastery-cp-1.yaml 2>/dev/null)
+    diff <(openssl x509 -noout -fingerprint -in clusterconfig/roastery-roastery-1.yaml 2>/dev/null) \
+         <(openssl x509 -noout -fingerprint -in /tmp/talos-check/roastery-roastery-1.yaml 2>/dev/null)
 
-Identical fingerprints mean `-s` took effect and both runs used the same committed secrets.
-Any difference means `-s` is not being honored — do not apply either config until the cause
-is found.
-
-## SOPS cannot decrypt the secrets
-
-If `sops -d talos/talsecret.sops.yaml` fails with `no identity matched any of the
-recipients`, this reads like the wrong key, but on macOS it is usually the wrong path. SOPS
-does not read `~/.config/sops/age/keys.txt` on macOS — it looks in
-`$HOME/Library/Application Support/sops/age/keys.txt`. Set `SOPS_AGE_KEY_FILE` explicitly
-rather than relying on the default lookup:
+## SOPS can't decrypt (macOS)
+SOPS reads `$HOME/Library/Application Support/sops/age/keys.txt`, not `~/.config/sops/...`:
 
     export SOPS_AGE_KEY_FILE=~/Library/Application\ Support/sops/age/keys.txt
-    sops -d talos/talsecret.sops.yaml
 
-The reverse direction has its own trap: `sops -e` matches its creation rules against the
-input filename, so encrypting a file named `talsecret.yaml` into `talsecret.sops.yaml` fails
-with `no matching creation rules found` — the rule matches on the `.sops.yaml` suffix in the
-name being written, and `sops -e` never sees that name because it operates on the plaintext
-file. Use `--filename-override` to tell it what filename to match rules against:
+Re-encrypting: `sops -e` matches creation rules on the **output** name → use
+`--filename-override talos/talsecret.sops.yaml`.
 
-    sops --filename-override talos/talsecret.sops.yaml -e talos/talsecret.yaml > talos/talsecret.sops.yaml
+## Reading a rendered config safely
+Never grep with surrounding context — it contains CA private keys. Grep named non-secret keys only
+(`hostname`, `installDisk`, `nodeLabels`).
 
-## Reading a rendered machine config safely
-
-Never grep a rendered machine config for broad context. It contains every CA private key
-generated for the cluster, and a context window around an unrelated match will pull one in.
-Grep for named, non-secret keys only — `hostname`, `nodeLabels`, `installDisk` and similar —
-never an unanchored pattern.
-
-This also matters for finding the VIP. Talos 1.13 renders a multi-document machine config,
-and the VIP is not `machine.network.interfaces[].vip` — it is its own document, of kind
-`Layer2VIPConfig`. Grepping for a `vip:` key finds nothing in a correctly configured cluster,
-and reads exactly like a missing VIP when the config is actually fine. Look for the
-`Layer2VIPConfig` document instead of a key.
-
-## Never
-
-Never run `talosctl bootstrap` against more than one node. It initialises etcd, and it is
-meant to run exactly once, on exactly one node, ever, for the cluster's whole lifetime.
-Running it a second time — even against a different node in the same cluster — starts a
-second etcd cluster and produces split brain. The only remedy for that is resetting every
-node and starting the cluster over from scratch. There is no node-count check that protects
-against this: it is a one-shot command trusted to be run once, by whoever is bootstrapping.
-
-## The ISO must match the schematic
-
-Nodes run a custom Image Factory build carrying `siderolabs/iscsi-tools` and
-`siderolabs/util-linux-tools`. Longhorn needs both: without `iscsid` no volume attaches, and
-without `fstrim` thin-provisioned volumes never release deleted blocks.
-
-Schematic ID:
-
-    613e1592b2da41ae5e265e8789429f22e121aab91cb4deb6bc3c0b6262961245
-
-The matching ISO:
-
-    https://factory.talos.dev/image/613e1592b2da41ae5e265e8789429f22e121aab91cb4deb6bc3c0b6262961245/v1.13.9/metal-amd64.iso
-
-Booting from a **stock** Talos ISO still reaches maintenance mode, so recovery itself is
-unaffected. The trap is reinstalling from stock media: the node comes up without the extensions and
-Longhorn volumes fail to attach on it, which looks like a storage fault rather than boot media.
-
-Reapplying the machine config fixes it, because the install image in `talconfig.yaml` points at the
-factory build — so a reinstall pulls the right one.
-
-Regenerate both URLs after changing the extension list:
-
-    talhelper genurl installer -c talos/talconfig.yaml
-    talhelper genurl image -c talos/talconfig.yaml
+## ISO must match the schematic
+Custom Image Factory build with `siderolabs/iscsi-tools` + `util-linux-tools` (Longhorn needs
+both: no `iscsid` → no volume attach; no `fstrim` → thin volumes never release blocks). Reinstalling
+from a **stock** ISO → volumes won't attach (looks like a storage fault); reapplying the machine
+config fixes it (the install image points at the factory build). Schematic
+`613e1592b2da41ae5e265e8789429f22e121aab91cb4deb6bc3c0b6262961245`; regen URLs after changing
+extensions: `talhelper genurl installer|image -c talos/talconfig.yaml`.
 
 ## "certificate signed by unknown authority" from talosctl
+Usually a stale `~/.talos/config` from a prior cluster (same context name `roastery`). Compare CA
+fingerprints, then install the current one over it (`cp clusterconfig/talosconfig ~/.talos/config`;
+regen with `-s` first if `clusterconfig/` is missing).
 
-Almost always the wrong `talosconfig`, not a broken node. A config left over from a previous
-cluster uses the same context name (`roastery`), so talosctl selects it without complaint and then
-fails the TLS handshake against the current nodes:
-
-    x509: certificate signed by unknown authority ... "x509: Ed25519 verification failure"
-
-Compare CA fingerprints to confirm:
-
-    for f in ~/.talos/config clusterconfig/talosconfig; do
-      printf "%-32s " "$f"; grep -m1 'ca:' "$f" | awk '{print $2}' | shasum | cut -c1-12
-    done
-
-If they differ, install the current one:
-
-    cp ~/.talos/config ~/.talos/config.bak-$(date +%s)
-    cp clusterconfig/talosconfig ~/.talos/config
-
-If `clusterconfig/` is missing, regenerate it first — see "Regenerating machine configs" above, and
-remember `-s talos/talsecret.sops.yaml` or talhelper silently mints new certificate authorities.
+## Never
+`talosctl bootstrap` runs exactly once, ever. A second run (even on another node) starts a second
+etcd → split brain; the only remedy is resetting every node and rebuilding.
