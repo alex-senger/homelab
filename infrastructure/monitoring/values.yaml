@@ -80,6 +80,26 @@ grafana:
       memory: 128Mi
     limits:
       memory: 256Mi
+  # OIDC login via Authelia. Local admin (existingSecret above) stays as break-glass.
+  grafana.ini:
+    server:
+      root_url: https://grafana.senger-solutions.com
+    auth.generic_oauth:
+      enabled: true
+      name: Authelia
+      client_id: grafana
+      client_secret: $__env{GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET}
+      scopes: openid profile email groups
+      auth_url: https://auth.senger-solutions.com/api/oidc/authorization
+      token_url: https://auth.senger-solutions.com/api/oidc/token
+      api_url: https://auth.senger-solutions.com/api/oidc/userinfo
+      use_pkce: true
+      role_attribute_path: "contains(groups[*], 'grafana-admins') && 'Admin' || 'Viewer'"
+  envValueFrom:
+    GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET:
+      secretKeyRef:
+        name: grafana-oidc
+        key: client-secret
 
 # --- Dashboards (node/kube/object) ---
 defaultDashboards:
