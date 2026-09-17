@@ -35,7 +35,7 @@ securityContext:
       - SYS_ADMIN
       - SYS_RESOURCE
 
-# --- External reach (#4) ---
+# --- External reach ---
 # CRDs via infrastructure/gateway-api-crds. enableProxyProtocol=false: the VPS
 # shares :443 via SNI and can't add a PROXY header (trade-off: no real client IP).
 gatewayAPI:
