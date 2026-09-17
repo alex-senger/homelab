@@ -1,108 +1,70 @@
 # homelab
 
-GitOps configuration for `roastery`, a two-node Talos Linux Kubernetes cluster running on a
-single Proxmox host. Everything in the cluster is declared here and reconciled by ArgoCD.
+GitOps config for `roastery`, a **single-node** Talos Linux Kubernetes cluster on one Proxmox host.
+Everything in the cluster is declared here and reconciled by ArgoCD.
 
 ## Stack
 
 | Layer | Choice |
 |---|---|
-| OS | Talos Linux v1.13.8 — immutable, API-managed, no SSH |
+| OS | Talos Linux v1.13.9 — immutable, API-managed, no SSH |
 | Kubernetes | v1.36.2 |
-| CNI | Cilium 1.18.0, kube-proxy replacement via eBPF, VXLAN, Hubble |
-| GitOps | ArgoCD v3.5.1, app-of-apps |
-| OS config | talhelper, SOPS-encrypted secrets, three control-plane nodes sharing a VIP |
-| Rendering | Kustomize, with Helm charts inflated via `helmCharts:` |
-| CI | GitHub Actions — render, `kubeconform -strict`, rendered-object diff on every PR |
-| Updates | Renovate, automerge gated on CI |
-| Gateway API | Cilium's Gateway controller, v1.3.0 standard-channel CRDs |
-| TLS issuance | cert-manager v1.21.1, Let's Encrypt via Cloudflare DNS-01 |
-| External ingress | VPS + WireGuard → Cilium Gateway (LAN path live; VPS hop pending) |
-| Secrets | Self-hosted OpenBao (KV v2) + External Secrets Operator (manifests merged; init/seed pending) |
+| CNI | Cilium 1.20.1 — kube-proxy replacement (eBPF), Gateway API, Hubble |
+| GitOps | ArgoCD (chart 10.9.1), app-of-apps |
+| OS config | talhelper + SOPS-encrypted machine secrets |
+| Rendering | Kustomize, Helm charts inflated via `helmCharts:` |
+| CI | GitHub Actions — render + `kubeconform -strict` + rendered-object diff per PR; Renovate (automerge gated on CI) |
+| Gateway API | Cilium Gateway controller, v1.6.1 experimental CRDs |
+| TLS | cert-manager v1.21.2 — Let's Encrypt wildcard via Cloudflare DNS-01 |
+| External reach | VPS + WireGuard tunnel → Cilium Gateway (TLS terminates in-cluster) |
+| In-cluster DNS | CoreDNS `hosts` override: `*.senger-solutions.com` → the Gateway |
+| Secrets | OpenBao (KV v2) + External Secrets Operator |
+| Storage | Longhorn (single-replica, NVMe); Garage S3 backups on a separate HDD |
+| Database | CloudNativePG (Postgres 17); WAL + PITR to Garage |
+| Observability | VictoriaMetrics + Grafana + Hubble |
+| SSO | Authelia OIDC + passkeys — ArgoCD, Grafana, Nextcloud behind it |
+| Apps | Nextcloud (migrated from AIO) |
 
 ## Layout
 
-    bootstrap/        applied by hand exactly once
+    bootstrap/        applied by hand once
     cluster/          ArgoCD control plane: root Application, AppProjects, one Application per component
     infrastructure/   platform component manifests
     apps/             user-facing workloads
-    talos/            machine configuration: talconfig, patches, encrypted secrets
-    docs/             bootstrap, runbooks, ADRs, specs and plans
+    talos/            machine config: talconfig, patches, encrypted secrets
+    docs/             bootstrap, runbooks, specs
 
-`cluster/applications/` is the map of the cluster: every component and its sync wave, readable
-by listing one directory.
+`cluster/applications/` is the map of the cluster — every component and its sync wave in one directory.
 
 ## Bootstrap
 
-See [docs/bootstrap.md](docs/bootstrap.md). Two commands.
+See [docs/bootstrap.md](docs/bootstrap.md).
 
 ## How a change reaches the cluster
 
-1. Open a pull request.
-2. CI renders every Kustomization, schema-validates it, and comments with a diff of the
-   **rendered Kubernetes objects** — not a values diff.
-3. Merge. ArgoCD reconciles within about three minutes.
-
-Rollback is `git revert`.
+Open a PR → CI renders + schema-validates every Kustomization and comments a diff of the **rendered
+objects** → merge → ArgoCD reconciles within ~3 min. Rollback is `git revert`.
 
 ## Honest caveats
 
-This is a learning cluster, and this README should say what it is rather than what it resembles.
+- **Single node, no real HA.** One Talos VM on one Proxmox host (one PSU, one NVMe). Longhorn is
+  single-replica — what it buys is surviving Talos-upgrade reboots, not hardware failure. Backups
+  land off-NVMe on a separate HDD (Garage).
+- **Modest host** (i5-3550S, 4 threads) — scrape intervals and resource requests tuned accordingly.
+- **Encrypted secrets, not none.** Talos machine secrets live in `talos/talsecret.sops.yaml` (SOPS);
+  the age key is the one thing held out of band. CI refuses tracked `clusterconfig/` or a secrets
+  file that loses its SOPS metadata.
+- **Cilium CRDs aren't declarative** — the agent/operator register the `cilium.io` CRDs at startup.
+- **No client-IP preservation** — the VPS→Gateway hop is L4 SNI passthrough, so apps see the tunnel
+  IP (proxy_protocol deferred: it can't coexist with LAN-direct access on the shared Gateway).
 
-**High availability is practised here, not achieved.** Both nodes are VMs on one Proxmox host
-with one power supply. Replicated storage would place every replica on the same NVMe. What
-replication genuinely buys is surviving *node* reboots, which matters because Talos upgrades are
-frequent — not surviving hardware failure. The mitigation that does help is placing the storage
-backup target on a physically separate SATA disk.
+## Roadmap — complete
 
-**The host is modest.** An Intel i5-3550S: four threads shared between the Talos nodes and a
-Debian VM. It works. It is not fast, and Prometheus scrape intervals are tuned accordingly.
+Foundation + ArgoCD + CI (1), declarative Talos (2), Longhorn (3), external reach (4), ESO + OpenBao
+secrets (5), observability (6), apps (7: Postgres, Garage backups, Authelia SSO + passkeys,
+Nextcloud). Cluster later consolidated from three control-plane VMs to a single node.
 
-**Three control-plane nodes, one physical host.** etcd holds quorum, so any single node can be
-lost without an API outage, and the control-plane VIP is elected rather than assigned — it moves to
-a surviving node on its own. Verified 2026-08-20 by shutting down the node that held the VIP:
-`kubectl` kept working through the VIP throughout, etcd held 2/3 and moved leadership, and only
-that node's own workloads were affected.
+## Docs
 
-That resilience is real inside the cluster and still fictional below it. All three nodes are VMs on
-one machine, with one power supply and one NVMe. What this buys is tolerance of node reboots —
-which matters, because Talos upgrades reboot nodes one at a time — not tolerance of hardware
-failure.
-
-**Cilium's CRDs are not declarative.** The Cilium chart ships no CustomResourceDefinition
-manifests; the agent and operator register the ten `cilium.io` CRDs programmatically at startup.
-Everything else about the CNI is declared here, but those ten resources exist because Cilium put
-them there, not because this repository asked for them.
-
-**The repository holds encrypted secrets, not none.** The Talos machine secrets — the cluster
-certificate authorities and bootstrap tokens — live here in `talos/talsecret.sops.yaml`, encrypted
-with SOPS. The age private key is the one thing held out of band. The property is therefore "no
-plaintext secrets, one key outside the repository", which is the standard arrangement but weaker
-than "no secrets at all", and the distinction is worth stating rather than glossing.
-
-CI enforces it: a job refuses to pass if `clusterconfig/` is ever tracked, or if the committed
-secrets file loses its SOPS metadata or gains a plaintext key block.
-
-**External reach is only half built.** The in-cluster half — Gateway API, LB-IPAM and L2
-announcement of a LAN IP, and cert-manager issuing a real wildcard certificate via Cloudflare
-DNS-01 — works today, on the LAN. The VPS and WireGuard tunnel that would expose that same Gateway
-to the public internet are designed (see [ADR 0003](docs/decisions/0003-external-reach-vps-wireguard.md))
-but not yet implemented, so nothing in this cluster is reachable from outside the LAN yet.
-
-## Roadmap
-
-| # | Sub-project | Status |
-|---|---|---|
-| 1 | Repository foundation, ArgoCD, CI, Renovate | Done |
-| 2 | Declarative Talos layer, three control-plane nodes | Done |
-| 3 | Longhorn replicated storage | Done |
-| 4 | External reach — Gateway API, cert-manager, VPS + WireGuard ingress | In progress — LAN path done, VPS hop pending |
-| 5 | Secrets — External Secrets Operator + OpenBao | In progress — manifests merged, OpenBao init/seed pending |
-| 6 | Observability — kube-prometheus-stack, Loki, Hubble | Planned |
-| 7 | Applications — website → Authelia → Nextcloud | Planned |
-
-## Design documents
-
-- [Specs](docs/superpowers/specs/) — what is being built and why
-- [ADRs](docs/decisions/) — decisions and their consequences
 - [Runbooks](docs/runbooks/) — what to do when it breaks
+- Specs under `docs/superpowers/specs/`
