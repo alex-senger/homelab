@@ -39,9 +39,6 @@ nextcloud:
           'OC\\Preview\\Movie',
         ),
       );
-  # Redis-backed distributed cache + transactional file locking (the image
-  # auto-writes redis.config.php from these). Redis runs as our own minimal
-  # standalone Deployment (nextcloud-redis), not the chart's bitnami subchart.
   extraEnv:
     - name: REDIS_HOST
       value: nextcloud-redis
@@ -52,10 +49,6 @@ nextcloud:
         secretKeyRef:
           name: nextcloud-redis
           key: password
-  # notify_push (High-Performance Backend) as a sidecar: shares config.php +
-  # the app binary (custom_apps PVC). Waits until the operator installs the
-  # notify_push app, then serves on :7867. Redis via env (separate config file);
-  # DB/secret/instanceid read from config.php.
   extraSidecarContainers:
     - name: notify-push
       image: nextcloud:33.0.8-apache

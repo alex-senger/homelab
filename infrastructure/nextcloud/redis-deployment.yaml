@@ -22,7 +22,6 @@ spec:
           # renovate: datasource=docker depName=redis
           image: redis:7.4-alpine
           # Cache + transactional file lock store for Nextcloud/notify_push.
-          # No persistence (pure cache); password-protected (ESO).
           command:
             - sh
             - -c
