@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: coredns
+  namespace: kube-system
+data:
+  # Base Corefile matches the Talos-bootstrapped default, plus a `hosts` block
+  # that resolves our external hostnames to the in-cluster Cilium Gateway (.3).
+  # Pods doing server-side calls (Nextcloud/ArgoCD OIDC discovery to
+  # auth.senger-solutions.com) otherwise resolve the public IP and hairpin.
+  # `fallthrough` keeps all other names on normal forwarding.
+  # NOTE: Talos also owns this ConfigMap (bootstrap inventory); on a Talos/k8s
+  # upgrade it may briefly reset the Corefile — ArgoCD selfHeal re-asserts this.
+  Corefile: |
+    .:53 {
+        errors
+        health {
+            lameduck 5s
+        }
+        ready
+        log . {
+            class error
+        }
+        prometheus :9153
+
+        kubernetes cluster.local in-addr.arpa ip6.arpa {
+            pods insecure
+            fallthrough in-addr.arpa ip6.arpa
+            ttl 30
+        }
+        hosts {
+            192.168.178.3 auth.senger-solutions.com nextcloud.senger-solutions.com argocd.senger-solutions.com
+            fallthrough
+        }
+        forward . /etc/resolv.conf {
+           max_concurrent 1000
+        }
+        cache 30 {
+           disable success cluster.local
+           disable denial cluster.local
+        }
+        loop
+        reload
+        loadbalance
+    }
