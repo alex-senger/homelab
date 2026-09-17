@@ -2,8 +2,7 @@ clusterName: roastery
 talosVersion: v1.13.9
 kubernetesVersion: v1.36.2
 
-# Single-node cluster: the node's own address is the API endpoint (no VIP —
-# there is only one control-plane node).
+# Single-node: the node's address is the API endpoint (no VIP).
 endpoint: https://192.168.178.16:6443
 
 allowSchedulingOnControlPlanes: true
@@ -13,8 +12,7 @@ clusterPodNets:
 clusterSvcNets:
   - 10.96.0.0/12
 
-# Cilium is installed by bootstrap/cilium immediately after bootstrap.
-# Nodes stay NotReady until then, which is expected.
+# Cilium installed post-bootstrap by bootstrap/cilium; nodes NotReady until then.
 cniConfig:
   name: none
 
@@ -47,11 +45,8 @@ nodes:
     userVolumes:
       - name: longhorn
         provisioning:
-          # The Longhorn data disk is the ~300 GB NVMe volume: non-rotational,
-          # larger than 200 GB, and not the ~40 GB system disk. The
-          # !disk.rotational bound is what keeps this disjoint from the garage
-          # HDD below — the #7d backup disk is ~200 GB and would otherwise also
-          # satisfy the >200 GB size bound, matching both selectors.
+          # Longhorn data disk: the ~300GB NVMe (non-rotational, >200GB, not
+          # system). !disk.rotational keeps it disjoint from the garage HDD.
           diskSelector:
             match: '!disk.rotational && disk.size > 200u * GB && !system_disk'
           minSize: 200GiB
@@ -60,15 +55,11 @@ nodes:
           type: xfs
       - name: garage
         provisioning:
-          # The HDD-backed backup disk — the only rotational disk (NVMe disks
-          # are non-rotational). Kept off Longhorn on purpose.
+          # HDD backup disk (the only rotational disk); kept off Longhorn.
           diskSelector:
             match: disk.rotational && !system_disk
-          # minSize must be >= the garage-data PV/PVC capacity (180Gi) and the
-          # `garage layout assign -c 180G` in the runbook: a local PV does not
-          # enforce capacity, so a smaller volume would let Garage believe it
-          # has space it lacks and fail once backups grow. Attach a >=180GiB
-          # (~200 GB) HDD; a too-small disk is rejected loudly here instead.
+          # minSize >= garage-data capacity (180Gi): a local PV doesn't enforce
+          # capacity, so a too-small disk fails loudly here, not once backups grow.
           minSize: 180GiB
           maxSize: 195GiB
         filesystem:

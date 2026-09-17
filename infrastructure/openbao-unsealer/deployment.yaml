@@ -15,8 +15,7 @@ spec:
       labels:
         app: openbao-unsealer
     spec:
-      # Decrypts the SOPS-encrypted Shamir unseal keys into a tmpfs emptyDir
-      # that only this pod's containers can see; nothing touches disk.
+      # Decrypts the SOPS unseal keys into a tmpfs emptyDir; nothing hits disk.
       initContainers:
         - name: decrypt
           # renovate: datasource=docker depName=ghcr.io/getsops/sops
@@ -38,8 +37,7 @@ spec:
             - name: keys
               mountPath: /keys
       containers:
-        # Loops calling the unseal API against OpenBao until it reports
-        # sealed=false; harmless no-op once already unsealed.
+        # Loops the unseal API until sealed=false; no-op once unsealed.
         - name: unsealer
           image: quay.io/openbao/openbao:2.6.2
           command:
@@ -65,8 +63,8 @@ spec:
           configMap:
             name: unseal-script
             defaultMode: 0755
-        # Hand-created by a human out-of-band at bring-up; dedicated to this
-        # unsealer (not the Talos age key). Never committed here.
+        # Dedicated unsealer age key (not the Talos age key); hand-created
+        # out-of-band, never committed.
         - name: unseal-age-key
           secret:
             secretName: openbao-unseal-age-key

@@ -1,15 +1,13 @@
-# Single-node raft. HA machinery with replicas 1 gives raft storage without a
-# quorum; a brief outage during this node's reboot is tolerable (synced k8s
-# Secrets persist).
+# Single-node raft: replicas=1 = raft storage without quorum; a brief outage on
+# reboot is fine (synced k8s Secrets persist).
 global:
   enabled: true
 injector:
   enabled: false   # ESO handles secret delivery; the agent injector is unused
 server:
   image:
-    # chart default registry is already quay.io; repository must NOT repeat it
-    # (server.image.registry + "/" + server.image.repository), or the
-    # rendered image becomes quay.io/quay.io/openbao/openbao.
+    # repository must NOT repeat the registry (chart prepends quay.io) or the
+    # image becomes quay.io/quay.io/openbao/openbao.
     repository: openbao/openbao
     tag: "2.6.2"
   ha:

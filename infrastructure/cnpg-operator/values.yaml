@@ -3,8 +3,7 @@
 crds:
   create: true
 
-# Prometheus-operator PodMonitor is not available (we use VM's VMPodScrape in
-# the postgres component instead).
+# No Prometheus-operator PodMonitor — we use VM's VMPodScrape (postgres component).
 monitoring:
   podMonitorEnabled: false
 

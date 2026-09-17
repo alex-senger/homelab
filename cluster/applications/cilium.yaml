@@ -6,12 +6,8 @@ metadata:
   annotations:
     # Wave -1: the CNI must exist before anything that needs pod networking.
     argocd.argoproj.io/sync-wave: "-1"
-  # NO finalizer, deliberately.
-  #
-  # resources-finalizer.argocd.argoproj.io makes deleting this Application
-  # cascade-delete everything it manages. For this Application that means
-  # deleting the CNI and taking down all pod networking cluster-wide.
-  # Recovery would require docs/runbooks/cilium-recovery.md.
+  # NO finalizer: a cascade-delete would take down the CNI and all pod
+  # networking cluster-wide (recovery: docs/runbooks/cilium-recovery.md).
 spec:
   project: infrastructure
 

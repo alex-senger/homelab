@@ -1,14 +1,13 @@
-# These values are Talos-specific. Do not change them without reading
-# docs/runbooks/cilium-recovery.md first — a bad value here takes down
-# all pod networking.
+# Talos-specific; read docs/runbooks/cilium-recovery.md before changing (a bad
+# value takes down all pod networking).
 
-# Talos mounts cgroups itself; Cilium must not try.
+# Talos mounts cgroups; Cilium must not.
 cgroup:
   autoMount:
     enabled: false
   hostRoot: /sys/fs/cgroup
 
-# Pod CIDRs are allocated by kube-controller-manager, not Cilium.
+# Pod CIDRs from kube-controller-manager, not Cilium.
 ipam:
   mode: kubernetes
 
@@ -36,36 +35,29 @@ securityContext:
       - SYS_ADMIN
       - SYS_RESOURCE
 
-# --- External reach (sub-project #4) ---
-
-# Gateway API controller. CRDs are installed separately by
-# infrastructure/gateway-api-crds (Cilium ships none). enableProxyProtocol stays
-# false: the VPS shares :443 with Pangolin via SNI and cannot add a PROXY header,
-# so the Gateway must not expect one (the trade-off is no real client IP).
+# --- External reach ---
+# CRDs via infrastructure/gateway-api-crds. enableProxyProtocol=false: the VPS
+# shares :443 via SNI and can't add a PROXY header (trade-off: no real client IP).
 gatewayAPI:
   enabled: true
   enableProxyProtocol: false
 
+# xdsMode=split: 1.20 'ads' mode fails to deliver Gateway L7 xDS (cilium #48548).
 envoy:
   xdsMode: split
 
-# L2 announcements answer ARP for LoadBalancer IPs on the LAN, so a
-# CiliumLoadBalancerIPPool address becomes reachable from other hosts.
+# L2 ARP for LoadBalancer IPs on the LAN.
 l2announcements:
   enabled: true
 
-# L2 announcements take leader-election Leases; the default client rate limit
-# is too low and produces lease churn warnings. Raise it.
+# Raise from defaults — L2 lease election churns the client rate limit otherwise.
 k8sClientRateLimit:
   qps: 10
   burst: 20
 
-# --- Hubble metrics (sub-project #6) ---
-# Enabling metrics is a cilium-config change: ArgoCD updates the ConfigMap but
-# does NOT roll the operator/agents (no checksum). After merge, run the manual
-# rollout restart documented in docs/runbooks/cilium-recovery.md. Enabling a
-# non-empty metrics set also makes Cilium create the hubble-metrics Service
-# (kube-system, port hubble-metrics/9965).
+# --- Hubble metrics ---
+# cilium-config change: needs a manual `rollout restart` after merge (no checksum;
+# see cilium-recovery.md). Also creates the hubble-metrics Service (:9965).
 hubble:
   enabled: true
   metrics:
@@ -77,8 +69,6 @@ hubble:
       - port-distribution
       - httpV2
 
-# --- Single-node cluster ---
-# Default operator replicas is 2 with anti-affinity; on one node the second is
-# permanently Pending. One node ⇒ one operator.
+# One node ⇒ one operator (default 2 + anti-affinity would leave one Pending).
 operator:
   replicas: 1

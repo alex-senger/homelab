@@ -4,14 +4,8 @@ defaultSettings:
   storageOverProvisioningPercentage: 100
   storageMinimalAvailablePercentage: 15
 
-# NOTE: on chart longhorn-1.12.1, backupTarget/backupTargetCredentialSecret
-# are NOT defaultSettings keys (the defaultSettings ConfigMap template has no
-# such fields, so they'd silently be dropped). They live under this separate
-# top-level defaultBackupStore key, which the chart's default-resource.yaml
-# template renders into the longhorn-default-resource ConfigMap
-# (backup-target / backup-target-credential-secret). Confirmed by reading
-# infrastructure/longhorn/charts/longhorn-1.12.1/longhorn/templates/
-# default-resource.yaml and values.yaml directly.
+# backupTarget lives under defaultBackupStore, NOT defaultSettings (chart
+# 1.12.1 would silently drop it there).
 defaultBackupStore:
   backupTarget: s3://backups@garage/longhorn
   backupTargetCredentialSecret: longhorn-backup-credential
