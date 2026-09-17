@@ -4,10 +4,14 @@ metadata:
   name: nextcloud-notify-push
   namespace: nextcloud
 spec:
-  # Targets the notify_push sidecar (port 7867) running in the Nextcloud pod.
+  # Targets the notify_push sidecar (port 7867) in the MAIN Nextcloud pod only.
+  # component:app is required — without it the selector also matches the
+  # imaginary pod (same name/instance labels), which isn't listening on 7867
+  # and causes intermittent 503s through the Gateway.
   selector:
     app.kubernetes.io/name: nextcloud
     app.kubernetes.io/instance: nextcloud
+    app.kubernetes.io/component: app
   ports:
     - port: 7867
       targetPort: 7867
