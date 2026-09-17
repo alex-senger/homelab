@@ -55,7 +55,7 @@ k8sClientRateLimit:
   qps: 10
   burst: 20
 
-# --- Hubble metrics (#6) ---
+# --- Hubble metrics ---
 # cilium-config change: needs a manual `rollout restart` after merge (no checksum;
 # see cilium-recovery.md). Also creates the hubble-metrics Service (:9965).
 hubble:
