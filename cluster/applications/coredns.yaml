@@ -1,0 +1,31 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: coredns
+  namespace: argocd
+  annotations:
+    # Foundational (cluster DNS); apply early. Only manages the coredns
+    # ConfigMap — the Deployment/Service stay Talos-managed.
+    argocd.argoproj.io/sync-wave: "1"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: infrastructure
+  source:
+    repoURL: https://github.com/alex-senger/homelab.git
+    targetRevision: main
+    path: infrastructure/coredns
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-system
+  syncPolicy:
+    automated:
+      # prune disabled: coredns is a shared Talos-owned object we only augment;
+      # ArgoCD must never delete it (would break cluster DNS).
+      prune: false
+      selfHeal: true
+    syncOptions:
+      # SSA so ArgoCD co-owns the Corefile field alongside Talos's bootstrap
+      # manager without clobbering the whole object.
+      - ServerSideApply=true
+      - CreateNamespace=false
