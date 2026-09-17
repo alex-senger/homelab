@@ -12,6 +12,16 @@ machine:
     hostDNS:
       enabled: true
       forwardKubeDNSToHost: true
+  network:
+    # In-cluster resolution of our external hostnames to the Cilium Gateway
+    # (.3). Pods doing server-side calls (e.g. Nextcloud/ArgoCD OIDC discovery
+    # to auth.senger-solutions.com) otherwise resolve the public IP and hairpin.
+    extraHostEntries:
+      - ip: 192.168.178.3
+        aliases:
+          - auth.senger-solutions.com
+          - nextcloud.senger-solutions.com
+          - argocd.senger-solutions.com
 cluster:
   proxy:
     disabled: true  # required by Cilium
