@@ -17,7 +17,6 @@ data:
       display_name: senger-solutions.com
       # Passkey (discoverable-credential) login, usable across *.senger-solutions.com.
       enable_passkey_login: true
-      # A user-verifying passkey counts as two_factor (passwordless + 2FA).
       experimental_enable_passkey_uv_two_factors: true
       attestation_conveyance_preference: indirect
       selection_criteria:
