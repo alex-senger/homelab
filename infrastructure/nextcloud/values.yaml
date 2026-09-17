@@ -23,6 +23,7 @@ nextcloud:
         'trusted_proxies' => array('10.0.0.0/8'),
         'default_phone_region' => 'DE',
         'memcache.local' => '\\OC\\Memcache\\APCu',
+        'allow_local_remote_servers' => true,
       );
   phpConfigs:
     zz-uploads.ini: |-
