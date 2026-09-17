@@ -5,10 +5,8 @@
 victoria-metrics-operator:
   enabled: true
   crds:
-    # CRDs are installed separately by infrastructure/monitoring-crds (mirrors
-    # gateway-api-crds). Disable the k8s-stack's own CRD machinery so this
-    # Application renders only the operator + custom resources. crds.enabled
-    # takes effect only together with crds.plain: false (chart limitation).
+    # CRDs via infrastructure/monitoring-crds. Disable the stack's own CRD
+    # machinery (crds.enabled needs plain: false too).
     enabled: false
     plain: false
   resources:

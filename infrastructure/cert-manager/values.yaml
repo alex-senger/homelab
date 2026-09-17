@@ -1,10 +1,9 @@
-# CRDs ship as ordinary templates gated by crds.enabled (chart default false).
-# Enabling it here is what installs the CRDs; there is no Helm crds/ directory,
-# so --include-crds would be a no-op — same situation documented for argo-cd.
+# CRDs ship as templates gated by crds.enabled (default false); enabling it
+# installs them (no Helm crds/ dir, so --include-crds is a no-op, like argo-cd).
 crds:
   enabled: true
 
-# Modest footprint for a 6-vCPU cluster.
+# Modest footprint.
 resources:
   requests:
     cpu: 10m

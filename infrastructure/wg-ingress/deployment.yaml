@@ -6,8 +6,7 @@ metadata:
   labels:
     app: wg-ingress
 spec:
-  # Single tunnel: the persistent key means a reschedule just re-dials the same
-  # VPS peer, no VPS-side change needed.
+  # Persistent key: a reschedule re-dials the same VPS peer, no VPS change.
   replicas: 1
   selector:
     matchLabels:
@@ -32,8 +31,7 @@ spec:
           securityContext:
             capabilities:
               add:
-                # NET_ADMIN only — Talos's runtime refuses SYS_MODULE, and the
-                # wireguard module is already loaded on the node.
+                # NET_ADMIN only — Talos refuses SYS_MODULE; wg module already loaded.
                 - NET_ADMIN
           volumeMounts:
             - name: wg-config
@@ -63,8 +61,7 @@ spec:
               cpu: 100m
               memory: 64Mi
       volumes:
-        # Hand-created by a human out-of-band (see docs/runbooks); never
-        # committed here. Key wg0.conf holds the client tunnel config.
+        # wg0.conf: client tunnel config, hand-created out-of-band; never committed.
         - name: wg-config
           secret:
             secretName: wg-ingress-key

@@ -4,8 +4,7 @@ metadata:
   name: postgres
   namespace: argocd
   annotations:
-    # Wave 21: needs CNPG CRDs (12), the ESO ClusterSecretStore (18), and the
-    # VM operator CRDs (19) to all exist first.
+    # Wave 21: needs CNPG CRDs (12), ESO store (18), VM operator CRDs (19).
     argocd.argoproj.io/sync-wave: "21"
   finalizers:
     - resources-finalizer.argocd.argoproj.io
@@ -25,13 +24,10 @@ spec:
     syncOptions:
       - ServerSideApply=true
       - CreateNamespace=false
-  # The CNPG operator defaults ~21 top-level Cluster.spec fields at admission
-  # and normalises two we do set (adds `enabled` to the WAL-archiver plugin,
-  # and `connectionLimit`/`inherit` to managed roles). These are operator-owned
-  # and absent from managedFields (so managedFieldsManagers can't target them),
-  # leaving the Cluster permanently OutOfSync. Ignore exactly those paths —
-  # derived from the live `argocd`/spec diff, not guessed. If a CNPG upgrade
-  # adds a new default field, this list may need one more entry.
+  # CNPG defaults ~21 Cluster.spec fields at admission + normalises our
+  # plugin/roles; operator-owned, absent from managedFields → permanent
+  # OutOfSync. Ignore exactly those (from the live diff); a CNPG upgrade may
+  # add one more.
   ignoreDifferences:
     - group: postgresql.cnpg.io
       kind: Cluster
