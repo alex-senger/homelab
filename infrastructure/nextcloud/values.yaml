@@ -1,6 +1,6 @@
 image:
   repository: nextcloud
-  tag: 33.0.8-apache
+  tag: 33.0.9-apache
 
 replicaCount: 1
 
@@ -51,7 +51,7 @@ nextcloud:
           key: password
   extraSidecarContainers:
     - name: notify-push
-      image: nextcloud:33.0.8-apache
+      image: nextcloud:33.0.9-apache
       command:
         - sh
         - -c
