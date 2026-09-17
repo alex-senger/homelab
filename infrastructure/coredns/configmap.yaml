@@ -29,7 +29,7 @@ data:
             ttl 30
         }
         hosts {
-            192.168.178.3 auth.senger-solutions.com nextcloud.senger-solutions.com argocd.senger-solutions.com
+            192.168.178.3 auth.senger-solutions.com nextcloud.senger-solutions.com argocd.senger-solutions.com grafana.senger-solutions.com
             fallthrough
         }
         forward . /etc/resolv.conf {
