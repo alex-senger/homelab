@@ -94,7 +94,6 @@ grafana:
       token_url: https://auth.senger-solutions.com/api/oidc/token
       api_url: https://auth.senger-solutions.com/api/oidc/userinfo
       use_pkce: true
-      # asg is in the grafana-admins Authelia group -> Grafana Admin; else Viewer.
       role_attribute_path: "contains(groups[*], 'grafana-admins') && 'Admin' || 'Viewer'"
   envValueFrom:
     GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET:
