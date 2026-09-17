@@ -25,6 +25,54 @@ nextcloud:
         'memcache.local' => '\\OC\\Memcache\\APCu',
         'allow_local_remote_servers' => true,
       );
+    preview.config.php: |-
+      <?php
+      $CONFIG = array (
+        'preview_imaginary_url' => 'http://nextcloud-imaginary',
+        'enabledPreviewProviders' => array(
+          'OC\\Preview\\Imaginary',
+          'OC\\Preview\\ImaginaryPDF',
+          'OC\\Preview\\MP3',
+          'OC\\Preview\\TXT',
+          'OC\\Preview\\MarkDown',
+          'OC\\Preview\\OpenDocument',
+          'OC\\Preview\\Movie',
+        ),
+      );
+  extraEnv:
+    - name: REDIS_HOST
+      value: nextcloud-redis
+    - name: REDIS_HOST_PORT
+      value: "6379"
+    - name: REDIS_HOST_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: nextcloud-redis
+          key: password
+  extraSidecarContainers:
+    - name: notify-push
+      image: nextcloud:33.0.8-apache
+      command:
+        - sh
+        - -c
+        - 'BIN=/var/www/html/custom_apps/notify_push/bin/x86_64/notify_push; until [ -x "$BIN" ]; do echo "waiting for notify_push app..."; sleep 10; done; exec "$BIN" /var/www/html/config/config.php --port 7867'
+      env:
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: nextcloud-redis
+              key: url
+        - name: NEXTCLOUD_URL
+          value: https://nextcloud.senger-solutions.com
+      ports:
+        - name: push
+          containerPort: 7867
+      volumeMounts:
+        - { name: nextcloud-main, mountPath: /var/www/html/config, subPath: config }
+        - { name: nextcloud-main, mountPath: /var/www/html/custom_apps, subPath: custom_apps }
+      resources:
+        requests: { cpu: 10m, memory: 32Mi }
+        limits: { memory: 128Mi }
   phpConfigs:
     zz-uploads.ini: |-
       upload_max_filesize=2G
@@ -48,7 +96,10 @@ externalDatabase:
     databaseKey: db-name
 
 redis:
-  enabled: false
+  enabled: false   # we run our own minimal nextcloud-redis Deployment instead
+
+imaginary:
+  enabled: true    # fast previews (HEIC/PDF/video/RAW), wired via preview.config.php
 
 cronjob:
   enabled: true

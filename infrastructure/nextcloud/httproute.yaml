@@ -12,6 +12,15 @@ spec:
   hostnames:
     - nextcloud.senger-solutions.com
   rules:
+    # notify_push HPB — more specific, matched first.
+    - matches:
+        - path: { type: PathPrefix, value: /push }
+      backendRefs:
+        - group: ""
+          kind: Service
+          name: nextcloud-notify-push
+          port: 7867
+          weight: 1
     - matches:
         - path: { type: PathPrefix, value: / }
       backendRefs:

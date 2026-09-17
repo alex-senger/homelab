@@ -7,6 +7,10 @@ resources:
   - namespace.yaml
   - app-externalsecret.yaml
   - httproute.yaml
+  - redis-externalsecret.yaml
+  - redis-deployment.yaml
+  - redis-service.yaml
+  - notify-push-service.yaml
 
 helmCharts:
   - name: nextcloud

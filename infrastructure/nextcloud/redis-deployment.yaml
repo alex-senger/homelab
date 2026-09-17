@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nextcloud-redis
+  namespace: nextcloud
+  labels:
+    app: nextcloud-redis
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: nextcloud-redis
+  template:
+    metadata:
+      labels:
+        app: nextcloud-redis
+    spec:
+      containers:
+        - name: redis
+          # renovate: datasource=docker depName=redis
+          image: redis:7.4-alpine
+          # Cache + transactional file lock store for Nextcloud/notify_push.
+          command:
+            - sh
+            - -c
+            - 'exec redis-server --requirepass "$REDIS_PASSWORD" --save "" --appendonly no'
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: nextcloud-redis
+                  key: password
+          ports:
+            - containerPort: 6379
+              name: redis
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
