@@ -61,6 +61,8 @@ data:
             scopes: [openid, profile, groups, email]
             grant_types: [authorization_code]
             response_types: [code]
+            # First-party app: skip the consent screen.
+            consent_mode: implicit
             userinfo_signed_response_alg: none
           - client_id: nextcloud
             client_name: Nextcloud
@@ -74,4 +76,6 @@ data:
             response_types: [code]
             # Nextcloud user_oidc sends client creds in the POST body, not Basic.
             token_endpoint_auth_method: client_secret_post
+            # First-party app: skip the consent screen.
+            consent_mode: implicit
             userinfo_signed_response_alg: none
