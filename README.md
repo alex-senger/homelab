@@ -67,4 +67,3 @@ Nextcloud). Cluster later consolidated from three control-plane VMs to a single 
 ## Docs
 
 - [Runbooks](docs/runbooks/) — what to do when it breaks
-- Specs under `docs/superpowers/specs/`
