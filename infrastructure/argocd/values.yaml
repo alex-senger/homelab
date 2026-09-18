@@ -36,7 +36,6 @@ controller:
     requests:
       cpu: 100m
       memory: 512Mi
-    # Peak parallel reconciliation (longhorn CRDs + monitoring) OOM'd at 768Mi.
     limits:
       memory: 2Gi
 
