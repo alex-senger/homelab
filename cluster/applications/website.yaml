@@ -23,6 +23,4 @@ spec:
       selfHeal: true
     syncOptions:
       - ServerSideApply=true
-      # apps project denies cluster-scoped resources, so the namespace can't be
-      # a declared manifest; the auto-created one bypasses that restriction.
       - CreateNamespace=true
