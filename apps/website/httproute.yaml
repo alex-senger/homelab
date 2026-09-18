@@ -9,7 +9,6 @@ spec:
       kind: Gateway
       name: external
       namespace: gateway
-  # Apex domain; www is redirected to it at the DNS layer.
   hostnames:
     - senger-solutions.com
   rules:
