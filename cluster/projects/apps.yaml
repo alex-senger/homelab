@@ -7,8 +7,9 @@ metadata:
   namespace: argocd
 spec:
   description: >-
-    User-facing workloads. Denied cluster-scoped resources so a third-party
-    chart cannot grant itself cluster-admin or install CRDs.
+    User-facing workloads. Cluster-scoped resources are denied except
+    Namespace, so a chart cannot grant itself cluster-admin or install CRDs
+    but each app can still own its namespace.
 
   sourceRepos:
     - https://github.com/alex-senger/homelab.git
@@ -23,8 +24,11 @@ spec:
     - server: https://kubernetes.default.svc
       namespace: nextcloud
 
-  # Empty: no cluster-scoped resource of any kind is permitted.
-  clusterResourceWhitelist: []
+  # Namespace only: apps own their namespace, but no other cluster-scoped
+  # resource (no CRDs, ClusterRoles, or bindings — no escalation path).
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
 
   namespaceResourceWhitelist:
     - group: '*'
