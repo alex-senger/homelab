@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: website-downloads
+  namespace: website
+spec:
+  # CV PDFs are not in git or the image; populated out-of-band (kubectl cp).
+  # retain keeps them if the PVC is ever deleted, so no re-populate is forced.
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn-retain
+  resources:
+    requests:
+      storage: 1Gi
