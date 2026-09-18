@@ -22,7 +22,6 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
-    # Wildcard above doesn't match the bare apex; cert already has the apex SAN.
     - name: https-apex
       protocol: HTTPS
       port: 443
