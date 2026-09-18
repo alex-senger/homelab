@@ -22,3 +22,16 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
+    - name: https-apex
+      protocol: HTTPS
+      port: 443
+      hostname: "senger-solutions.com"
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - group: ""
+            kind: Secret
+            name: wildcard-senger-solutions-tls
+      allowedRoutes:
+        namespaces:
+          from: All

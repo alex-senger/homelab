@@ -32,3 +32,4 @@ resources:
   - applications/authelia.yaml
   - applications/nextcloud.yaml
   - applications/coredns.yaml
+  - applications/website.yaml

@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: website
+  namespace: website
+  labels:
+    app: website
+spec:
+  replicas: 1
+  # RWO volume on a single node: Recreate avoids rollout multi-attach.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: website
+  template:
+    metadata:
+      labels:
+        app: website
+    spec:
+      # nginx uid/gid 101; fsGroup makes the emptyDirs writable to it.
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101
+        runAsGroup: 101
+        fsGroup: 101
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: website
+          # renovate: datasource=docker depName=ghcr.io/alex-senger/personal-website
+          image: ghcr.io/alex-senger/personal-website:v1.0.0
+          ports:
+            - containerPort: 80
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+              add: [NET_BIND_SERVICE]  # bind :80 as non-root
+          volumeMounts:
+            # CV PDFs live in the PVC (populated out-of-band); nginx only reads.
+            - name: downloads
+              mountPath: /usr/share/nginx/html/downloads
+              readOnly: true
+            # nginx writes its pid and temp dirs; rootfs is read-only.
+            - name: run
+              mountPath: /run
+            - name: cache
+              mountPath: /var/cache/nginx
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 64Mi
+      volumes:
+        - name: downloads
+          persistentVolumeClaim:
+            claimName: website-downloads
+        - name: run
+          emptyDir: {}
+        - name: cache
+          emptyDir: {}
