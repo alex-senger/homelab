@@ -108,6 +108,7 @@ spec:
             periodSeconds: 20
           securityContext:
             allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
             capabilities:
               drop: [ALL]
           resources:
@@ -120,7 +121,12 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
+            # readOnlyRootFilesystem: JVM tmpdir + entrypoint scratch need /tmp.
+            - name: tmp
+              mountPath: /tmp
       volumes:
         - name: data
           persistentVolumeClaim:
             claimName: minecraft-data
+        - name: tmp
+          emptyDir: {}

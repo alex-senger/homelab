@@ -33,3 +33,4 @@ resources:
   - applications/nextcloud.yaml
   - applications/coredns.yaml
   - applications/website.yaml
+  - applications/minecraft.yaml
