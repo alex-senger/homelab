@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: minecraft
+  namespace: minecraft
+  annotations:
+    io.cilium/lb-ipam-ips: "192.168.178.5"
+spec:
+  type: LoadBalancer
+  selector:
+    app: minecraft
+  ports:
+    - name: mc
+      port: 25565
+      targetPort: mc
