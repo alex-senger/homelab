@@ -1,7 +1,7 @@
 defaultSettings:
   defaultDataPath: /var/mnt/longhorn
   defaultReplicaCount: 1
-  storageOverProvisioningPercentage: 100
+  storageOverProvisioningPercentage: 200
   storageMinimalAvailablePercentage: 15
 
 # backupTarget lives under defaultBackupStore, NOT defaultSettings (chart
