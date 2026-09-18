@@ -9,7 +9,9 @@ metadata:
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
-  project: apps
+  # infrastructure like every other app: it permits the declared namespace.yaml
+  # (the apps project denies cluster-scoped resources and isn't adopted yet).
+  project: infrastructure
   source:
     repoURL: https://github.com/alex-senger/homelab.git
     targetRevision: main
@@ -23,4 +25,4 @@ spec:
       selfHeal: true
     syncOptions:
       - ServerSideApply=true
-      - CreateNamespace=true
+      - CreateNamespace=false
