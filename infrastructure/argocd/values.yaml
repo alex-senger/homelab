@@ -35,9 +35,10 @@ controller:
   resources:
     requests:
       cpu: 100m
-      memory: 256Mi
+      memory: 512Mi
+    # Peak parallel reconciliation (longhorn CRDs + monitoring) OOM'd at 768Mi.
     limits:
-      memory: 768Mi
+      memory: 2Gi
 
 repoServer:
   resources:
