@@ -81,8 +81,10 @@ spec:
             # Auto-fetch plugins from Modrinth, matched to the server version.
             # vaultunlocked pinned: it's a version-agnostic API bridge and a fresh
             # MC drop may lack its game-version metadata (would fail auto-match).
+            # coreprotect deferred: no 26.3 build yet (latest supports <=26.1.2);
+            # an unresolved plugin aborts startup, so re-add once it updates.
             - name: MODRINTH_PROJECTS
-              value: essentialsx,luckperms,coreprotect,chunky,spark,viaversion,viabackwards,vaultunlocked:2.18.0
+              value: essentialsx,luckperms,chunky,spark,viaversion,viabackwards,vaultunlocked:2.18.0
             - name: MODRINTH_DOWNLOAD_DEPENDENCIES
               value: none
           ports:
