@@ -18,6 +18,14 @@ spec:
       labels:
         app: website
     spec:
+      # nginx uid/gid 101; fsGroup makes the emptyDirs writable to it.
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101
+        runAsGroup: 101
+        fsGroup: 101
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: website
           # renovate: datasource=docker depName=ghcr.io/alex-senger/personal-website
@@ -28,11 +36,22 @@ spec:
             httpGet:
               path: /
               port: 80
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+              add: [NET_BIND_SERVICE]  # bind :80 as non-root
           volumeMounts:
             # CV PDFs live in the PVC (populated out-of-band); nginx only reads.
             - name: downloads
               mountPath: /usr/share/nginx/html/downloads
               readOnly: true
+            # nginx writes its pid and temp dirs; rootfs is read-only.
+            - name: run
+              mountPath: /run
+            - name: cache
+              mountPath: /var/cache/nginx
           resources:
             requests:
               cpu: 10m
@@ -43,3 +62,7 @@ spec:
         - name: downloads
           persistentVolumeClaim:
             claimName: website-downloads
+        - name: run
+          emptyDir: {}
+        - name: cache
+          emptyDir: {}
