@@ -113,8 +113,10 @@ spec:
               drop: [ALL]
           resources:
             # No CPU limit: a hard cap throttles the tick thread and tanks TPS.
+            # Request is a scheduling floor only (single node ~3950m allocatable,
+            # ~1700m free); the single-threaded tick still bursts onto idle cores.
             requests:
-              cpu: "2"
+              cpu: "1"
               memory: 6500Mi
             limits:
               memory: 8Gi
