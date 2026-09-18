@@ -60,8 +60,6 @@ spec:
             limits:
               cpu: 100m
               memory: 64Mi
-        # L4 byte relay from the tunnel to the Minecraft server (raw TCP, not
-        # HTTP/SNI, so it bypasses the Gateway). VPS stream :25565 -> here.
         - name: relay-minecraft
           # renovate: datasource=docker depName=alpine/socat
           image: alpine/socat:1.8.1.3

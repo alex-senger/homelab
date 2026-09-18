@@ -4,12 +4,8 @@ metadata:
   name: minecraft
   namespace: minecraft
   annotations:
-    # Pin a free LAN IP from the .3-.9 pool (.3 Gateway, .4 Grafana taken).
     io.cilium/lb-ipam-ips: "192.168.178.5"
 spec:
-  # LoadBalancer for LAN play at .5:25565. External play reaches the same
-  # Service via the wg-ingress :25565 relay (see infrastructure/wg-ingress).
-  # RCON (25575) is deliberately NOT exposed — admin via kubectl exec only.
   type: LoadBalancer
   selector:
     app: minecraft
