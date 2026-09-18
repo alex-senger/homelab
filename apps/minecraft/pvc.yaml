@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: minecraft-data
+  namespace: minecraft
+spec:
+  accessModes:
+    - ReadWriteOnce
+  # Retain so a PVC delete never takes the world with it. Auto-covered by the
+  # longhorn daily-backup (group `default`, retain 7) -> off-disk to Garage.
+  storageClassName: longhorn-retain
+  resources:
+    requests:
+      storage: 20Gi

@@ -23,6 +23,8 @@ spec:
       namespace: authelia
     - server: https://kubernetes.default.svc
       namespace: nextcloud
+    - server: https://kubernetes.default.svc
+      namespace: minecraft
 
   # Namespace only: apps own their namespace, but no other cluster-scoped
   # resource (no CRDs, ClusterRoles, or bindings — no escalation path).

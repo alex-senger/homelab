@@ -1,0 +1,126 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minecraft
+  namespace: minecraft
+  labels:
+    app: minecraft
+spec:
+  replicas: 1
+  # RWO world volume on a single node: Recreate avoids rollout multi-attach.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: minecraft
+  template:
+    metadata:
+      labels:
+        app: minecraft
+    spec:
+      # itzg image runs as uid/gid 1000; fsGroup makes the world PVC writable.
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: minecraft
+          # java25 tag: 26.3 requires JDK 25.
+          # renovate: datasource=docker depName=itzg/minecraft-server
+          image: itzg/minecraft-server:java25
+          env:
+            - name: EULA
+              value: "TRUE"
+            - name: TYPE
+              value: PAPER
+            - name: VERSION
+              value: "26.3"
+            - name: TZ
+              value: Etc/UTC
+            # ~6G heap + Aikar's GC flags; container limit leaves off-heap room.
+            - name: MEMORY
+              value: 6G
+            - name: USE_AIKAR_FLAGS
+              value: "true"
+            - name: ONLINE_MODE
+              value: "TRUE"
+            # Public server: whitelist is the access gate (usernames from secret,
+            # resolved to UUIDs against Mojang at boot). OVERRIDE keeps the file
+            # in sync with the secret so removing a name revokes access.
+            - name: ENFORCE_WHITELIST
+              value: "TRUE"
+            - name: OVERRIDE_WHITELIST
+              value: "TRUE"
+            - name: WHITELIST
+              valueFrom:
+                secretKeyRef:
+                  name: minecraft-access
+                  key: whitelist
+            - name: OPS
+              valueFrom:
+                secretKeyRef:
+                  name: minecraft-access
+                  key: ops
+            - name: RCON_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: minecraft-access
+                  key: rcon-password
+            # Tuned down for the Ivy Bridge single core (tick is single-threaded).
+            - name: VIEW_DISTANCE
+              value: "10"
+            - name: SIMULATION_DISTANCE
+              value: "7"
+            - name: MAX_PLAYERS
+              value: "10"
+            - name: MOTD
+              value: "senger-solutions"
+            # Auto-fetch plugins from Modrinth, matched to the server version.
+            # vaultunlocked pinned: it's a version-agnostic API bridge and a fresh
+            # MC drop may lack its game-version metadata (would fail auto-match).
+            - name: MODRINTH_PROJECTS
+              value: essentialsx,luckperms,coreprotect,chunky,spark,viaversion,viabackwards,vaultunlocked:2.18.0
+            - name: MODRINTH_DOWNLOAD_DEPENDENCIES
+              value: none
+          ports:
+            - name: mc
+              containerPort: 25565
+            - name: rcon
+              containerPort: 25575
+          # World gen + first-run plugin downloads are slow on this CPU; give the
+          # startup probe a long budget before liveness takes over.
+          startupProbe:
+            exec:
+              command: [mc-health]
+            periodSeconds: 10
+            failureThreshold: 60
+          livenessProbe:
+            exec:
+              command: [mc-health]
+            periodSeconds: 30
+            failureThreshold: 5
+          readinessProbe:
+            exec:
+              command: [mc-health]
+            periodSeconds: 20
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          resources:
+            # No CPU limit: a hard cap throttles the tick thread and tanks TPS.
+            requests:
+              cpu: "2"
+              memory: 6500Mi
+            limits:
+              memory: 8Gi
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: minecraft-data

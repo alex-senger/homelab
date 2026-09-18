@@ -60,6 +60,22 @@ spec:
             limits:
               cpu: 100m
               memory: 64Mi
+        # L4 byte relay from the tunnel to the Minecraft server (raw TCP, not
+        # HTTP/SNI, so it bypasses the Gateway). VPS stream :25565 -> here.
+        - name: relay-minecraft
+          # renovate: datasource=docker depName=alpine/socat
+          image: alpine/socat:1.8.1.3
+          args:
+            - -d
+            - TCP-LISTEN:25565,fork,reuseaddr
+            - TCP:minecraft.minecraft.svc.cluster.local:25565
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
       volumes:
         # wg0.conf: client tunnel config, hand-created out-of-band; never committed.
         - name: wg-config
