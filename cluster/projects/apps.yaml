@@ -24,6 +24,7 @@ spec:
     - server: https://kubernetes.default.svc
       namespace: nextcloud
 
+
   # Namespace only: apps own their namespace, but no other cluster-scoped
   # resource (no CRDs, ClusterRoles, or bindings — no escalation path).
   clusterResourceWhitelist:
