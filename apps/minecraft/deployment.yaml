@@ -36,8 +36,11 @@ spec:
               value: "TRUE"
             - name: TYPE
               value: PAPER
+            # 26.1.2, not the newest 26.3: it's the latest MC where BOTH
+            # EssentialsX and CoreProtect have Modrinth builds (they lag the
+            # year-versioned releases). Bump as the plugin ecosystem catches up.
             - name: VERSION
-              value: "26.3"
+              value: "26.1.2"
             - name: TZ
               value: Etc/UTC
             # ~6G heap + Aikar's GC flags; container limit leaves off-heap room.
@@ -78,13 +81,14 @@ spec:
               value: "10"
             - name: MOTD
               value: "senger-solutions"
-            # Auto-fetch plugins from Modrinth, matched to the server version.
-            # vaultunlocked pinned: it's a version-agnostic API bridge and a fresh
-            # MC drop may lack its game-version metadata (would fail auto-match).
-            # coreprotect deferred: no 26.3 build yet (latest supports <=26.1.2);
-            # an unresolved plugin aborts startup, so re-add once it updates.
+            # Auto-fetch plugins from Modrinth, matched to VERSION. An unresolved
+            # plugin aborts startup, so every entry must have a 26.1.2 build.
             - name: MODRINTH_PROJECTS
-              value: essentialsx,luckperms,chunky,spark,viaversion,viabackwards,vaultunlocked:2.18.0
+              value: essentialsx,luckperms,coreprotect,chunky,viaversion,viabackwards,vaultunlocked
+            # spark isn't published on Modrinth for the Paper loader; pull it from
+            # SpigotMC (id 57242) via Spiget, which doesn't game-version filter.
+            - name: SPIGET_RESOURCES
+              value: "57242"
             - name: MODRINTH_DOWNLOAD_DEPENDENCIES
               value: none
           ports:
