@@ -1,6 +1,6 @@
 image:
   repository: nextcloud
-  tag: 34.0.0-apache
+  tag: 35.0.0-apache
 
 replicaCount: 1
 
