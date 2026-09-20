@@ -8,6 +8,7 @@ resources:
   - grafana-externalsecret.yaml
   - grafana-oidc-externalsecret.yaml
   - grafana-httproute.yaml
+  - alerting-externalsecret.yaml
   - scrapes/cert-manager.yaml
   - scrapes/cilium-envoy.yaml
   - scrapes/hubble.yaml
