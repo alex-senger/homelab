@@ -58,9 +58,6 @@ vmalert:
       limits: { memory: 128Mi }
 alertmanager:
   enabled: true
-  # Full routing config (recipient, Resend key, healthchecks URL from OpenBao)
-  # is rendered by the alerting ExternalSecret into this Secret's
-  # alertmanager.yaml; configSecret makes the operator use it verbatim.
   spec:
     configSecret: alertmanager-config
     selectAllByDefault: false        # config fully supplied; don't merge VMAlertmanagerConfig CRs
