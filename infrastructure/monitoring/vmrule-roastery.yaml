@@ -69,18 +69,6 @@ spec:
           for: 15m
           labels: { severity: warning }
           annotations: { summary: "PVC {{ $labels.namespace }}/{{ $labels.persistentvolumeclaim }} pending" }
-    - name: longhorn
-      rules:
-        - alert: LonghornVolumeDegraded
-          expr: longhorn_volume_robustness == 2
-          for: 10m
-          labels: { severity: warning }
-          annotations: { summary: "Longhorn volume {{ $labels.volume }} degraded" }
-        - alert: LonghornVolumeFaulted
-          expr: longhorn_volume_robustness == 3
-          for: 1m
-          labels: { severity: critical }
-          annotations: { summary: "Longhorn volume {{ $labels.volume }} faulted" }
     - name: cnpg
       rules:
         - alert: CNPGInstanceDown

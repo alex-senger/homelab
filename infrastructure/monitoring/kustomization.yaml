@@ -13,7 +13,6 @@ resources:
   - scrapes/cert-manager.yaml
   - scrapes/cilium-envoy.yaml
   - scrapes/hubble.yaml
-  - scrapes/longhorn.yaml
 
 helmCharts:
   - name: victoria-metrics-k8s-stack
