@@ -38,3 +38,10 @@ spec:
       name: vm-victoria-metrics-operator-validation
       jsonPointers:
         - /data
+    # The VMRule CRD defaults an empty `record: ""` onto every alert rule
+    # (rules are alert-or-record); it's absent from the rendered manifest, so
+    # every rule diffs. Ignore it.
+    - group: operator.victoriametrics.com
+      kind: VMRule
+      jqPathExpressions:
+        - '.spec.groups[].rules[].record'
