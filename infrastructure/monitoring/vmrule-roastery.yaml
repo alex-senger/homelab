@@ -1,0 +1,125 @@
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: roastery
+  namespace: monitoring
+spec:
+  groups:
+    - name: node
+      rules:
+        - alert: NodeNotReady
+          expr: kube_node_status_condition{condition="Ready",status="true"} == 0
+          for: 5m
+          labels: { severity: critical }
+          annotations: { summary: "Node {{ $labels.node }} not Ready" }
+        - alert: NodeMemoryPressure
+          expr: kube_node_status_condition{condition="MemoryPressure",status="true"} == 1
+          for: 5m
+          labels: { severity: warning }
+          annotations: { summary: "Node {{ $labels.node }} under memory pressure" }
+        - alert: NodeDiskPressure
+          expr: kube_node_status_condition{condition="DiskPressure",status="true"} == 1
+          for: 5m
+          labels: { severity: warning }
+          annotations: { summary: "Node {{ $labels.node }} under disk pressure" }
+        - alert: HostMemoryLow
+          expr: 100 * node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes < 10
+          for: 15m
+          labels: { severity: warning }
+          annotations: { summary: "Host memory available < 10%" }
+    - name: filesystem
+      rules:
+        - alert: HostFilesystemFillingUp
+          expr: |
+            100 * node_filesystem_avail_bytes{fstype!~"tmpfs|overlay|ramfs|squashfs"}
+            / node_filesystem_size_bytes{fstype!~"tmpfs|overlay|ramfs|squashfs"} < 15
+          for: 15m
+          labels: { severity: warning }
+          annotations: { summary: "{{ $labels.mountpoint }} on {{ $labels.instance }} < 15% free" }
+        - alert: HostFilesystemAlmostFull
+          expr: |
+            100 * node_filesystem_avail_bytes{fstype!~"tmpfs|overlay|ramfs|squashfs"}
+            / node_filesystem_size_bytes{fstype!~"tmpfs|overlay|ramfs|squashfs"} < 5
+          for: 5m
+          labels: { severity: critical }
+          annotations: { summary: "{{ $labels.mountpoint }} on {{ $labels.instance }} < 5% free" }
+        - alert: HostFilesystemWillFillIn4h
+          expr: |
+            predict_linear(node_filesystem_avail_bytes{fstype!~"tmpfs|overlay|ramfs|squashfs"}[6h], 4*3600) < 0
+            and
+            100 * node_filesystem_avail_bytes{fstype!~"tmpfs|overlay|ramfs|squashfs"}
+            / node_filesystem_size_bytes{fstype!~"tmpfs|overlay|ramfs|squashfs"} < 30
+          for: 1h
+          labels: { severity: warning }
+          annotations: { summary: "{{ $labels.mountpoint }} on {{ $labels.instance }} predicted full within 4h" }
+    - name: storage
+      rules:
+        - alert: PVCFillingUp
+          expr: 100 * kubelet_volume_stats_available_bytes / kubelet_volume_stats_capacity_bytes < 15
+          for: 15m
+          labels: { severity: warning }
+          annotations: { summary: "PVC {{ $labels.namespace }}/{{ $labels.persistentvolumeclaim }} < 15% free" }
+        - alert: PVCAlmostFull
+          expr: 100 * kubelet_volume_stats_available_bytes / kubelet_volume_stats_capacity_bytes < 5
+          for: 5m
+          labels: { severity: critical }
+          annotations: { summary: "PVC {{ $labels.namespace }}/{{ $labels.persistentvolumeclaim }} < 5% free" }
+        - alert: PVCPending
+          expr: kube_persistentvolumeclaim_status_phase{phase="Pending"} == 1
+          for: 15m
+          labels: { severity: warning }
+          annotations: { summary: "PVC {{ $labels.namespace }}/{{ $labels.persistentvolumeclaim }} pending" }
+    - name: longhorn
+      rules:
+        - alert: LonghornVolumeDegraded
+          expr: longhorn_volume_robustness == 2
+          for: 10m
+          labels: { severity: warning }
+          annotations: { summary: "Longhorn volume {{ $labels.volume }} degraded" }
+        - alert: LonghornVolumeFaulted
+          expr: longhorn_volume_robustness == 3
+          for: 1m
+          labels: { severity: critical }
+          annotations: { summary: "Longhorn volume {{ $labels.volume }} faulted" }
+    - name: cnpg
+      rules:
+        - alert: CNPGInstanceDown
+          expr: cnpg_collector_up == 0
+          for: 5m
+          labels: { severity: critical }
+          annotations: { summary: "CNPG instance {{ $labels.pod }} unreachable" }
+        - alert: CNPGWALArchiveStuck
+          expr: cnpg_collector_pg_wal_archive_status{value="ready"} > 0
+          for: 15m
+          labels: { severity: critical }
+          annotations: { summary: "CNPG {{ $labels.namespace }}/{{ $labels.pod }}: WAL archive backlog (continuous backup stuck)" }
+    - name: workloads
+      rules:
+        - alert: PodCrashLooping
+          expr: increase(kube_pod_container_status_restarts_total[1h]) > 5
+          for: 15m
+          labels: { severity: warning }
+          annotations: { summary: "{{ $labels.namespace }}/{{ $labels.pod }} container {{ $labels.container }} crashlooping" }
+        - alert: DeploymentReplicasUnavailable
+          expr: kube_deployment_status_replicas_unavailable > 0
+          for: 15m
+          labels: { severity: warning }
+          annotations: { summary: "Deployment {{ $labels.namespace }}/{{ $labels.deployment }} has unavailable replicas" }
+        - alert: StatefulSetReplicasUnavailable
+          expr: kube_statefulset_status_replicas_ready < kube_statefulset_status_replicas
+          for: 15m
+          labels: { severity: warning }
+          annotations: { summary: "StatefulSet {{ $labels.namespace }}/{{ $labels.statefulset }} has unready replicas" }
+    - name: cert-manager
+      rules:
+        - alert: CertificateExpiringSoon
+          expr: (certmanager_certificate_expiration_timestamp_seconds - time()) < 7 * 24 * 3600
+          for: 1h
+          labels: { severity: warning }
+          annotations: { summary: "Certificate {{ $labels.namespace }}/{{ $labels.name }} expires in < 7d (renewal failing?)" }
+    - name: watchdog
+      rules:
+        - alert: Watchdog
+          expr: vector(1)
+          labels: { severity: none }
+          annotations: { summary: "Alerting pipeline heartbeat — always firing" }

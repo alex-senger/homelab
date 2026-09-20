@@ -48,13 +48,32 @@ vmagent:
       limits:
         memory: 256Mi
 
-# --- Alerting: deferred (spec §10) ---
-alertmanager:
-  enabled: false
+# --- Alerting ---
 vmalert:
-  enabled: false
+  enabled: true
+  spec:
+    evaluationInterval: 30s
+    resources:
+      requests: { cpu: 25m, memory: 64Mi }
+      limits: { memory: 128Mi }
+alertmanager:
+  enabled: true
+  spec:
+    configSecret: alertmanager-config
+    selectAllByDefault: false        # config fully supplied; don't merge VMAlertmanagerConfig CRs
+    storage:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: longhorn-retain   # silences + nflog survive reboots
+          accessModes: [ReadWriteOnce]
+          resources:
+            requests:
+              storage: 1Gi
+    resources:
+      requests: { cpu: 25m, memory: 64Mi }
+      limits: { memory: 128Mi }
 defaultRules:
-  enabled: false                    # no evaluator without vmalert
+  enabled: false                     # using the curated VMRule instead
 
 # --- Grafana ---
 grafana:
