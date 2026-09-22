@@ -1,0 +1,33 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: databases
+spec:
+  endpointSelector: {}
+  ingress:
+    # intra-namespace: instance ↔ instance / barman sidecar
+    - fromEndpoints:
+        - {}
+    # app clients → Postgres
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: authelia
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: nextcloud
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+    # CNPG operator manages the instances (5432 + instance-manager 8000) — all ports
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: cnpg-system
+    # VMAgent scrapes CNPG metrics
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: monitoring
+      toPorts:
+        - ports:
+            - port: "9187"
+              protocol: TCP
