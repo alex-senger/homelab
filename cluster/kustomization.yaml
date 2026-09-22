@@ -35,3 +35,4 @@ resources:
   - applications/website.yaml
   - applications/minecraft.yaml
   - applications/network-policies.yaml
+  - applications/trivy-operator.yaml
