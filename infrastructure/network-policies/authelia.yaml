@@ -9,8 +9,10 @@ spec:
     # intra-namespace
     - fromEndpoints:
         - {}
-    # Gateway/Envoy (host identity per Task-6 probe): OIDC + ext-authz forward-auth
+    # Gateway/Envoy proxies L7 gateway traffic with the reserved `ingress` identity
+    # (OIDC discovery/token + ext-authz forward-auth); `host` kept for node-sourced paths.
     - fromEntities:
+        - ingress
         - host
       toPorts:
         - ports:
