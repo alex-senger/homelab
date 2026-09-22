@@ -3,3 +3,4 @@ kind: Kustomization
 resources:
   - openbao.yaml
   - external-secrets.yaml
+  - cnpg-system.yaml
