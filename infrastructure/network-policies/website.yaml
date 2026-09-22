@@ -6,7 +6,6 @@ metadata:
 spec:
   endpointSelector: {}
   egress:
-    # DNS only — a static site serves inbound (conntrack replies), needs no other egress
     - toEndpoints:
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: kube-system
