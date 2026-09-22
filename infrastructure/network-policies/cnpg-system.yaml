@@ -1,0 +1,14 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: cnpg-system
+spec:
+  endpointSelector: {}
+  ingress:
+    # intra-namespace: operator ↔ barman-cloud plugin (gRPC)
+    - fromEndpoints:
+        - {}
+    # kube-apiserver calls the CNPG validating/mutating webhook
+    - fromEntities:
+        - kube-apiserver
