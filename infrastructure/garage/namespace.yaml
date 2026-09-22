@@ -3,7 +3,6 @@ kind: Namespace
 metadata:
   name: garage
   labels:
-    # baseline: garage runs as root writing the HDD-backed PV; restricted (non-root) risks the backup target's volume perms.
     pod-security.kubernetes.io/enforce: baseline
     pod-security.kubernetes.io/warn: restricted
     pod-security.kubernetes.io/audit: restricted
