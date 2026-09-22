@@ -1,0 +1,20 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: argocd
+spec:
+  endpointSelector: {}
+  ingress:
+    # intra-namespace: server ↔ repo-server ↔ application-controller ↔ redis ↔ applicationset
+    - fromEndpoints:
+        - {}
+    # Gateway/Envoy → argocd-server (LAN HTTPRoute). L7-proxied gateway traffic
+    # carries the reserved `ingress` identity (verified live on authelia); `host` kept too.
+    - fromEntities:
+        - ingress
+        - host
+      toPorts:
+        - ports:
+            - port: "80"
+              protocol: TCP
