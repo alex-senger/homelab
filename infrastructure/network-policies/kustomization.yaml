@@ -4,3 +4,4 @@ resources:
   - openbao.yaml
   - external-secrets.yaml
   - cnpg-system.yaml
+  - databases.yaml
