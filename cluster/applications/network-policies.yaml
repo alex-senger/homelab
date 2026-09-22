@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: network-policies
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "26"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: infrastructure
+  source:
+    repoURL: https://github.com/alex-senger/homelab.git
+    targetRevision: main
+    path: infrastructure/network-policies
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default        # ignored — every CNP sets its own metadata.namespace
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
+      - CreateNamespace=false

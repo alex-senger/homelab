@@ -1,0 +1,19 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: openbao
+spec:
+  endpointSelector: {}
+  ingress:
+    # intra-namespace: unsealer + config Job → openbao (all ports)
+    - fromEndpoints:
+        - {}
+    # External Secrets Operator reads secrets over the Vault API
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: external-secrets
+      toPorts:
+        - ports:
+            - port: "8200"
+              protocol: TCP
