@@ -34,3 +34,4 @@ resources:
   - applications/coredns.yaml
   - applications/website.yaml
   - applications/minecraft.yaml
+  - applications/network-policies.yaml
