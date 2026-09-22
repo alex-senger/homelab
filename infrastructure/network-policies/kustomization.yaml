@@ -6,3 +6,4 @@ resources:
   - cnpg-system.yaml
   - databases.yaml
   - garage.yaml
+  - authelia.yaml

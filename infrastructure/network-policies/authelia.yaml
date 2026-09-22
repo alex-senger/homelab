@@ -1,0 +1,18 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: authelia
+spec:
+  endpointSelector: {}
+  ingress:
+    # intra-namespace
+    - fromEndpoints:
+        - {}
+    # Gateway/Envoy (host identity per Task-6 probe): OIDC + ext-authz forward-auth
+    - fromEntities:
+        - host
+      toPorts:
+        - ports:
+            - port: "9091"
+              protocol: TCP
