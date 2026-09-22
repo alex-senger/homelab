@@ -1,0 +1,21 @@
+# Image-vulnerability scanning ONLY; other scanners off to spare the host.
+operator:
+  vulnerabilityScannerEnabled: true
+  configAuditScannerEnabled: false
+  exposedSecretScannerEnabled: false
+  rbacAssessmentScannerEnabled: false
+  infraAssessmentScannerEnabled: false
+  clusterComplianceEnabled: false
+  scanJobsConcurrentLimit: 1        # weak host: one scan at a time (default 10)
+  scannerReportTTL: "24h"
+  metricsVulnIdEnabled: false       # per-CVE-id metrics = high cardinality; keep off
+
+trivy:
+  mode: Standalone
+  resources:
+    requests: { cpu: 100m, memory: 100M }
+    limits:   { cpu: 500m, memory: 500M }
+
+# We scrape via our own VMServiceScrape, not a Prometheus ServiceMonitor.
+serviceMonitor:
+  enabled: false
