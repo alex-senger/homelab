@@ -7,3 +7,4 @@ resources:
   - databases.yaml
   - garage.yaml
   - authelia.yaml
+  - argocd.yaml
