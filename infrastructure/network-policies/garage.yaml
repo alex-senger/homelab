@@ -1,0 +1,21 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: garage
+spec:
+  endpointSelector: {}
+  ingress:
+    # intra-namespace: RPC / self
+    - fromEndpoints:
+        - {}
+    # Longhorn backups + CNPG WAL/base-backup sidecar → S3 API
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: longhorn-system
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: databases
+      toPorts:
+        - ports:
+            - port: "3900"
+              protocol: TCP

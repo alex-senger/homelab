@@ -5,3 +5,4 @@ resources:
   - external-secrets.yaml
   - cnpg-system.yaml
   - databases.yaml
+  - garage.yaml
