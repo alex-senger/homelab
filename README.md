@@ -30,6 +30,7 @@
 | Database | **CloudNativePG** (Postgres); WAL + PITR to Garage |
 | Observability | **VictoriaMetrics** + **Grafana** + Hubble |
 | SSO | **Authelia** |
+| Network policy | **Cilium** ingress default-deny on secrets, DB, backups & control-plane |
 
 ## Layout
 
