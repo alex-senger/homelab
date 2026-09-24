@@ -1,0 +1,23 @@
+---
+# Rate-limit SSH: ufw's LIMIT bans a source exceeding 6 connections in 30s. Replaces the
+# plain allow on 22/tcp; touches no other rule.
+- name: Rate-limit SSH (ufw limit 22/tcp)
+  community.general.ufw:
+    rule: limit
+    port: "22"
+    proto: tcp
+    comment: "SSH (rate-limited)"
+
+# Remove stale rules from decommissioned services — OFF unless the operator has confirmed
+# each service is dead and set hardening_remove_stale_rules=true.
+- name: Remove stale ufw rules (decommissioned services)
+  community.general.ufw:
+    delete: true
+    rule: "{{ item.rule }}"
+    port: "{{ item.port }}"
+    proto: "{{ item.proto }}"
+  loop: "{{ hardening_stale_ufw_rules }}"
+  when: hardening_remove_stale_rules | bool
+
+# Note: tailscale0-bound rules (8120/8060) aren't expressible as a clean ufw-module delete
+# for "allow in on <iface>". The operator removes those by hand per the runbook.

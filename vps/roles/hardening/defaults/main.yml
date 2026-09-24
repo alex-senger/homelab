@@ -1,0 +1,14 @@
+---
+# Admin source IPs to whitelist in CrowdSec so a fat-fingered SSH can't self-ban.
+# Leave empty to rely only on the private-range whitelist; add your static home/office IP(s).
+hardening_admin_whitelist_ips: []
+
+# Destructive ops are OFF by default — the operator enables them AFTER verifying CrowdSec.
+hardening_remove_stale_rules: false
+hardening_retire_fail2ban: false
+
+# Stale ufw rules from decommissioned services (Pangolin/Newt/Tailscale), removed only
+# when hardening_remove_stale_rules=true. Each is a named, surgical delete.
+hardening_stale_ufw_rules:
+  - { rule: allow, port: "51820", proto: udp }   # Newt tunnel (decommissioned)
+  - { rule: allow, port: "21820", proto: udp }   # Pangolin control (decommissioned)

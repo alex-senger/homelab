@@ -1,0 +1,14 @@
+---
+- name: Reload sshd
+  ansible.builtin.systemd:
+    name: ssh
+    state: reloaded
+
+- name: Apply sysctl
+  ansible.builtin.command: sysctl --system
+  changed_when: false
+
+- name: Reload crowdsec
+  ansible.builtin.systemd:
+    name: crowdsec
+    state: reloaded

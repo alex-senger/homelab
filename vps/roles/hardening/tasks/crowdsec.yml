@@ -1,0 +1,62 @@
+---
+- name: Add CrowdSec apt repository
+  ansible.builtin.deb822_repository:
+    name: crowdsec
+    types: [deb]
+    uris: "https://packagecloud.io/crowdsec/crowdsec/debian"
+    suites: "{{ ansible_distribution_release }}"
+    components: [main]
+    signed_by: "https://packagecloud.io/crowdsec/crowdsec/gpgkey"
+    state: present
+  register: crowdsec_repo
+
+- name: Update apt cache after adding CrowdSec repo
+  ansible.builtin.apt:
+    update_cache: true
+  when: crowdsec_repo is changed
+
+- name: Install CrowdSec + firewall bouncer
+  ansible.builtin.apt:
+    name:
+      - crowdsec
+      - crowdsec-firewall-bouncer-iptables
+    state: present
+
+- name: Install CrowdSec collections
+  ansible.builtin.command: "cscli collections install {{ item }}"
+  args:
+    creates: "/etc/crowdsec/collections/{{ item | basename }}.yaml"
+  loop:
+    - crowdsecurity/sshd
+    - crowdsecurity/linux
+    - crowdsecurity/iptables
+    - crowdsecurity/whitelists
+  notify: Reload crowdsec
+
+- name: Deploy admin whitelist
+  ansible.builtin.template:
+    src: whitelist-admin.yaml.j2
+    dest: /etc/crowdsec/parsers/s02-enrich/hardening-admin-whitelist.yaml
+    owner: root
+    group: root
+    mode: "0644"
+  when: hardening_admin_whitelist_ips | length > 0
+  notify: Reload crowdsec
+
+- name: Enable and start CrowdSec + bouncer
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+  loop:
+    - crowdsec
+    - crowdsec-firewall-bouncer
+
+# Retire fail2ban only after CrowdSec is verified — OFF unless hardening_retire_fail2ban=true.
+- name: Retire fail2ban (CrowdSec replaces it)
+  ansible.builtin.systemd:
+    name: fail2ban
+    enabled: false
+    state: stopped
+  when: hardening_retire_fail2ban | bool
+  failed_when: false

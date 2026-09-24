@@ -1,0 +1,9 @@
+# Managed by Ansible (hardening role). Whitelists admin source IPs so remediation can't self-ban.
+name: hardening/admin-whitelist
+description: "Whitelist operator admin IPs"
+whitelist:
+  reason: "operator admin IPs"
+  ip:
+{% for ip in hardening_admin_whitelist_ips %}
+    - "{{ ip }}"
+{% endfor %}
