@@ -18,7 +18,6 @@ spec:
       labels:
         app: website
     spec:
-      # private ghcr.io image → pull secret rendered by ESO from OpenBao secret/website/ghcr.
       imagePullSecrets:
         - name: ghcr-pull
       # nginx uid/gid 101; fsGroup makes the emptyDirs writable to it.
