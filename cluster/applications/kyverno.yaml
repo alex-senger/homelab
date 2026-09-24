@@ -5,8 +5,6 @@ metadata:
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "28"
-    # ServerSideDiff: Kyverno's large CEL-policy CRDs + Kyverno-mutated ClusterPolicies
-    # show false OutOfSync under ArgoCD's legacy diff though they match under SSA.
     argocd.argoproj.io/compare-options: ServerSideDiff=true
   finalizers:
     - resources-finalizer.argocd.argoproj.io
