@@ -1,6 +1,3 @@
-# Secure-by-default: every newly created namespace gets an ingress-locked CiliumNetworkPolicy
-# until explicit allows are added. Only new namespaces (generateExisting: false) — existing
-# namespaces are untouched and already covered by their own explicit netpols.
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:

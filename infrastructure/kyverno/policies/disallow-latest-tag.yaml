@@ -1,6 +1,3 @@
-# Audit-only: deny images with no tag or an explicit ":latest" tag.
-# Canonical: https://github.com/kyverno/policies (best-practices/disallow-latest-tag), adapted to the
-# Kyverno 1.19 per-rule validate.failureAction API (spec-level validationFailureAction is deprecated).
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
