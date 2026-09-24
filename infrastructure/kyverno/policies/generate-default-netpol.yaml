@@ -1,0 +1,43 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: generate-default-netpol
+  annotations:
+    policies.kyverno.io/title: Generate Default-Deny Ingress NetworkPolicy
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/subject: Namespace, CiliumNetworkPolicy
+    policies.kyverno.io/description: >-
+      Generates a default-deny-ingress CiliumNetworkPolicy in every new namespace so
+      that ingress is locked to intra-namespace traffic until explicit allows are added.
+spec:
+  background: true
+  rules:
+    - name: default-deny-ingress
+      match:
+        any:
+          - resources:
+              kinds:
+                - Namespace
+      exclude:
+        any:
+          - resources:
+              names:
+                - kube-system
+                - kyverno
+                - monitoring
+                - longhorn-system
+                - wg-ingress
+      generate:
+        apiVersion: cilium.io/v2
+        kind: CiliumNetworkPolicy
+        name: default-deny-ingress
+        namespace: "{{request.object.metadata.name}}"
+        synchronize: true
+        generateExisting: false
+        data:
+          spec:
+            endpointSelector: {}
+            ingress:
+              - fromEndpoints:
+                  - {}

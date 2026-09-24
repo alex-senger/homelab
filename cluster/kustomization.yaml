@@ -36,3 +36,4 @@ resources:
   - applications/minecraft.yaml
   - applications/network-policies.yaml
   - applications/trivy-operator.yaml
+  - applications/kyverno.yaml
