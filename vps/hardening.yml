@@ -1,0 +1,15 @@
+---
+# Standalone entrypoint: harden any Debian VPS with just the `hardening` role.
+# On a brand-new box, set `hardening_manage_ufw=true` to stand up the baseline firewall.
+#
+#   ansible-galaxy collection install -r requirements.yml
+#   ansible-playbook hardening.yml -i 203.0.113.10, -u root -e hardening_manage_ufw=true
+#
+# or target a group from your own inventory (see hardening.inventory.example.ini).
+# Apply staged with --tags (sshd / sysctl,upgrades / crowdsec / firewall); see
+# docs/runbooks/vps-hardening.md for the lockout-safe order.
+- name: Harden a Debian VPS
+  hosts: all
+  become: true
+  roles:
+    - hardening

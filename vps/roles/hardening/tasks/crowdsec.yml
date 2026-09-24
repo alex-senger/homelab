@@ -8,12 +8,6 @@
     components: [main]
     signed_by: "https://packagecloud.io/crowdsec/crowdsec/gpgkey"
     state: present
-  register: crowdsec_repo
-
-- name: Update apt cache after adding CrowdSec repo
-  ansible.builtin.apt:
-    update_cache: true
-  when: crowdsec_repo is changed
 
 - name: Install CrowdSec + firewall bouncer
   ansible.builtin.apt:
@@ -21,6 +15,7 @@
       - crowdsec
       - crowdsec-firewall-bouncer-iptables
     state: present
+    update_cache: true
 
 - name: Install CrowdSec collections
   ansible.builtin.command: "cscli collections install {{ item }}"
@@ -52,3 +47,10 @@
     - crowdsec
     - crowdsec-firewall-bouncer
 
+- name: Retire fail2ban (CrowdSec replaces it)
+  ansible.builtin.systemd:
+    name: fail2ban
+    enabled: false
+    state: stopped
+  when: hardening_retire_fail2ban | bool
+  failed_when: false

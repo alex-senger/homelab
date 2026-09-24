@@ -1,16 +1,16 @@
 ---
-- name: sshd hardening
+- name: Harden sshd
   ansible.builtin.import_tasks: sshd.yml
   tags: [sshd]
 
-- name: sysctl + unattended-upgrades
+- name: Apply sysctl and unattended-upgrades
   ansible.builtin.import_tasks: sysctl_upgrades.yml
   tags: [sysctl, upgrades]
 
-- name: CrowdSec
+- name: Install and configure CrowdSec
   ansible.builtin.import_tasks: crowdsec.yml
   tags: [crowdsec]
 
-- name: ufw rate-limit + stale-rule cleanup
+- name: Configure ufw
   ansible.builtin.import_tasks: ufw.yml
   tags: [firewall]

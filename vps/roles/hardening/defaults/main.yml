@@ -1,6 +1,15 @@
 ---
+# Stand up a baseline ufw firewall on a fresh host: default-deny incoming, allow outgoing,
+# allow + rate-limit SSH, then enable ufw. Leave false on a host whose ufw the operator
+# already manages (the role then only adds the SSH rate-limit and any deletes below).
+hardening_manage_ufw: false
+
+# ufw rules to delete (e.g. leftovers from a decommissioned service). Empty = no-op.
+# Each item: {rule, port, proto}. Interface-bound rules can't be expressed here.
+hardening_ufw_delete_rules: []
+
+# Admin source IPs whitelisted in CrowdSec so remediation can't self-ban you.
 hardening_admin_whitelist_ips: []
 
-hardening_remove_stale_rules: false
+# Retire fail2ban (CrowdSec replaces it) — enable only after CrowdSec is verified.
 hardening_retire_fail2ban: false
-

@@ -58,8 +58,8 @@ Verify:
   limit dead weight).
 - Current session survives.
 
-Leave `hardening_remove_stale_rules=false` for now — stale-rule cleanup is last, after
-CrowdSec is verified.
+Leave `hardening_ufw_delete_rules` empty for now — rule cleanup is last, after CrowdSec is
+verified. `hardening_manage_ufw` stays `false` on this box (ufw is already operator-managed).
 
 ### 4. CrowdSec (replaces fail2ban)
 
@@ -98,10 +98,13 @@ Verify:
 
 Only once Pangolin/Newt/Tailscale are confirmed truly decommissioned.
 
-    # set hardening_remove_stale_rules=true in group_vars/vps.yml
+    # in group_vars/vps.yml:
+    # hardening_ufw_delete_rules:
+    #   - { rule: allow, port: "51820", proto: udp }   # Newt (decommissioned)
+    #   - { rule: allow, port: "21820", proto: udp }   # Pangolin control (decommissioned)
     ansible-playbook playbook.yml --tags firewall
 
-This removes the automated rules (`51820/udp`, `21820/udp`). The `tailscale0`-bound rules
+This removes the listed rules (`51820/udp`, `21820/udp`). The `tailscale0`-bound rules
 (`8120`, `8060`) aren't expressible as a plain ufw delete — remove them by hand, v4 and v6:
 
     sudo ufw delete allow in on tailscale0 to any port 8120

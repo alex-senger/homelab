@@ -1,0 +1,18 @@
+---
+galaxy_info:
+  author: asg
+  description: Baseline hardening for a Debian VPS — sshd, sysctl, unattended-upgrades, CrowdSec, ufw.
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Debian
+      versions:
+        - bookworm
+        - trixie
+  galaxy_tags:
+    - hardening
+    - security
+    - ssh
+    - ufw
+    - crowdsec
+dependencies: []

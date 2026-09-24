@@ -1,4 +1,18 @@
 ---
+# Baseline firewall for a fresh host (optional). Default-deny incoming + allow outgoing.
+# The SSH allow/limit below runs before "Enable ufw", so enabling never locks you out.
+- name: Set ufw default incoming policy to deny
+  community.general.ufw:
+    direction: incoming
+    policy: deny
+  when: hardening_manage_ufw | bool
+
+- name: Set ufw default outgoing policy to allow
+  community.general.ufw:
+    direction: outgoing
+    policy: allow
+  when: hardening_manage_ufw | bool
+
 - name: Rate-limit SSH (ufw limit 22/tcp)
   community.general.ufw:
     rule: limit
@@ -6,8 +20,8 @@
     proto: tcp
     comment: "SSH (rate-limited)"
 
-# Remove the pre-existing plain allow on 22/tcp so it can't shadow the rate-limit
-# above (ufw evaluates rules in order). Idempotent: no-op if absent.
+# Remove any pre-existing plain allow on 22/tcp so it can't shadow the rate-limit above
+# (ufw evaluates rules in order). Idempotent: no-op if absent.
 - name: Remove plain allow on SSH (superseded by the rate-limit rule)
   community.general.ufw:
     delete: true
@@ -15,16 +29,17 @@
     port: "22"
     proto: tcp
 
-# Remove stale rules from decommissioned services — OFF unless the operator has confirmed
-# each service is dead and set hardening_remove_stale_rules=true.
-- name: Remove stale ufw rules (decommissioned services)
+# Optionally delete unwanted ufw rules (e.g. leftovers from a decommissioned service).
+# Empty by default; interface-bound rules must be removed by hand.
+- name: Delete unwanted ufw rules
   community.general.ufw:
     delete: true
     rule: "{{ item.rule }}"
     port: "{{ item.port }}"
     proto: "{{ item.proto }}"
-  loop: "{{ hardening_stale_ufw_rules }}"
-  when: hardening_remove_stale_rules | bool
+  loop: "{{ hardening_ufw_delete_rules }}"
 
-# Note: tailscale0-bound rules (8120/8060) aren't expressible as a clean ufw-module delete
-# for "allow in on <iface>". The operator removes those by hand per the runbook.
+- name: Enable ufw
+  community.general.ufw:
+    state: enabled
+  when: hardening_manage_ufw | bool
