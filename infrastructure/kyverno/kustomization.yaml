@@ -1,7 +1,9 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-namespace: kyverno
+# No top-level `namespace:` transformer: ClusterPolicy is cluster-scoped and must not get a
+# metadata.namespace stamped on it. Namespaced resources already land in kyverno via the
+# helmCharts entry's `namespace:` (passed to `helm template --namespace`) and namespace.yaml.
 
 resources:
   - namespace.yaml
