@@ -1,0 +1,40 @@
+# Audit-only: allow images only from an approved registry allowlist.
+# Canonical: https://github.com/kyverno/policies (best-practices/restrict-image-registries), adapted to the
+# Kyverno 1.19 per-rule validate.failureAction API and our allowlist.
+#
+# NOTE: implicit docker.io shorthand (e.g. "nginx:1.25" or "library/nginx:1.25" with no
+# registry prefix) does NOT match "docker.io/*" and will show as an Audit violation.
+# Normalize such images to explicit docker.io/... refs before promoting this rule to Enforce.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: restrict-image-registries
+  annotations:
+    policies.kyverno.io/title: Restrict Image Registries
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/description: >-
+      Images from unknown registries may not be scanned or trustworthy. Restricts
+      container images to an approved allowlist: ghcr.io, docker.io, quay.io,
+      registry.k8s.io, mirror.gcr.io, ecr-public.aws.com.
+spec:
+  background: true
+  rules:
+    - name: validate-registries
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      validate:
+        failureAction: Audit
+        message: "Image registry not in the allowlist (ghcr.io, docker.io, quay.io, registry.k8s.io, mirror.gcr.io, ecr-public.aws.com)."
+        pattern:
+          spec:
+            "=(ephemeralContainers)":
+              - image: "ghcr.io/* | docker.io/* | quay.io/* | registry.k8s.io/* | mirror.gcr.io/* | ecr-public.aws.com/*"
+            "=(initContainers)":
+              - image: "ghcr.io/* | docker.io/* | quay.io/* | registry.k8s.io/* | mirror.gcr.io/* | ecr-public.aws.com/*"
+            containers:
+              - image: "ghcr.io/* | docker.io/* | quay.io/* | registry.k8s.io/* | mirror.gcr.io/* | ecr-public.aws.com/*"

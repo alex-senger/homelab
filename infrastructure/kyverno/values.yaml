@@ -1,0 +1,24 @@
+# Single weak node: pin every controller to 1 replica (chart defaults to HA),
+# trim resources, and drop the cleanup controller (no cleanup policies in use).
+# config.resourceFilters is left unset so the chart's default system-namespace
+# exclusions (kube-system, kyverno, etc.) stay in effect.
+admissionController:
+  replicas: 1
+  resources:
+    requests: { cpu: 100m, memory: 128Mi }
+    limits: { memory: 256Mi }
+
+backgroundController:
+  replicas: 1
+  resources:
+    requests: { cpu: 100m, memory: 64Mi }
+    limits: { memory: 128Mi }
+
+reportsController:
+  replicas: 1
+  resources:
+    requests: { cpu: 100m, memory: 64Mi }
+    limits: { memory: 128Mi }
+
+cleanupController:
+  enabled: false
