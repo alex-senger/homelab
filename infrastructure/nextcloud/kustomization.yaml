@@ -16,7 +16,7 @@ helmCharts:
   - name: nextcloud
     repo: https://nextcloud.github.io/helm/
     # renovate: datasource=helm depName=nextcloud registryUrl=https://nextcloud.github.io/helm/
-    version: 9.2.6
+    version: 9.3.0
     releaseName: nextcloud
     namespace: nextcloud
     valuesFile: values.yaml
