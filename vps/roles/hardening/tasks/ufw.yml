@@ -8,6 +8,15 @@
     proto: tcp
     comment: "SSH (rate-limited)"
 
+# Remove the pre-existing plain allow on 22/tcp so it can't shadow the rate-limit
+# above (ufw evaluates rules in order). Idempotent: no-op if absent.
+- name: Remove plain allow on SSH (superseded by the rate-limit rule)
+  community.general.ufw:
+    delete: true
+    rule: allow
+    port: "22"
+    proto: tcp
+
 # Remove stale rules from decommissioned services — OFF unless the operator has confirmed
 # each service is dead and set hardening_remove_stale_rules=true.
 - name: Remove stale ufw rules (decommissioned services)
