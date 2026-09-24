@@ -1,13 +1,4 @@
 ---
-- name: Deploy sysctl hardening drop-in
-  ansible.builtin.template:
-    src: 60-hardening.conf.j2
-    dest: /etc/sysctl.d/60-hardening.conf
-    owner: root
-    group: root
-    mode: "0644"
-  notify: Apply sysctl
-
 - name: Ensure unattended-upgrades is installed
   ansible.builtin.apt:
     name: unattended-upgrades

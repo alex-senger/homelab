@@ -17,17 +17,18 @@ next. See `vps/roles/hardening/README.md` for the role's toggles and tag scheme.
 
 Run from `vps/`, one `--tags` group at a time, in this order. Don't skip ahead.
 
-### 1. sysctl + unattended-upgrades
+### 1. OS baseline + unattended-upgrades
 
     ansible-playbook playbook.yml --tags sysctl,upgrades
 
+`sysctl` runs devsec `os_hardening` (sysctl + login.defs baseline; mount/SUID/PAM bits disabled).
 Verify:
 
     sysctl net.ipv4.tcp_syncookies net.ipv4.conf.all.rp_filter   # expect 1, then 2
 
-- Tunnel, website, and minecraft still reachable (no forwarding/routing changed —
-  `rp_filter` stays loose at `2` because this box carries the WireGuard tunnel; `ip_forward`
-  is untouched).
+- `rp_filter` stays loose at `2` (this box carries the WireGuard tunnel; `ip_forward` untouched).
+- **Services still up** after the broad os_hardening pass — nginx (`:443`), CrowdSec,
+  minecraft (`:25565`), and the WireGuard tunnel all reachable.
 
 ### 2. sshd
 
@@ -36,13 +37,12 @@ Verify:
 Verify **from a new terminal**, before closing the old session:
 
     ssh asg@vps                                              # still works
-    ssh -vv asg@vps 2>&1 | grep -iE 'kex|cipher'              # negotiates chacha20/curve25519
-    sudo sshd -T | grep -E 'maxauthtries|logingracetime'      # 3, 20
+    sudo sshd -T | grep -E 'allowusers|maxauthtries|logingracetime'   # asg; 2; 30 (devsec)
 
-The role runs `sshd -t` on the merged config before reloading — a bad config aborts the play
-before the reload handler fires, so this stage can't lock you out via a syntax error. It can
-still lock you out via a *valid* config you didn't mean (e.g. wrong key algo) — hence the new
-terminal check.
+`sshd` runs devsec `ssh_hardening`, which templates the whole `sshd_config` (key-only, no
+root/forwarding, `AllowUsers asg`) and validates before reloading — a bad config aborts the
+play before the reload, so a syntax error can't lock you out. A *valid* config you didn't mean
+still can, hence the new-terminal check before closing the old session.
 
 ### 3. firewall
 

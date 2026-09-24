@@ -1,11 +1,39 @@
 ---
 - name: Harden sshd
-  ansible.builtin.import_tasks: sshd.yml
+  ansible.builtin.import_role:
+    name: devsec.hardening.ssh_hardening
+  vars:
+    ssh_allow_users: asg          # preserve the AllowUsers restriction
+    ssh_client_hardening: false   # harden the server only, don't rewrite ssh_config
   tags: [sshd]
 
-- name: Apply sysctl and unattended-upgrades
-  ansible.builtin.import_tasks: sysctl_upgrades.yml
-  tags: [sysctl, upgrades]
+# sysctl + login.defs baseline. Intrusive bits skipped: mount remounts, SUID/SGID
+# enforcement, PAM (faillock/pwquality) — see the disabled toggles below.
+- name: Apply OS baseline hardening
+  ansible.builtin.import_role:
+    name: devsec.hardening.os_hardening
+  vars:
+    sysctl_overwrite:
+      net.ipv4.conf.all.rp_filter: 2       # loose — this box carries the WireGuard tunnel
+      net.ipv4.conf.default.rp_filter: 2
+    os_users_without_password_ageing: [asg]  # don't expire the key-only admin
+    os_security_suid_sgid_enforce: false
+    os_pam_enabled: false
+    os_mnt_boot_enabled: false
+    os_mnt_dev_enabled: false
+    os_mnt_dev_shm_enabled: false
+    os_mnt_home_enabled: false
+    os_mnt_run_enabled: false
+    os_mnt_tmp_enabled: false
+    os_mnt_var_enabled: false
+    os_mnt_var_log_enabled: false
+    os_mnt_var_log_audit_enabled: false
+    os_mnt_var_tmp_enabled: false
+  tags: [sysctl]
+
+- name: Configure unattended-upgrades
+  ansible.builtin.import_tasks: upgrades.yml
+  tags: [upgrades]
 
 - name: Install and configure CrowdSec
   ansible.builtin.import_tasks: crowdsec.yml

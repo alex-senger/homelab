@@ -1,5 +1,7 @@
 ---
-# The wireguard role uses community.general.ufw. ansible-lint and the operator
-# both need this collection installed: `ansible-galaxy collection install -r vps/requirements.yml`.
+# community.general: ufw module (wireguard + hardening roles).
+# devsec.hardening: os_hardening + ssh_hardening roles used by the hardening role.
+# Install both: `ansible-galaxy collection install -r vps/requirements.yml`.
 collections:
   - name: community.general
+  - name: devsec.hardening
