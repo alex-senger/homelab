@@ -31,7 +31,7 @@ spec:
       containers:
         - name: website
           # renovate: datasource=docker depName=ghcr.io/alex-senger/personal-website
-          image: ghcr.io/alex-senger/personal-website:v1.0.0
+          image: ghcr.io/alex-senger/personal-website:v1.1.0
           ports:
             - containerPort: 80
           readinessProbe:
