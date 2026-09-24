@@ -3,12 +3,27 @@ admissionController:
   resources:
     requests: { cpu: 100m, memory: 128Mi }
     limits: { memory: 256Mi }
+  # generate-default-netpol needs Kyverno to act on Cilium's CRD (not covered by
+  # Kyverno's default RBAC); admission controller needs get/list to validate the rule.
+  rbac:
+    clusterRole:
+      extraResources:
+        - apiGroups: ["cilium.io"]
+          resources: ["ciliumnetworkpolicies"]
+          verbs: ["get", "list", "watch"]
 
 backgroundController:
   replicas: 1
   resources:
     requests: { cpu: 100m, memory: 64Mi }
     limits: { memory: 128Mi }
+  # background controller creates/syncs the generated CiliumNetworkPolicy.
+  rbac:
+    clusterRole:
+      extraResources:
+        - apiGroups: ["cilium.io"]
+          resources: ["ciliumnetworkpolicies"]
+          verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 
 reportsController:
   replicas: 1
