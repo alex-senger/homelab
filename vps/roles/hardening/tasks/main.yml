@@ -7,7 +7,7 @@
   ansible.builtin.import_tasks: sysctl_upgrades.yml
   tags: [sysctl, upgrades]
 
-- name: CrowdSec (replaces fail2ban)
+- name: CrowdSec
   ansible.builtin.import_tasks: crowdsec.yml
   tags: [crowdsec]
 

@@ -8,8 +8,6 @@
     mode: "0644"
   notify: Reload sshd
 
-# Full-config validation of the merged sshd config. If this fails the play aborts
-# HERE, before the reload handler flushes — so a bad config never gets loaded.
 - name: Validate merged sshd config
   ansible.builtin.command: sshd -t
   changed_when: false

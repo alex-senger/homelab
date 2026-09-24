@@ -52,11 +52,3 @@
     - crowdsec
     - crowdsec-firewall-bouncer
 
-# Retire fail2ban only after CrowdSec is verified — OFF unless hardening_retire_fail2ban=true.
-- name: Retire fail2ban (CrowdSec replaces it)
-  ansible.builtin.systemd:
-    name: fail2ban
-    enabled: false
-    state: stopped
-  when: hardening_retire_fail2ban | bool
-  failed_when: false

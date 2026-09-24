@@ -1,6 +1,4 @@
 ---
-# Rate-limit SSH: ufw's LIMIT bans a source exceeding 6 connections in 30s. Replaces the
-# plain allow on 22/tcp; touches no other rule.
 - name: Rate-limit SSH (ufw limit 22/tcp)
   community.general.ufw:
     rule: limit
