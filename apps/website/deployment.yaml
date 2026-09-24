@@ -18,6 +18,8 @@ spec:
       labels:
         app: website
     spec:
+      imagePullSecrets:
+        - name: ghcr-pull
       # nginx uid/gid 101; fsGroup makes the emptyDirs writable to it.
       securityContext:
         runAsNonRoot: true
