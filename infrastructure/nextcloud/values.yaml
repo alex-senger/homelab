@@ -100,9 +100,6 @@ redis:
 
 imaginary:
   enabled: true    # fast previews (HEIC/PDF/video/RAW), wired via preview.config.php
-  # Upstream h2non/imaginary:1.2.4 is unmaintained and built on EOL Debian 10
-  # (70+ critical CVEs, incl. libwebp). Nextcloud AIO's build is the same
-  # binary on current Alpine, rebuilt regularly.
   image:
     registry: ghcr.io
     repository: nextcloud-releases/aio-imaginary
