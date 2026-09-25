@@ -23,3 +23,22 @@ spec:
         - ports:
             - port: "443"
               protocol: TCP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-wg-ingress
+  namespace: minecraft
+spec:
+  endpointSelector:
+    matchLabels:
+      app: minecraft
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: wg-ingress
+            app: wg-ingress
+      toPorts:
+        - ports:
+            - port: "25565"
+              protocol: TCP
