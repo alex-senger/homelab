@@ -29,3 +29,29 @@ firewall_cloudflare_ipv6_ranges:
   - 2405:8100::/32
   - 2a06:98c0::/29
   - 2c0f:f248::/32
+
+# devsec.hardening.ssh_hardening
+ssh_allow_users: asg
+ssh_client_alive_interval: 120
+ssh_client_hardening: false
+sftp_chroot: false
+
+# robertdebock.fail2ban (role asserts numbers for these three)
+fail2ban_bantime: 3600
+fail2ban_findtime: 600
+fail2ban_maxretry: 5
+fail2ban_jail_configuration:
+  - { section: DEFAULT, option: backend, value: systemd }
+  - { section: DEFAULT, option: banaction, value: nftables }
+  - { section: DEFAULT, option: banaction_allports, value: "nftables[type=allports]" }
+  - { section: sshd, option: enabled, value: "true" }
+  - { section: sshd, option: port, value: "22" }
+  - { section: sshd, option: filter, value: sshd }
+  - { section: sshd, option: maxretry, value: "3" }
+  - { section: sshd, option: bantime, value: 24h }
+
+# hifis.toolkit.unattended_upgrades
+unattended_origins_patterns:
+  - origin=Debian,codename=${distro_codename},label=Debian
+  - origin=Debian,codename=${distro_codename},label=Debian-Security
+  - origin=Debian,codename=${distro_codename}-security,label=Debian-Security
