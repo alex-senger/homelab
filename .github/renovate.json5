@@ -35,6 +35,11 @@
       platformAutomerge: true,
     },
     {
+      // Timestamp tags (YYYYMMDD_HHMMSS), not semver.
+      matchPackageNames: ["ghcr.io/nextcloud-releases/aio-imaginary"],
+      versioning: "regex:^(?<major>\\d{4})(?<minor>\\d{4})_(?<patch>\\d{6})$",
+    },
+    {
       matchUpdateTypes: ["major"],
       addLabels: ["major-update"],
       automerge: false,
