@@ -28,6 +28,7 @@ spec:
                 - monitoring
                 - longhorn-system
                 - wg-ingress
+                - nextcloud
       generate:
         apiVersion: cilium.io/v2
         kind: CiliumNetworkPolicy

@@ -1,0 +1,19 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: nextcloud
+spec:
+  endpointSelector: {}
+  ingress:
+    - fromEndpoints:
+        - {}
+    - fromEntities:
+        - ingress
+        - host
+      toPorts:
+        - ports:
+            - port: "80"
+              protocol: TCP
+            - port: "7867"
+              protocol: TCP

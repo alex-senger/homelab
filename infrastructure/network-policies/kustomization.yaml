@@ -10,3 +10,4 @@ resources:
   - argocd.yaml
   - minecraft.yaml
   - website.yaml
+  - nextcloud.yaml
