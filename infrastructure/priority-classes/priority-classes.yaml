@@ -1,0 +1,19 @@
+# Single node with CPU requests near capacity: when a rollout can't schedule,
+# critical pods may preempt ordinary ones, and batch work goes first.
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: homelab-critical
+value: 100000
+preemptionPolicy: PreemptLowerPriority
+globalDefault: false
+description: Services everything else depends on (auth, database, public ingress).
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: homelab-batch
+value: -100
+preemptionPolicy: Never
+globalDefault: false
+description: Retryable background jobs (e.g. Trivy scans); first to be preempted.
