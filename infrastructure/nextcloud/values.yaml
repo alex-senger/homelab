@@ -131,3 +131,6 @@ resources:
     memory: 512Mi
   limits:
     memory: 2Gi
+
+startupProbe:
+  enabled: true
