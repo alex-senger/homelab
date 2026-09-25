@@ -4,6 +4,7 @@
   become: true
   gather_facts: false
   tags: [verify]
+  # Asserts post-apply state, so a --check dry run skips it.
   tasks:
     - name: Read state
       ansible.builtin.command: "{{ item }}"
@@ -15,9 +16,10 @@
         - fail2ban-client status sshd
       register: verify_state
       changed_when: false
-      check_mode: false
+      when: not ansible_check_mode
 
     - name: Assert end state
+      when: not ansible_check_mode
       vars:
         wg: "{{ verify_state.results[1].stdout }}"
         ufw: "{{ verify_state.results[2].stdout }}"
@@ -38,4 +40,5 @@
       ansible.builtin.assert:
         that: "verify_state.results[2].stdout is search('443/tcp\\s+ALLOW\\s+' ~ (item | regex_escape))"
         quiet: true
+      when: not ansible_check_mode
       loop: "{{ firewall_cloudflare_ipv4_ranges + firewall_cloudflare_ipv6_ranges }}"

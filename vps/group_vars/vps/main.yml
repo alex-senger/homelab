@@ -33,6 +33,7 @@ firewall_cloudflare_ipv6_ranges:
 # devsec.hardening.ssh_hardening
 ssh_allow_users: asg
 ssh_client_alive_interval: 120
+ssh_max_auth_retries: 3  # devsec default 2 trips agents holding several keys
 ssh_client_hardening: false
 sftp_chroot: false
 
