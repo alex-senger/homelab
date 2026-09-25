@@ -28,6 +28,7 @@ docker leftovers. UFW is additive so manual rules survive runs.
 SOPS + age (recipient in `/.sops.yaml`); decrypted at run time by the `community.sops` vars plugin.
 
 - `group_vars/vps/secrets.sops.yml`: `wg_vps_private_key`, `wg_cluster_public_key`
+- `group_vars/vps/ssh_keys.sops.yml`: `asg_ssh_public_keys` (installed by `bootstrap.yml`, exclusive)
 - `host_vars/ristretto/secrets.sops.yml`: `ansible_host`, `asg_password_hash`
 
 Edit with `sops edit <file>`.

@@ -1,0 +1,17 @@
+asg_ssh_public_keys:
+    - ENC[AES256_GCM,data:7Zl21urrCwtChQToDKknyiyimaWWS+BejLUsUEnFXksDHh5LPH3WeWb0OsIHgm/b7ywcg4D+2693XPrTWNvogE6RsymHGnBfi7QcxMYTvec=,iv:TBwvO9AKe/dKBcGIS4Td8Tl94dA8IeWAsfE88vK+9+0=,tag:BGN3xBmL1JPoQyev4xJh0g==,type:str]
+sops:
+    age:
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBwR2hjSnk5QUtrMjc3ck10
+            dldFWi8zNUpwN3FGMXFHWk9mcG12NnJlbG5ZCmViVVZpYlBEVGhDekVwWmdZOHp3
+            MUNBYXQyMjNRQ0h4Rzc2ampST04zSkUKLS0tIDdYbzdYbWJVaDdsWm1oVzhkem1P
+            QXRJRzQyZ3VWcmlZdm9RNWxhb2N4eTgKPyNdpLrKYnmSn3pTp3fsOXrcAoj5bzgo
+            QZeCL2SM1DbmviOkGtHJvAzIbXY08l9uH6VylkJPxHioUjGnyCMINw==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age18cz7evl8pajdm5hs27negvnjc9dr9r77nxj8dpwmvllqscus63usxwtded
+    lastmodified: "2026-09-25T13:45:59Z"
+    mac: ENC[AES256_GCM,data:xHdDgvU2VgaFMwMvbBb7baEEqL8aH4NPKXHr+yz4jBBWEqogoyp9ESp7gzjIvf6y1Hky3F4BDnW2wryybfk9kLQpwNspKLJYRtF3ahfawUb0WwSFloLzFezm/Q2ZB3K4/KDWi09+B27dpIR94UxHC/uBWLuar2KE4EK3IyHBQ7c=,iv:rwlZEEbRizwdJw82vvaH0wvS/zV1iN4dioZJ3NLclpc=,tag:5Yw2p1wi7x34nfAytPN8Zg==,type:str]
+    unencrypted_suffix: _unencrypted
+    version: 3.13.3
