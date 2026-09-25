@@ -19,7 +19,7 @@ spec:
       initContainers:
         - name: decrypt
           # renovate: datasource=docker depName=ghcr.io/getsops/sops
-          image: ghcr.io/getsops/sops:v3.10.2-alpine
+          image: ghcr.io/getsops/sops:v3.13.3-alpine
           command:
             - sh
             - -c
