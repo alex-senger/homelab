@@ -5,8 +5,9 @@ metadata:
   namespace: databases
 spec:
   instances: 1
+  priorityClassName: homelab-critical
   # renovate: datasource=docker depName=ghcr.io/cloudnative-pg/postgresql
-  imageName: ghcr.io/cloudnative-pg/postgresql:17.11-202609210816-minimal-trixie
+  imageName: ghcr.io/cloudnative-pg/postgresql:18.6-202609210816-minimal-trixie
 
   storage:
     size: 5Gi
@@ -18,6 +19,10 @@ spec:
       isWALArchiver: true
       parameters:
         barmanObjectName: pg-backups
+        # One archive path per PG major: pg_upgrade resets the system ID and
+        # timeline, so PG18 WAL would clobber PG17's in a shared path. Bump
+        # together with the major version in imageName.
+        serverName: pg-18
 
   resources:
     requests:
