@@ -1,0 +1,4 @@
+---
+nginx_stream_sni_routes: []
+nginx_stream_sni_default_upstream: "10.10.0.2:443"
+nginx_stream_tcp_passthrough: []

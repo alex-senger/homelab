@@ -1,0 +1,6 @@
+---
+firewall_rules: []
+firewall_cloudflare_ipv4_ranges: []
+firewall_cloudflare_ipv6_ranges: []
+# Deletes the old 80/tcp Cloudflare allows (nothing listens on :80 anymore).
+firewall_remove_legacy_http: true

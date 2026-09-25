@@ -1,0 +1,24 @@
+---
+base_packages:
+  - ca-certificates
+  - curl
+  - ufw
+  - vim
+
+base_sysctl_bbr:
+  net.core.default_qdisc: fq
+  net.ipv4.tcp_congestion_control: bbr
+
+# rp_filter loose (2): this box terminates WireGuard. ip_forward is deliberately absent.
+# log_martians omitted: ufw resets it to 0 on every start (/etc/ufw/sysctl.conf).
+base_sysctl_hardening:
+  net.ipv4.tcp_syncookies: 1
+  net.ipv4.conf.all.accept_redirects: 0
+  net.ipv6.conf.all.accept_redirects: 0
+  net.ipv4.conf.all.send_redirects: 0
+  net.ipv4.conf.all.accept_source_route: 0
+  net.ipv6.conf.all.accept_source_route: 0
+  net.ipv4.conf.all.rp_filter: 2
+  net.ipv4.conf.default.rp_filter: 2
+  net.ipv4.icmp_echo_ignore_broadcasts: 1
+  net.ipv4.icmp_ignore_bogus_error_responses: 1

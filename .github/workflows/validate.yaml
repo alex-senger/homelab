@@ -188,15 +188,28 @@ jobs:
 
   ansible:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: vps
+    env:
+      # No age key in CI; lint/syntax-check don't need decrypted vars.
+      SOPS_ANSIBLE_AWX_DISABLE_VARS_PLUGIN_TEMPORARILY: "true"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - name: Install the community.general collection
-        # The wireguard role uses community.general.ufw; ansible-lint's
-        # syntax-check cannot resolve it unless the collection is installed.
+      - name: Install Ansible and dependencies
         run: |
           python -m pip install --upgrade ansible-core
-          ansible-galaxy collection install -r vps/requirements.yml
+          ansible-galaxy install -r requirements.yml
 
-      - name: Lint the VPS Ansible
-        run: pipx run ansible-lint vps/
+      - name: Syntax-check playbooks
+        run: ansible-playbook --syntax-check playbook.yml verify.yml bootstrap.yml
+
+      - name: nginx template golden tests
+        run: |
+          mkdir -p tests/.out
+          ansible-playbook tests/render_nginx.yml
+          ansible-playbook tests/render_nginx.yml -e @tests/vars-routes.yml
+
+      - name: Lint
+        run: pipx run ansible-lint

@@ -1,0 +1,29 @@
+---
+- name: Install nginx with the stream module
+  ansible.builtin.apt:
+    name: [nginx, libnginx-mod-stream]
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Template nginx.conf
+  ansible.builtin.template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+    owner: root
+    group: root
+    mode: "0644"
+    validate: nginx -t -c %s
+  notify: Reload nginx
+
+# Unused: nginx.conf has no http{} block.
+- name: Remove default site
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+
+- name: Enable and start nginx
+  ansible.builtin.systemd:
+    name: nginx
+    enabled: true
+    state: started

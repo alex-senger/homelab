@@ -1,5 +1,16 @@
 ---
-# The wireguard role uses community.general.ufw. ansible-lint and the operator
-# both need this collection installed: `ansible-galaxy collection install -r vps/requirements.yml`.
+# Install: ansible-galaxy install -r requirements.yml
 collections:
   - name: community.general
+    version: 13.4.0
+  - name: ansible.posix
+    version: 2.2.2
+  - name: community.sops
+    version: 2.4.0
+  - name: devsec.hardening
+    version: 10.6.0
+  - name: hifis.toolkit
+    version: 6.3.2
+roles:
+  - name: robertdebock.fail2ban
+    version: 5.0.7

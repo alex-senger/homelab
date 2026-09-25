@@ -1,6 +1,22 @@
 ---
-- name: Configure the VPS side of the WireGuard tunnel to the cluster
+- name: Configure the VPS
   hosts: vps
   become: true
   roles:
-    - wireguard
+    - role: base
+      tags: [base]
+    - role: devsec.hardening.ssh_hardening
+      tags: [sshd]
+    - role: firewall
+      tags: [firewall]
+    - role: robertdebock.fail2ban
+      tags: [fail2ban]
+    - role: hifis.toolkit.unattended_upgrades
+      tags: [upgrades]
+    - role: wireguard
+      tags: [wireguard]
+    - role: nginx_stream
+      tags: [nginx]
+
+- name: Verify
+  ansible.builtin.import_playbook: verify.yml

@@ -1,0 +1,44 @@
+---
+- name: Verify the VPS end state
+  hosts: vps
+  become: true
+  gather_facts: false
+  tags: [verify]
+  # Asserts post-apply state, so a --check dry run skips it.
+  tasks:
+    - name: Read state
+      ansible.builtin.command: "{{ item }}"
+      loop:
+        - nginx -t
+        - wg show wg1 allowed-ips
+        - ufw status
+        - sshd -T
+        - fail2ban-client status sshd
+      register: verify_state
+      changed_when: false
+      when: not ansible_check_mode
+
+    - name: Assert end state
+      when: not ansible_check_mode
+      vars:
+        wg: "{{ verify_state.results[1].stdout }}"
+        ufw: "{{ verify_state.results[2].stdout }}"
+        sshd: "{{ verify_state.results[3].stdout_lines }}"
+      ansible.builtin.assert:
+        that:
+          - "'10.10.0.2/32' in wg"
+          - "ufw is search('22/tcp\\s+LIMIT')"
+          - "ufw is not search('22/tcp\\s+ALLOW')"
+          - "ufw is not search('80/tcp')"
+          - "ufw is search('51821/udp\\s+ALLOW')"
+          - "ufw is search('25565/tcp\\s+ALLOW')"
+          - "'permitrootlogin no' in sshd"
+          - "'passwordauthentication no' in sshd"
+          - "'allowusers asg' in sshd"
+
+    - name: Assert Cloudflare HTTPS rules
+      ansible.builtin.assert:
+        that: "verify_state.results[2].stdout is search('443/tcp\\s+ALLOW\\s+' ~ (item | regex_escape))"
+        quiet: true
+      when: not ansible_check_mode
+      loop: "{{ firewall_cloudflare_ipv4_ranges + firewall_cloudflare_ipv6_ranges }}"
