@@ -1,0 +1,4 @@
+---
+# sops ciphertext lines exceed yamllint's line-length limit.
+exclude_paths:
+  - "**/*.sops.yml"
