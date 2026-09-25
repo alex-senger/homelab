@@ -4,8 +4,6 @@ metadata:
   name: minecraft
   namespace: minecraft
 spec:
-  # ClusterIP: only wg-ingress's relay-minecraft talks to this. A LAN
-  # LoadBalancer is useless now that Paper requires a PROXY header.
   type: ClusterIP
   selector:
     app: minecraft
