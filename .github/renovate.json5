@@ -70,9 +70,6 @@
       ],
     },
     {
-      // Image pins in plain manifests, marked the same way. No
-      // built-in manager reads these (kubernetes manager has no default
-      // file patterns, and it wouldn't see CNPG's imageName anyway).
       customType: "regex",
       description: "Pinned images in Kubernetes manifests",
       managerFilePatterns: ["/^(apps|infrastructure)/.+\\.ya?ml$/"],
