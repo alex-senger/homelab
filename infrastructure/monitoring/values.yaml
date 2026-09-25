@@ -34,7 +34,7 @@ vmsingle:
         cpu: 100m
         memory: 256Mi
       limits:
-        memory: 512Mi
+        memory: 1Gi                 # was OOMKilled at 512Mi
 # --- Scrape agent: VMAgent ---
 vmagent:
   enabled: true
@@ -96,7 +96,7 @@ grafana:
       cpu: 50m
       memory: 128Mi
     limits:
-      memory: 256Mi
+      memory: 512Mi                 # was OOMKilled at 256Mi
   # OIDC login via Authelia. Local admin (existingSecret above) stays as break-glass.
   grafana.ini:
     server:
@@ -127,6 +127,16 @@ kubelet:
   enabled: true
 kubeApiServer:
   enabled: true
+  vmScrape:
+    spec:
+      endpoints:
+        - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+          port: https
+          scheme: https
+          tlsConfig:
+            caFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+            serverName: kubernetes
+          max_scrape_size: 64MiB    # /metrics is ~17MB, over the 16MiB default
 coreDns:
   enabled: true                     # scrapes kube-dns:9153
 kubeControllerManager:
