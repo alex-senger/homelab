@@ -23,7 +23,7 @@ spec:
       containers:
         - name: authelia
           # renovate: datasource=docker depName=authelia/authelia
-          image: authelia/authelia:4.39.26
+          image: authelia/authelia:4.39.28
           args: ["--config", "/config/configuration.yml"]
           securityContext:
             allowPrivilegeEscalation: false
