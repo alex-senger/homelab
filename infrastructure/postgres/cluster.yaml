@@ -5,7 +5,10 @@ metadata:
   namespace: databases
 spec:
   instances: 1
-  imageName: ghcr.io/cloudnative-pg/postgresql:17
+  # Pinned build on Debian 13; the floating :17 tag is the legacy bullseye
+  # (EOL) image. All databases use the C collation, so glibc changes are safe.
+  # renovate: datasource=docker depName=ghcr.io/cloudnative-pg/postgresql
+  imageName: ghcr.io/cloudnative-pg/postgresql:17.11-202609210816-minimal-trixie
 
   storage:
     size: 5Gi
