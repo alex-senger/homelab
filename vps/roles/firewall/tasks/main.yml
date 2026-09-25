@@ -1,0 +1,51 @@
+---
+# Additive only: never reset; manual rules (e.g. wg0's 51820/udp) must survive.
+- name: Add owned rules
+  community.general.ufw:
+    rule: "{{ item.rule }}"
+    port: "{{ item.port }}"
+    proto: "{{ item.proto }}"
+    comment: "{{ item.comment }}"
+  loop: "{{ firewall_rules }}"
+  loop_control:
+    label: "{{ item.rule }} {{ item.port }}/{{ item.proto }}"
+
+- name: Remove plain SSH allow (would shadow the limit rule)
+  community.general.ufw:
+    rule: allow
+    port: "22"
+    proto: tcp
+    delete: true
+
+- name: Allow HTTPS from Cloudflare
+  community.general.ufw:
+    rule: allow
+    port: "443"
+    proto: tcp
+    from_ip: "{{ item }}"
+    comment: Cloudflare
+  loop: "{{ firewall_cloudflare_ipv4_ranges + firewall_cloudflare_ipv6_ranges }}"
+
+- name: Remove legacy HTTP allows
+  community.general.ufw:
+    rule: allow
+    port: "80"
+    proto: tcp
+    from_ip: "{{ item }}"
+    delete: true
+  loop: "{{ firewall_cloudflare_ipv4_ranges }}"
+  when: firewall_remove_legacy_http | bool
+
+- name: Default deny incoming
+  community.general.ufw:
+    direction: incoming
+    policy: deny
+
+- name: Default allow outgoing
+  community.general.ufw:
+    direction: outgoing
+    policy: allow
+
+- name: Enable ufw
+  community.general.ufw:
+    state: enabled

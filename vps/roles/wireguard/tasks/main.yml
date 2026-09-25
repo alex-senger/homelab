@@ -15,15 +15,6 @@
     mode: "0600"
   notify: Restart wireguard
 
-# UFW is operator-managed on this box: add a single additive allow rule, never
-# reset or flush it. No forwarding/NAT needed — the cluster dials out to us.
-- name: Allow the WireGuard tunnel through ufw
-  community.general.ufw:
-    rule: allow
-    port: "51821"
-    proto: udp
-    comment: "WireGuard - k8s cluster tunnel"
-
 - name: Enable and start wg-quick@wg1
   ansible.builtin.systemd:
     name: wg-quick@wg1

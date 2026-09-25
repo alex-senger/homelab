@@ -5,5 +5,7 @@
   roles:
     - role: base
       tags: [base]
+    - role: firewall
+      tags: [firewall]
     - role: wireguard
       tags: [wireguard]
