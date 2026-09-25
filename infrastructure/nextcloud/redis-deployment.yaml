@@ -20,7 +20,7 @@ spec:
       containers:
         - name: redis
           # renovate: datasource=docker depName=redis
-          image: redis:7.4-alpine
+          image: redis:8.10-alpine
           # Cache + transactional file lock store for Nextcloud/notify_push.
           command:
             - sh
