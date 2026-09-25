@@ -91,6 +91,15 @@ spec:
               value: "57242"
             - name: MODRINTH_DOWNLOAD_DEPENDENCIES
               value: none
+            # The VPS nginx prepends a PROXY v2 header (real client IP); Paper's
+            # proxy-protocol is switched on via this patch. Every connection must
+            # then carry the header, so only the VPS path can reach the server.
+            - name: PATCH_DEFINITIONS
+              value: /patches/paper-patches.json
+            # mc-health pings localhost:25565 too; it must send a PROXY header or
+            # Paper drops it and the probes fail.
+            - name: MC_HEALTH_EXTRA_ARGS
+              value: "-use-proxy"
           ports:
             - name: mc
               containerPort: 25565
@@ -132,9 +141,15 @@ spec:
             # readOnlyRootFilesystem: JVM tmpdir + entrypoint scratch need /tmp.
             - name: tmp
               mountPath: /tmp
+            - name: paper-patches
+              mountPath: /patches
+              readOnly: true
       volumes:
         - name: data
           persistentVolumeClaim:
             claimName: minecraft-data
         - name: tmp
           emptyDir: {}
+        - name: paper-patches
+          configMap:
+            name: paper-patches
