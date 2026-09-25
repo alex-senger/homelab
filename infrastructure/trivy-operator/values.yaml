@@ -9,12 +9,20 @@ operator:
   scanJobsConcurrentLimit: 1        # weak host: one scan at a time (default 10)
   scannerReportTTL: "24h"
   metricsVulnIdEnabled: false       # per-CVE-id metrics = high cardinality; keep off
+  # Standalone scan jobs run one container per image against a shared fs cache;
+  # multi-container pods then fail on the cache lock. Server mode also fetches
+  # the DB once instead of per job.
+  builtInTrivyServer: true
 
 trivy:
-  mode: Standalone
   resources:
     requests: { cpu: 100m, memory: 100M }
     limits:   { cpu: 500m, memory: 500M }
+  storageClassEnabled: false        # DB cache is disposable; emptyDir, not a Longhorn volume
+  server:
+    resources:
+      requests: { cpu: 50m, memory: 256Mi }
+      limits:   { cpu: "1", memory: 1Gi }
 
 # We scrape via our own VMServiceScrape, not a Prometheus ServiceMonitor.
 serviceMonitor:
