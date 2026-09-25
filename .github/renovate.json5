@@ -40,6 +40,16 @@
       versioning: "regex:^(?<major>\\d{4})(?<minor>\\d{4})_(?<patch>\\d{6})$",
     },
     {
+      // CNPG build tags: <pg major>.<minor>-<YYYYMMDDhhmm>-minimal-trixie.
+      matchPackageNames: ["ghcr.io/cloudnative-pg/postgresql"],
+      versioning: "regex:^(?<major>\\d+)\\.(?<minor>\\d+)-(?<patch>\\d{12})-(?<compatibility>minimal-trixie)$",
+    },
+    {
+      // linuxserver.io tags: <version>-r<pkgrel>-ls<build>.
+      matchPackageNames: ["linuxserver/**"],
+      versioning: "regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)-r(?<build>\\d+)-ls(?<revision>\\d+)$",
+    },
+    {
       matchUpdateTypes: ["major"],
       addLabels: ["major-update"],
       automerge: false,
@@ -57,6 +67,14 @@
       managerFilePatterns: ["/^\\.github/workflows/.+\\.ya?ml$/"],
       matchStrings: [
         "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\s+[A-Z_]+_VERSION:\\s*(?<currentValue>\\S+)",
+      ],
+    },
+    {
+      customType: "regex",
+      description: "Pinned images in Kubernetes manifests",
+      managerFilePatterns: ["/^(apps|infrastructure)/.+\\.ya?ml$/"],
+      matchStrings: [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\s+(?:image|imageName):\\s*[^\\s:]+:(?<currentValue>[^\\s@]+)",
       ],
     },
   ],
