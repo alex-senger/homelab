@@ -23,3 +23,26 @@ spec:
         - ports:
             - port: "443"
               protocol: TCP
+---
+# Kyverno's generate-default-netpol stamps a default-deny-ingress (same-namespace
+# only) on this namespace; Cilium allows are additive, so this re-opens exactly the
+# public path: wg-ingress relay-minecraft -> Paper :25565. Nothing else may reach
+# the port, which matters since Paper trusts the PROXY header (real client IP).
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-wg-ingress
+  namespace: minecraft
+spec:
+  endpointSelector:
+    matchLabels:
+      app: minecraft
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: wg-ingress
+            app: wg-ingress
+      toPorts:
+        - ports:
+            - port: "25565"
+              protocol: TCP
