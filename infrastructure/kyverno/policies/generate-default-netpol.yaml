@@ -1,7 +1,6 @@
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
-  # Generate rules are immutable in Kyverno; rename the policy to change match/exclude.
   name: generate-default-netpol-v2
   annotations:
     policies.kyverno.io/title: Generate Default-Deny Ingress NetworkPolicy
