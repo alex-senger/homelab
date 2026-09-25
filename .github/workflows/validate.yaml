@@ -203,7 +203,7 @@ jobs:
           ansible-galaxy install -r requirements.yml
 
       - name: Syntax-check playbooks
-        run: ansible-playbook --syntax-check playbook.yml verify.yml
+        run: ansible-playbook --syntax-check playbook.yml verify.yml bootstrap.yml
 
       - name: nginx template golden tests
         run: |

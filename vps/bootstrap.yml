@@ -1,0 +1,22 @@
+---
+# Once, on a fresh VPS: ansible-playbook bootstrap.yml
+- name: Bootstrap admin user
+  hosts: vps
+  gather_facts: false
+  vars:
+    ansible_user: root
+  tasks:
+    - name: Create asg
+      ansible.builtin.user:
+        name: asg
+        groups: sudo
+        append: true
+        shell: /bin/bash
+        password: "{{ asg_password_hash }}"
+        update_password: on_create
+
+    - name: Authorize SSH keys
+      ansible.posix.authorized_key:
+        user: asg
+        key: "{{ asg_ssh_public_keys | join('\n') }}"
+        exclusive: true
