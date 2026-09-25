@@ -13,6 +13,7 @@ spec:
     metadata:
       labels: { app: authelia }
     spec:
+      priorityClassName: homelab-critical
       enableServiceLinks: false
       securityContext:
         runAsNonRoot: true

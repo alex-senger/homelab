@@ -25,3 +25,6 @@ trivy:
 # We scrape via our own VMServiceScrape, not a Prometheus ServiceMonitor.
 serviceMonitor:
   enabled: false
+
+trivyOperator:
+  scanJobPodPriorityClassName: homelab-batch   # scans yield to everything else

@@ -16,6 +16,7 @@ spec:
       labels:
         app: wg-ingress
     spec:
+      priorityClassName: homelab-critical
       containers:
         # Dials out to the VPS and brings up wg0 from the hand-created client conf.
         - name: wireguard
