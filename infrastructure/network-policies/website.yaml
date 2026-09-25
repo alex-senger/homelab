@@ -16,3 +16,22 @@ spec:
               protocol: UDP
             - port: "53"
               protocol: TCP
+---
+# Kyverno's generated default-deny-ingress only allows intra-namespace traffic;
+# the Gateway (Cilium's ingress identity) needs port 80 on top of it.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-gateway-ingress
+  namespace: website
+spec:
+  endpointSelector:
+    matchLabels:
+      app: website
+  ingress:
+    - fromEntities:
+        - ingress
+      toPorts:
+        - ports:
+            - port: "80"
+              protocol: TCP
