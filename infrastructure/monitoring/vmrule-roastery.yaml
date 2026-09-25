@@ -27,6 +27,14 @@ spec:
           for: 15m
           labels: { severity: warning }
           annotations: { summary: "Host memory available < 10%" }
+        - alert: HostOOMKill
+          expr: increase(node_vmstat_oom_kill[30m]) > 0
+          labels: { severity: warning }
+          annotations: { summary: "Kernel OOM killer fired on {{ $labels.instance }}" }
+        - alert: HostRebooted
+          expr: changes(node_boot_time_seconds[15m]) > 0
+          labels: { severity: warning }
+          annotations: { summary: "{{ $labels.instance }} rebooted" }
     - name: filesystem
       rules:
         - alert: HostFilesystemFillingUp
@@ -52,6 +60,11 @@ spec:
           for: 1h
           labels: { severity: warning }
           annotations: { summary: "{{ $labels.mountpoint }} on {{ $labels.instance }} predicted full within 4h" }
+        - alert: HostInodesLow
+          expr: 100 * node_filesystem_files_free{fstype="xfs"} / node_filesystem_files{fstype="xfs"} < 10
+          for: 15m
+          labels: { severity: warning }
+          annotations: { summary: "{{ $labels.mountpoint }} on {{ $labels.instance }} < 10% inodes free" }
     - name: storage
       rules:
         - alert: PVCFillingUp
@@ -98,16 +111,90 @@ spec:
           for: 15m
           labels: { severity: warning }
           annotations: { summary: "StatefulSet {{ $labels.namespace }}/{{ $labels.statefulset }} has unready replicas" }
+        - alert: DaemonSetUnavailable
+          expr: kube_daemonset_status_number_unavailable > 0
+          for: 15m
+          labels: { severity: warning }
+          annotations: { summary: "DaemonSet {{ $labels.namespace }}/{{ $labels.daemonset }} has unavailable pods" }
+        - alert: PodStuckWaiting
+          expr: |
+            max by (namespace, pod, container, reason) (kube_pod_container_status_waiting_reason{
+              reason=~"CrashLoopBackOff|ImagePullBackOff|ErrImagePull|CreateContainerConfigError|CreateContainerError"}) == 1
+          for: 15m
+          labels: { severity: warning }
+          annotations: { summary: "{{ $labels.namespace }}/{{ $labels.pod }} container {{ $labels.container }} stuck in {{ $labels.reason }}" }
+        - alert: JobFailed
+          expr: kube_job_status_failed{namespace!="trivy-system"} > 0
+          for: 5m
+          labels: { severity: warning }
+          annotations: { summary: "Job {{ $labels.namespace }}/{{ $labels.job_name }} failed" }
+        - alert: ContainerOOMKilled
+          expr: |
+            increase(kube_pod_container_status_restarts_total[15m]) > 0
+            and on (namespace, pod, container)
+            kube_pod_container_status_last_terminated_reason{reason="OOMKilled"} == 1
+          labels: { severity: warning }
+          annotations: { summary: "{{ $labels.namespace }}/{{ $labels.pod }} container {{ $labels.container }} OOMKilled" }
+        - alert: ContainerMemoryNearLimit
+          expr: |
+            max by (namespace, pod, container) (container_memory_working_set_bytes{container!=""})
+            / max by (namespace, pod, container) (kube_pod_container_resource_limits{resource="memory"}) > 0.9
+          for: 15m
+          labels: { severity: warning }
+          annotations: { summary: "{{ $labels.namespace }}/{{ $labels.pod }} container {{ $labels.container }} at {{ $value | humanizePercentage }} of memory limit" }
     - name: cert-manager
       rules:
+        # LE renews at 30d left, so < 21d means renewal has been failing for 9d.
         - alert: CertificateExpiringSoon
-          expr: (certmanager_certificate_expiration_timestamp_seconds - time()) < 7 * 24 * 3600
+          expr: (certmanager_certificate_expiration_timestamp_seconds - time()) < 21 * 24 * 3600
           for: 1h
           labels: { severity: warning }
-          annotations: { summary: "Certificate {{ $labels.namespace }}/{{ $labels.name }} expires in < 7d (renewal failing?)" }
+          annotations: { summary: "Certificate {{ $labels.namespace }}/{{ $labels.name }} expires in < 21d (renewal failing?)" }
+        - alert: CertificateExpiryCritical
+          expr: (certmanager_certificate_expiration_timestamp_seconds - time()) < 7 * 24 * 3600
+          for: 1h
+          labels: { severity: critical }
+          annotations: { summary: "Certificate {{ $labels.namespace }}/{{ $labels.name }} expires in < 7d" }
+        - alert: CertificateNotReady
+          expr: certmanager_certificate_ready_status{condition="False"} == 1
+          for: 30m
+          labels: { severity: warning }
+          annotations: { summary: "Certificate {{ $labels.namespace }}/{{ $labels.name }} not Ready" }
+    # Without these, a dead exporter silences every rule that depends on it.
+    - name: meta
+      rules:
+        - alert: TargetDown
+          expr: up == 0
+          for: 15m
+          labels: { severity: warning }
+          annotations: { summary: "Scrape target {{ $labels.job }} ({{ $labels.instance }}) down" }
+        - alert: KubeStateMetricsAbsent
+          expr: absent(up{job="kube-state-metrics"} == 1)
+          for: 5m
+          labels: { severity: critical }
+          annotations: { summary: "kube-state-metrics not scraped; kube_* alerts are blind" }
+        - alert: NodeExporterAbsent
+          expr: absent(up{job="node-exporter"} == 1)
+          for: 5m
+          labels: { severity: critical }
+          annotations: { summary: "node-exporter not scraped; host alerts are blind" }
+        - alert: CNPGMetricsAbsent
+          expr: absent(cnpg_collector_up)
+          for: 10m
+          labels: { severity: critical }
+          annotations: { summary: "CNPG metrics absent; Postgres alerts are blind" }
+        - alert: VMAlertRuleErrors
+          expr: increase(vmalert_alerting_rules_errors_total[10m]) > 0
+          labels: { severity: warning }
+          annotations: { summary: "vmalert rule {{ $labels.alertname }} failing to evaluate" }
+        - alert: AlertmanagerNotificationsFailing
+          expr: increase(alertmanager_notifications_failed_total[15m]) > 0
+          labels: { severity: critical }
+          annotations: { summary: "Alertmanager {{ $labels.integration }} notifications failing ({{ $labels.reason }})" }
     - name: watchdog
       rules:
         - alert: Watchdog
-          expr: vector(1)
+          # Stops when scrapes stop (up goes stale), not just when AM dies.
+          expr: count(up == 1) > 0
           labels: { severity: none }
           annotations: { summary: "Alerting pipeline heartbeat — always firing" }

@@ -37,6 +37,7 @@ Rotate: `bao kv put secret/alerting/email recipient=… resend-password=… hc-u
     curl -s localhost:19093/metrics | grep alertmanager_notifications_.*_total.*'"webhook"\|"email"'
 
 - healthchecks.io check should show **up**. A green Watchdog + a healthy check = the pipeline works.
+  Watchdog is `count(up == 1) > 0`, so it also stops if vmagent stops scraping.
 - End-to-end email test: `kubectl -n monitoring apply` a throwaway VMRule with `expr: vector(1)`,
   `severity: warning` → email arrives (~30s); `kubectl delete` it → resolved email (~5m, next
   group_interval). Delete the test rule afterward.
@@ -68,4 +69,5 @@ Rotate: `bao kv put secret/alerting/email recipient=… resend-password=… hc-u
 - Node/cluster down → email path dies with it; healthchecks.io stops receiving pings and alerts you.
 - vmalertmanager not-ready after deploy → `alertmanager-config` secret absent (OpenBao unseeded).
 - AM retain PVC lost → silences/nflog reset; alerts still fire (acceptable).
+- `AlertmanagerNotificationsFailing` for email can't reach you by email; check AM logs.
 - Noisy alert → tune `for:`/threshold in `vmrule-roastery.yaml`; silence via amtool meanwhile.
