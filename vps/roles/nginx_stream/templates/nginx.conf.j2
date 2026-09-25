@@ -1,0 +1,34 @@
+# Managed by Ansible (vps/roles/nginx_stream).
+user www-data;
+worker_processes auto;
+pid /run/nginx.pid;
+include /etc/nginx/modules-enabled/*.conf;
+
+events {
+    worker_connections 1024;
+}
+
+stream {
+    map $ssl_preread_server_name $upstream_443 {
+{% for route in nginx_stream_sni_routes %}
+        {{ route.server_name }} {{ route.upstream }};
+{% endfor %}
+        default {{ nginx_stream_sni_default_upstream }};
+    }
+
+    server {
+        listen 443;
+        ssl_preread on;
+        proxy_pass $upstream_443;
+    }
+{% for fwd in nginx_stream_tcp_passthrough %}
+
+    server {
+        listen {{ fwd.port }};
+        proxy_pass {{ fwd.upstream }};
+{% if fwd.proxy_protocol | default(false) %}
+        proxy_protocol on;
+{% endif %}
+    }
+{% endfor %}
+}

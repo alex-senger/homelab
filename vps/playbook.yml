@@ -15,3 +15,5 @@
       tags: [upgrades]
     - role: wireguard
       tags: [wireguard]
+    - role: nginx_stream
+      tags: [nginx]

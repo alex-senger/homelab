@@ -1,0 +1,6 @@
+---
+golden: nginx-routes.conf
+nginx_stream_sni_routes:
+  - { server_name: example.org, upstream: "192.0.2.10:443" }
+nginx_stream_tcp_passthrough:
+  - { port: 2222, upstream: "10.10.0.2:22" }

@@ -1,0 +1,19 @@
+---
+- name: Render nginx.conf and diff against the golden file
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files:
+    - ../group_vars/vps/main.yml
+  vars:
+    golden: nginx.conf
+  tasks:
+    - name: Render template
+      ansible.builtin.template:
+        src: ../roles/nginx_stream/templates/nginx.conf.j2
+        dest: "{{ playbook_dir }}/.out/{{ golden }}"
+        mode: "0644"
+
+    - name: Compare with golden file
+      ansible.builtin.command: diff -u {{ playbook_dir }}/expected/{{ golden }} {{ playbook_dir }}/.out/{{ golden }}
+      changed_when: false

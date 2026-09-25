@@ -55,3 +55,10 @@ unattended_origins_patterns:
   - origin=Debian,codename=${distro_codename},label=Debian
   - origin=Debian,codename=${distro_codename},label=Debian-Security
   - origin=Debian,codename=${distro_codename}-security,label=Debian-Security
+
+# nginx_stream
+nginx_stream_sni_routes: []
+nginx_stream_sni_default_upstream: "10.10.0.2:443"
+nginx_stream_tcp_passthrough:
+  # proxy_protocol requires Paper to expect it (PR #98).
+  - { port: 25565, upstream: "10.10.0.2:25565", proxy_protocol: true }

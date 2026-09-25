@@ -205,5 +205,11 @@ jobs:
       - name: Syntax-check playbooks
         run: ansible-playbook --syntax-check playbook.yml
 
+      - name: nginx template golden tests
+        run: |
+          mkdir -p tests/.out
+          ansible-playbook tests/render_nginx.yml
+          ansible-playbook tests/render_nginx.yml -e @tests/vars-routes.yml
+
       - name: Lint
         run: pipx run ansible-lint
