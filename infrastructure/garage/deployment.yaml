@@ -16,7 +16,7 @@ spec:
       containers:
         - name: garage
           # renovate: datasource=docker depName=dxflrs/garage
-          image: dxflrs/garage:v2.3.0
+          image: dxflrs/garage:v2.4.1
           # The image ships the binary as CMD (/garage), not ENTRYPOINT, so
           # args alone would be exec'd as the command ("server" not found).
           command: ["/garage"]
