@@ -3,3 +3,5 @@ creation_rules:
     age: age18cz7evl8pajdm5hs27negvnjc9dr9r77nxj8dpwmvllqscus63usxwtded
   - path_regex: infrastructure/openbao-unsealer/unseal-keys\.sops\.ya?ml$
     age: age1s32vpmraeaf22k2twqquxc6g8n27psxwv27fste2u3td3tyra5fszatcqa
+  - path_regex: vps/.*\.sops\.ya?ml$
+    age: age18cz7evl8pajdm5hs27negvnjc9dr9r77nxj8dpwmvllqscus63usxwtded

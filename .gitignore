@@ -23,15 +23,11 @@ clusterconfig/
 talos/talsecret.yaml
 talenv.yaml
 
-# VPS Ansible: real connection details (public IP, SSH user) and secret
-# values (WireGuard keys) never belong in a public repo. inventory.ini and
-# the role templates are committed with placeholders only — real values live
-# in these untracked files. See vps/README.md.
+# VPS Ansible: secrets only as *.sops.yml; never plaintext.
+vps/**/secrets.yml
+vps/**/secrets.yaml
 vps/inventory.local.ini
 vps/group_vars/vps.yml
-vps/group_vars/vps/
-vps/*.vault
-vps/*vault*.yml
-vps/*vault*.yaml
+vps/tests/.out/
 
 .ansible/
