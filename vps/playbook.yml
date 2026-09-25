@@ -17,3 +17,6 @@
       tags: [wireguard]
     - role: nginx_stream
       tags: [nginx]
+
+- name: Verify
+  ansible.builtin.import_playbook: verify.yml
