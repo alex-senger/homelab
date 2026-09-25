@@ -10,4 +10,6 @@ resources:
   - argocd.yaml
   - minecraft.yaml
   - website.yaml
+  - cert-manager.yaml
+  - trivy-system.yaml
   - nextcloud.yaml
