@@ -28,7 +28,14 @@ spec:
                 - monitoring
                 - longhorn-system
                 - wg-ingress
+                - argocd
+                - authelia
+                - cnpg-system
+                - databases
+                - external-secrets
+                - garage
                 - nextcloud
+                - openbao
       generate:
         apiVersion: cilium.io/v2
         kind: CiliumNetworkPolicy
