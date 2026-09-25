@@ -25,7 +25,7 @@ the VPS.
 ## WireGuard tunnel
     kubectl -n wg-ingress exec deploy/wg-ingress -- wg show
 Healthy = a recent handshake + nonzero transfer both ways. No handshake → VPS down/unreachable,
-peer pubkey mismatch, or outbound UDP blocked. Handshake then stale → check the VPS nftables + its
+peer pubkey mismatch, or outbound UDP blocked. Handshake then stale → check the VPS UFW (`51821/udp`) + its
 `nginx stream` SNI config.
 
 ## Stuck certificate
