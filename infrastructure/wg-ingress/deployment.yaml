@@ -21,7 +21,7 @@ spec:
         # Dials out to the VPS and brings up wg0 from the hand-created client conf.
         - name: wireguard
           # renovate: datasource=docker depName=linuxserver/wireguard
-          image: linuxserver/wireguard:1.0.20260223-r0-ls121
+          image: linuxserver/wireguard:1.0.20260223-r0-ls123
           env:
             - name: PUID
               value: "1000"
