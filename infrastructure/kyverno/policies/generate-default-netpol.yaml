@@ -28,7 +28,16 @@ spec:
                 - monitoring
                 - longhorn-system
                 - wg-ingress
+                # own a default-deny-ingress in network-policies/; generating
+                # one here overwrites it (synchronize) and fights ArgoCD
+                - argocd
+                - authelia
+                - cnpg-system
+                - databases
+                - external-secrets
+                - garage
                 - nextcloud
+                - openbao
       generate:
         apiVersion: cilium.io/v2
         kind: CiliumNetworkPolicy
