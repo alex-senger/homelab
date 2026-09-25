@@ -1,0 +1,23 @@
+---
+- name: Install base packages
+  ansible.builtin.apt:
+    name: "{{ base_packages }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Enable BBR congestion control
+  ansible.posix.sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    sysctl_file: /etc/sysctl.d/99-bbr.conf
+    sysctl_set: true
+  loop: "{{ base_sysctl_bbr | dict2items }}"
+
+- name: Apply network hardening sysctls
+  ansible.posix.sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    sysctl_file: /etc/sysctl.d/90-hardening.conf
+    sysctl_set: true
+  loop: "{{ base_sysctl_hardening | dict2items }}"

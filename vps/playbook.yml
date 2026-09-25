@@ -1,6 +1,9 @@
 ---
-- name: Configure the VPS side of the WireGuard tunnel to the cluster
+- name: Configure the VPS
   hosts: vps
   become: true
   roles:
-    - wireguard
+    - role: base
+      tags: [base]
+    - role: wireguard
+      tags: [wireguard]
