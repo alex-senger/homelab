@@ -9,6 +9,7 @@ resources:
   - applications/argocd.yaml
   - applications/cilium.yaml
   - applications/cilium-lb.yaml
+  - applications/priority-classes.yaml
   - applications/gateway-api-crds.yaml
   - applications/kubelet-serving-cert-approver.yaml
   - applications/metrics-server.yaml
