@@ -1,0 +1,28 @@
+# Complete on its own, so it doesn't matter whether Kyverno's intra-namespace
+# default-deny-ingress also lands here (policies are additive).
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-ingress
+  namespace: cert-manager
+spec:
+  endpointSelector: {}
+  ingress:
+    - fromEndpoints:
+        - {}
+    # Admission/conversion webhook calls from the API server
+    - fromEntities:
+        - kube-apiserver
+        - host
+      toPorts:
+        - ports:
+            - port: "10250"
+              protocol: TCP
+    # VMAgent scrapes metrics
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: monitoring
+      toPorts:
+        - ports:
+            - port: "9402"
+              protocol: TCP
