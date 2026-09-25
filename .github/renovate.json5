@@ -77,5 +77,16 @@
         "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\s+(?:image|imageName):\\s*[^\\s:]+:(?<currentValue>[^\\s@]+)",
       ],
     },
+    {
+      // Gateway API CRDs pulled by URL. Matches every URL line so all of
+      // them move together; Renovate folds them into a single update.
+      customType: "regex",
+      description: "Gateway API CRD URLs",
+      managerFilePatterns: ["/^infrastructure/gateway-api-crds/kustomization\\.yaml$/"],
+      matchStrings: [
+        "https://raw\\.githubusercontent\\.com/(?<depName>kubernetes-sigs/gateway-api)/(?<currentValue>v[^/\\s]+)/",
+      ],
+      datasourceTemplate: "github-releases",
+    },
   ],
 }
