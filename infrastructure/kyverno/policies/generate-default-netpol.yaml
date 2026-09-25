@@ -28,8 +28,6 @@ spec:
                 - monitoring
                 - longhorn-system
                 - wg-ingress
-                # own a default-deny-ingress in network-policies/; generating
-                # one here overwrites it (synchronize) and fights ArgoCD
                 - argocd
                 - authelia
                 - cnpg-system
