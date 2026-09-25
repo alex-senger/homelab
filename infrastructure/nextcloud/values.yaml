@@ -131,3 +131,8 @@ resources:
     memory: 512Mi
   limits:
     memory: 2Gi
+
+# The entrypoint runs `occ upgrade` before Apache listens; without this the
+# liveness probe killed the 35.0.1 upgrade mid-way. Allows up to ~5 min.
+startupProbe:
+  enabled: true
