@@ -4,10 +4,10 @@ kind: Kustomization
 resources:
   # Versions bumped together by the "Gateway API CRD URLs" manager in
   # .github/renovate.json5; keep them in lockstep.
-  - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.1/config/crd/experimental/gateway.networking.k8s.io_gatewayclasses.yaml
-  - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.1/config/crd/experimental/gateway.networking.k8s.io_gateways.yaml
-  - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.1/config/crd/experimental/gateway.networking.k8s.io_httproutes.yaml
-  - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.1/config/crd/experimental/gateway.networking.k8s.io_grpcroutes.yaml
-  - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.1/config/crd/experimental/gateway.networking.k8s.io_referencegrants.yaml
-  - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.1/config/crd/experimental/gateway.networking.k8s.io_tlsroutes.yaml
-  - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.1/config/crd/experimental/gateway.networking.k8s.io_backendtlspolicies.yaml
+  - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.2/config/crd/experimental/gateway.networking.k8s.io_gatewayclasses.yaml
+  - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.2/config/crd/experimental/gateway.networking.k8s.io_gateways.yaml
+  - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.2/config/crd/experimental/gateway.networking.k8s.io_httproutes.yaml
+  - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.2/config/crd/experimental/gateway.networking.k8s.io_grpcroutes.yaml
+  - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.2/config/crd/experimental/gateway.networking.k8s.io_referencegrants.yaml
+  - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.2/config/crd/experimental/gateway.networking.k8s.io_tlsroutes.yaml
+  - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.2/config/crd/experimental/gateway.networking.k8s.io_backendtlspolicies.yaml
