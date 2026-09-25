@@ -91,6 +91,10 @@ spec:
               value: "57242"
             - name: MODRINTH_DOWNLOAD_DEPENDENCIES
               value: none
+            - name: PATCH_DEFINITIONS
+              value: /patches/paper-patches.json
+            - name: MC_HEALTH_EXTRA_ARGS
+              value: "-use-proxy"
           ports:
             - name: mc
               containerPort: 25565
@@ -132,9 +136,15 @@ spec:
             # readOnlyRootFilesystem: JVM tmpdir + entrypoint scratch need /tmp.
             - name: tmp
               mountPath: /tmp
+            - name: paper-patches
+              mountPath: /patches
+              readOnly: true
       volumes:
         - name: data
           persistentVolumeClaim:
             claimName: minecraft-data
         - name: tmp
           emptyDir: {}
+        - name: paper-patches
+          configMap:
+            name: paper-patches

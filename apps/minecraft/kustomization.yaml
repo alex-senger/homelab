@@ -9,3 +9,9 @@ resources:
   - externalsecret.yaml
   - deployment.yaml
   - service.yaml
+
+# Applied by the itzg entrypoint (PATCH_DEFINITIONS) on every boot.
+configMapGenerator:
+  - name: paper-patches
+    files:
+      - paper-patches.json
