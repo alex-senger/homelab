@@ -9,7 +9,7 @@ server:
     # repository must NOT repeat the registry (chart prepends quay.io) or the
     # image becomes quay.io/quay.io/openbao/openbao.
     repository: openbao/openbao
-    tag: "2.6.2"
+    tag: "2.7.0"
   ha:
     enabled: true
     replicas: 1
