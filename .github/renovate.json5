@@ -15,6 +15,18 @@
   prConcurrentLimit: 5,
   commitMessagePrefix: "chore(deps): ",
 
+  hostRules: [
+    {
+      // The website image is a private GHCR package, which the app's own
+      // token can't read. GHCR_TOKEN is a classic PAT with read:packages,
+      // stored as a repo secret in the Mend developer portal.
+      matchHost: "ghcr.io",
+      hostType: "docker",
+      username: "alex-senger",
+      password: "{{ secrets.GHCR_TOKEN }}",
+    },
+  ],
+
   packageRules: [
     {
       // Either of these can take the cluster down: Cilium is the CNI, and
