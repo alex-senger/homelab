@@ -128,9 +128,9 @@ spec:
             # the near-full node has room for rollouts.
             requests:
               cpu: 500m
-              memory: 6500Mi
+              memory: 7500Mi
             limits:
-              memory: 8Gi
+              memory: 10Gi
           volumeMounts:
             - name: data
               mountPath: /data
