@@ -35,9 +35,15 @@
       prPriority: 10,
     },
     {
+      // Merging only edits talconfig; the upgrade itself is a manual talosctl run.
+      matchPackageNames: ["siderolabs/talos", "kubernetes/kubernetes"],
+      automerge: false,
+      addLabels: ["critical-infrastructure"],
+    },
+    {
       // Everything else: patch bumps land on their own once CI is green.
       matchUpdateTypes: ["patch"],
-      matchPackageNames: ["!cilium", "!argo-cd"],
+      matchPackageNames: ["!cilium", "!argo-cd", "!siderolabs/talos", "!kubernetes/kubernetes"],
       automerge: true,
       automergeType: "pr",
       platformAutomerge: true,
@@ -83,6 +89,14 @@
       managerFilePatterns: ["/^(apps|infrastructure)/.+\\.ya?ml$/"],
       matchStrings: [
         "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\s+(?:image|imageName):\\s*[^\\s:]+:(?<currentValue>[^\\s@]+)",
+      ],
+    },
+    {
+      customType: "regex",
+      description: "Talos and Kubernetes versions in talconfig",
+      managerFilePatterns: ["/^talos/talconfig\\.yaml$/"],
+      matchStrings: [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\s+[a-z]+Version:\\s*(?<currentValue>\\S+)",
       ],
     },
     {
