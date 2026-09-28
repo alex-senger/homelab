@@ -1,10 +1,10 @@
-# Audit-only: allow images only from an approved registry allowlist.
+# Enforce: allow images only from an approved registry allowlist.
 # Canonical: https://github.com/kyverno/policies (best-practices/restrict-image-registries), adapted to the
 # Kyverno 1.19 per-rule validate.failureAction API and our allowlist.
 #
-# NOTE: implicit docker.io shorthand (e.g. "nginx:1.25" or "library/nginx:1.25" with no
-# registry prefix) does NOT match "docker.io/*" and will show as an Audit violation.
-# Normalize such images to explicit docker.io/... refs before promoting this rule to Enforce.
+# Implicit Docker Hub shorthand ("redis:8", "itzg/minecraft-server:x") does NOT match "docker.io/*":
+# always write the docker.io/ prefix (also for `kubectl debug --image`). kube-system and kyverno are
+# excluded by the webhook's namespaceSelector, not here.
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
@@ -28,13 +28,13 @@ spec:
               kinds:
                 - Pod
       validate:
-        failureAction: Audit
-        message: "Image registry not in the allowlist (ghcr.io, docker.io, quay.io, registry.k8s.io, mirror.gcr.io, ecr-public.aws.com)."
+        failureAction: Enforce
+        message: "Image registry not in the allowlist (ghcr.io, docker.io, quay.io, registry.k8s.io, mirror.gcr.io, ecr-public.aws.com, reg.kyverno.io)."
         pattern:
           spec:
             "=(ephemeralContainers)":
-              - image: "ghcr.io/* | docker.io/* | quay.io/* | registry.k8s.io/* | mirror.gcr.io/* | ecr-public.aws.com/*"
+              - image: "ghcr.io/* | docker.io/* | quay.io/* | registry.k8s.io/* | mirror.gcr.io/* | ecr-public.aws.com/* | reg.kyverno.io/*"
             "=(initContainers)":
-              - image: "ghcr.io/* | docker.io/* | quay.io/* | registry.k8s.io/* | mirror.gcr.io/* | ecr-public.aws.com/*"
+              - image: "ghcr.io/* | docker.io/* | quay.io/* | registry.k8s.io/* | mirror.gcr.io/* | ecr-public.aws.com/* | reg.kyverno.io/*"
             containers:
-              - image: "ghcr.io/* | docker.io/* | quay.io/* | registry.k8s.io/* | mirror.gcr.io/* | ecr-public.aws.com/*"
+              - image: "ghcr.io/* | docker.io/* | quay.io/* | registry.k8s.io/* | mirror.gcr.io/* | ecr-public.aws.com/* | reg.kyverno.io/*"
