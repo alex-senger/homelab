@@ -62,6 +62,7 @@ nginx_stream_sni_routes:
   - { server_name: senger-solutions.com, upstream: "10.10.0.2:443" }
   - { server_name: auth.senger-solutions.com, upstream: "10.10.0.2:443" }
   - { server_name: nextcloud.senger-solutions.com, upstream: "10.10.0.2:443" }
+  - { server_name: obsidian.senger-solutions.com, upstream: "10.10.0.2:443" }
 nginx_stream_sni_default_upstream: ""
 nginx_stream_tcp_passthrough:
   # proxy_protocol requires Paper to expect it (PR #98).

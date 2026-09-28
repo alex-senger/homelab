@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: obsidian-livesync
+  namespace: argocd
+  annotations:
+    # Wave 24: after the Gateway (5), Longhorn and ESO exist.
+    argocd.argoproj.io/sync-wave: "24"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: apps
+  source:
+    repoURL: https://github.com/alex-senger/homelab.git
+    targetRevision: main
+    path: apps/obsidian-livesync
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: obsidian-livesync
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
+      - CreateNamespace=false

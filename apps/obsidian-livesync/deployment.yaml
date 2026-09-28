@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: couchdb
+  namespace: obsidian-livesync
+  labels:
+    app: couchdb
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: couchdb
+  template:
+    metadata:
+      labels:
+        app: couchdb
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 5984
+        runAsGroup: 5984
+        fsGroup: 5984
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: couchdb
+          # renovate: datasource=docker depName=docker.io/couchdb
+          image: docker.io/couchdb:3.5.2.1
+          ports:
+            - containerPort: 5984
+          env:
+            - name: COUCHDB_USER
+              valueFrom:
+                secretKeyRef: { name: couchdb-admin, key: username }
+            - name: COUCHDB_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: couchdb-admin, key: password }
+            - name: ERLANG_COOKIE
+              valueFrom:
+                secretKeyRef: { name: couchdb-admin, key: erlang-cookie }
+            - name: ERL_FLAGS
+              value: "-setcookie $(ERLANG_COOKIE)"
+          startupProbe:
+            httpGet: { path: /_up, port: 5984 }
+            periodSeconds: 5
+            failureThreshold: 30
+          readinessProbe:
+            httpGet: { path: /_up, port: 5984 }
+          livenessProbe:
+            httpGet: { path: /_up, port: 5984 }
+            periodSeconds: 30
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: data
+              mountPath: /opt/couchdb/data
+            - name: local-d
+              mountPath: /opt/couchdb/etc/local.d
+            - name: config
+              mountPath: /opt/couchdb/etc/local.d/10-livesync.ini
+              subPath: livesync.ini
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              memory: 512Mi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: couchdb-data
+        - name: local-d
+          emptyDir: {}
+        - name: config
+          configMap:
+            name: couchdb-config
+        - name: tmp
+          emptyDir: {}
