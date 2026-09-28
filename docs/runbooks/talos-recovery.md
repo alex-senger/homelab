@@ -54,6 +54,32 @@ Usually a stale `~/.talos/config` from a prior cluster (same context name `roast
 fingerprints, then install the current one over it (`cp clusterconfig/talosconfig ~/.talos/config`;
 regen with `-s` first if `clusterconfig/` is missing).
 
+## Rebuild from scratch
+Have in hand first (can't be read back from a wiped cluster): Cloudflare API token, the existing
+`wg0.conf` (same value keeps the VPS peer), Grafana admin creds, the OpenBao unseal age key and the
+Talos age key.
+
+1. **VM** (Proxmox): q35, VirtIO SCSI single, CPU host 4 cores, 28 GB RAM ballooning OFF, VirtIO
+   NIC. System disk ~50 GB NVMe on **SCSI** (`scsi0` → `/dev/sda` = `installDisk`; VirtIO Block
+   gives `/dev/vda` and breaks it). Longhorn disk `scsi1` ~300 GB NVMe; garage HDD ~200 GB (see
+   backups-recovery.md). Boot the factory ISO → maintenance mode on a DHCP IP (`MAINT_IP`).
+2. **Talos**:
+
+       talhelper genconfig -s talos/talsecret.sops.yaml
+       talosctl apply-config --insecure -n <MAINT_IP> -f clusterconfig/roastery-roastery-1.yaml
+       # installs + reboots to .16; everything after targets .16:
+       talosctl --talosconfig clusterconfig/talosconfig config endpoint 192.168.178.16
+       talosctl --talosconfig clusterconfig/talosconfig config node 192.168.178.16
+       talosctl bootstrap -n 192.168.178.16
+       talosctl kubeconfig -n 192.168.178.16 --force
+
+3. **GitOps**: [bootstrap.md](../bootstrap.md).
+4. **OpenBao**: re-init and re-seed per [openbao-recovery.md](openbao-recovery.md), then every
+   path the ExternalSecrets reference (`git grep -h 'key: ' -- '*externalsecret.yaml'`).
+
+Verify: node Ready; all ArgoCD apps Synced/Healthy; OpenBao unsealed; all ExternalSecrets
+`SecretSynced`; `curl https://senger-solutions.com` → 200 (external path via the re-seeded wg0.conf).
+
 ## Never
-`talosctl bootstrap` runs exactly once, ever. A second run (even on another node) starts a second
-etcd → split brain; the only remedy is resetting every node and rebuilding.
+`talosctl bootstrap` runs exactly once per cluster. A second run starts a second etcd → split
+brain; the only remedy is resetting the node and rebuilding.
