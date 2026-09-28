@@ -14,12 +14,23 @@ spec:
         app: openbao-config
     spec:
       restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 100
+        runAsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: openbao-config
           image: quay.io/openbao/openbao:2.6.2
           command:
             - /bin/sh
             - /scripts/configure.sh
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
           env:
             - name: BAO_ADDR
               value: http://openbao.openbao.svc:8200

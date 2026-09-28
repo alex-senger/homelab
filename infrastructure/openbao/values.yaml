@@ -27,6 +27,12 @@ server:
           path = "/openbao/data"
         }
         service_registration "kubernetes" {}
+  statefulSet:
+    securityContext:
+      container:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: [ALL]
   dataStorage:
     enabled: true
     size: 2Gi

@@ -3,7 +3,6 @@ kind: Namespace
 metadata:
   name: openbao
   labels:
-    # baseline: openbao runs as root writing its raft PV; restricted (non-root) needs an fsGroup/volume migration on the secrets store.
-    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/enforce: restricted
     pod-security.kubernetes.io/warn: restricted
     pod-security.kubernetes.io/audit: restricted
