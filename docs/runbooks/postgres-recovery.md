@@ -1,8 +1,8 @@
 # PostgreSQL (CloudNativePG) — bring-up & recovery
 
 #7c. `infrastructure/cnpg-operator` (app `cnpg-operator`, wave 12) + `infrastructure/postgres` (app
-`postgres`, wave 21). Operator chart `cloudnative-pg` 0.29.0; shared single-instance `Cluster pg`
-in ns `databases`, Postgres 17 on `longhorn-retain`. Per-app DB/role added by each consumer.
+`postgres`, wave 21). Shared single-instance `Cluster pg`
+in ns `databases`, Postgres 18 on `longhorn-retain`. Per-app DB/role added by each consumer.
 
 ## Bring-up (after merge)
 Seed each app's role password in OpenBao (never in Git), e.g.:
@@ -16,7 +16,8 @@ ArgoCD sync `cnpg-operator` then `postgres` (hard-refresh if it lags).
 - Credential path end-to-end (a passwordless connect just hangs, proving nothing):
 
       PW=$(kubectl -n databases get secret authelia-db -o jsonpath='{.data.password}' | base64 -d)
-      kubectl -n databases run psql-check --rm -it --restart=Never --image=ghcr.io/cloudnative-pg/postgresql:17 \
+      kubectl -n databases run psql-check --rm -it --restart=Never --image=ghcr.io/cloudnative-pg/postgresql:18 \
+        --override-type=strategic --overrides='{"spec":{"containers":[{"name":"psql-check","securityContext":{"runAsNonRoot":true,"runAsUser":26,"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"seccompProfile":{"type":"RuntimeDefault"}}}]}}' \
         --env=PGPASSWORD="$PW" -- psql -h pg-rw.databases.svc -U authelia -d authelia -c '\conninfo'
 
 ## Notes

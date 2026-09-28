@@ -18,7 +18,6 @@ resources:
 helmCharts:
   - name: victoria-metrics-k8s-stack
     repo: https://victoriametrics.github.io/helm-charts/
-    # renovate: datasource=helm depName=victoria-metrics-k8s-stack registryUrl=https://victoriametrics.github.io/helm-charts/
     version: 0.93.0
     releaseName: vm
     namespace: monitoring

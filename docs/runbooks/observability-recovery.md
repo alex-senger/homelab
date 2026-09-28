@@ -1,6 +1,6 @@
 # Observability (VictoriaMetrics + Grafana) — bring-up & recovery
 
-#6. `infrastructure/monitoring` (app `monitoring`, wave 20), chart victoria-metrics-k8s-stack 0.92.1.
+#6. `infrastructure/monitoring` (app `monitoring`, wave 20), chart victoria-metrics-k8s-stack.
 
 ## Bring-up (after merge)
 1. Seed the Grafana admin in OpenBao (never in Git):

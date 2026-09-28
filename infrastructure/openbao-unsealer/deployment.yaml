@@ -52,7 +52,8 @@ spec:
       containers:
         # Loops the unseal API until sealed=false; no-op once unsealed.
         - name: unsealer
-          image: quay.io/openbao/openbao:2.6.2
+          # renovate: datasource=docker depName=quay.io/openbao/openbao
+          image: quay.io/openbao/openbao:2.7.0
           command:
             - /bin/sh
             - /scripts/unseal.sh

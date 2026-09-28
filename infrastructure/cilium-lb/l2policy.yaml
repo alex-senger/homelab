@@ -3,8 +3,7 @@ kind: CiliumL2AnnouncementPolicy
 metadata:
   name: lan-l2
 spec:
-  # Announce LoadBalancer IPs (not externalIPs) on the LAN interface ens18,
-  # confirmed present on all three nodes on 2026-09-08.
+  # Announce LoadBalancer IPs (not externalIPs) on the LAN interface.
   loadBalancerIPs: true
   interfaces:
     - ^ens18$

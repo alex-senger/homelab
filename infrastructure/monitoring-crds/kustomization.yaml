@@ -7,6 +7,5 @@ kind: Kustomization
 helmCharts:
   - name: victoria-metrics-operator-crds
     repo: https://victoriametrics.github.io/helm-charts/
-    # renovate: datasource=helm depName=victoria-metrics-operator-crds registryUrl=https://victoriametrics.github.io/helm-charts/
     version: 0.14.0
     releaseName: vm-crds

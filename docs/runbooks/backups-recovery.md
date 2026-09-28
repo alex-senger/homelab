@@ -75,4 +75,4 @@ three SecretSynced.
 | OpenBao sealed / eso broken | ExternalSecrets stop refreshing; see openbao-recovery.md. |
 
 ## Related
-postgres-recovery.md, openbao-recovery.md, `docs/superpowers/specs/2026-09-14-backups-garage-design.md`.
+postgres-recovery.md, openbao-recovery.md.

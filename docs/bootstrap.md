@@ -42,12 +42,13 @@ All Applications should reach `Synced` and `Healthy`.
 
 ## Admin access
 
+`https://argocd.senger-solutions.com` (LAN-only) via Authelia SSO once the Gateway and Authelia are
+up. Before that, or as break-glass:
+
     kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d
     kubectl -n argocd port-forward svc/argocd-server 8080:80
 
-Log in at `http://localhost:8080` as `admin`. TLS terminates at the Gateway from
-sub-project #3 onward; until then ArgoCD serves plaintext internally and is reached
-by port-forward only.
+Log in at `http://localhost:8080` as `admin`.
 
 ## Why bootstrap and infrastructure cannot drift
 

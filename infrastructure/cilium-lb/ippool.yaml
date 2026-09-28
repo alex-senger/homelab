@@ -3,11 +3,8 @@ kind: CiliumLoadBalancerIPPool
 metadata:
   name: lan-pool
 spec:
-  # Static band BELOW the FritzBox DHCP range (which starts at .21) and below
-  # its WireGuard VPN peer range (.201+). The original .201–.220 pool collided
-  # with FritzBox VPN clients — a peer assigned .201 conflicted with the Gateway
-  # and made LB IPs unreachable over the VPN. Nodes/API VIP sit at .16–.19; .2
-  # and .10–.19 are already taken, so this pool is .3–.9.
+  # Below FritzBox DHCP (.21+) and its VPN peer range (.201+, which collided
+  # with an earlier .201 pool); .2 and .10–.19 are taken.
   blocks:
     - start: 192.168.178.3
       stop: 192.168.178.9

@@ -6,9 +6,8 @@ replicaCount: 1
 
 nextcloud:
   host: nextcloud.senger-solutions.com
-  # Replaces the chart default (fsGroup: 33), so restate it. OnRootMismatch skips the recursive
-  # chown of the data volume on every start
-  # Whole pod runs as www-data: apache binds :80 unprivileged (pod netns has ip_unprivileged_port_start=0).
+  # Replaces the chart default, so restate fsGroup. OnRootMismatch skips the per-start recursive chown.
+  # Runs as www-data: apache binds :80 unprivileged (pod netns has ip_unprivileged_port_start=0).
   podSecurityContext:
     fsGroup: 33
     fsGroupChangePolicy: OnRootMismatch
@@ -66,6 +65,7 @@ nextcloud:
           key: password
   extraSidecarContainers:
     - name: notify-push
+      # renovate: datasource=docker depName=nextcloud
       image: docker.io/nextcloud:35.0.1-apache
       command:
         - sh

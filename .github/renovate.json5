@@ -9,8 +9,7 @@
 
   timezone: "Europe/Berlin",
 
-  // Weekly rather than continuous, so the commit history reads as maintained
-  // rather than bot-flooded.
+  // Weekly, not continuous.
   schedule: ["* 0-6 * * 1"],
   prConcurrentLimit: 5,
   commitMessagePrefix: "chore(deps): ",
