@@ -1,0 +1,30 @@
+# Non-root entrypoint writes conf.d/redis-session.ini, but conf.d is root-owned. Pre-create it on
+# an emptyDir and mount just that file (the chart only does this when its own redis is enabled).
+# A patch, not extraVolumeMounts: those also land in the CronJob pod, which has no init container.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nextcloud
+spec:
+  template:
+    spec:
+      initContainers:
+        - name: init-redis-session-ini
+          image: docker.io/nextcloud:35.0.1-apache
+          command: ["touch", "/php-confd/redis-session.ini"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - { name: php-confd, mountPath: /php-confd }
+      containers:
+        - name: nextcloud
+          volumeMounts:
+            - name: php-confd
+              mountPath: /usr/local/etc/php/conf.d/redis-session.ini
+              subPath: redis-session.ini
+      volumes:
+        - name: php-confd
+          emptyDir: {}

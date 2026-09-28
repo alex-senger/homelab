@@ -8,9 +8,19 @@ nextcloud:
   host: nextcloud.senger-solutions.com
   # Replaces the chart default (fsGroup: 33), so restate it. OnRootMismatch skips the recursive
   # chown of the data volume on every start
+  # Whole pod runs as www-data: apache binds :80 unprivileged (pod netns has ip_unprivileged_port_start=0).
   podSecurityContext:
     fsGroup: 33
     fsGroupChangePolicy: OnRootMismatch
+    runAsNonRoot: true
+    runAsUser: 33
+    runAsGroup: 33
+    seccompProfile:
+      type: RuntimeDefault
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop: [ALL]
   existingSecret:
     enabled: true
     secretName: nextcloud-app
@@ -75,6 +85,11 @@ nextcloud:
       volumeMounts:
         - { name: nextcloud-main, mountPath: /var/www/html/config, subPath: config }
         - { name: nextcloud-main, mountPath: /var/www/html/custom_apps, subPath: custom_apps }
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop: [ALL]
       resources:
         requests: { cpu: 10m, memory: 32Mi }
         limits: { memory: 128Mi }
@@ -118,8 +133,21 @@ imaginary:
     seccompProfile:
       type: RuntimeDefault
 
+# CronJob, not the sidecar: the sidecar's busybox crond requires root.
 cronjob:
   enabled: true
+  type: cronjob
+  cronjob:
+    # The chart gives the CronJob pod no pod-level securityContext, so set it all here.
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 33
+      runAsGroup: 33
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop: [ALL]
+      seccompProfile:
+        type: RuntimeDefault
 
 persistence:
   enabled: true
