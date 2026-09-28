@@ -28,9 +28,9 @@ spec:
           type: RuntimeDefault
       containers:
         - name: minecraft
-          # java25 tag: 26.3 requires JDK 25.
+          # -java25 variant: 26.3 requires JDK 25.
           # renovate: datasource=docker depName=itzg/minecraft-server
-          image: docker.io/itzg/minecraft-server:java25
+          image: docker.io/itzg/minecraft-server:2026.9.2-java25
           env:
             - name: EULA
               value: "TRUE"
