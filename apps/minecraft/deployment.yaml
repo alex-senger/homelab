@@ -30,7 +30,7 @@ spec:
         - name: minecraft
           # java25 tag: 26.3 requires JDK 25.
           # renovate: datasource=docker depName=itzg/minecraft-server
-          image: itzg/minecraft-server:java25
+          image: docker.io/itzg/minecraft-server:java25
           env:
             - name: EULA
               value: "TRUE"
