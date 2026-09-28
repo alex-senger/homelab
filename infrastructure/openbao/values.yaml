@@ -27,6 +27,14 @@ server:
           path = "/openbao/data"
         }
         service_registration "kubernetes" {}
+  statefulSet:
+    securityContext:
+      # pod: {} keeps the chart default (uid 100/gid 1000, fsGroup, RuntimeDefault seccomp).
+      # Setting container replaces its default, so restate allowPrivilegeEscalation.
+      container:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: [ALL]
   dataStorage:
     enabled: true
     size: 2Gi
