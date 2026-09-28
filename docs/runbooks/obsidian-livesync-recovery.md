@@ -5,7 +5,19 @@
 (content and paths) by the plugin; the server and its backups hold ciphertext only.
 
 Layers: Cloudflare WAF secret header → Cloudflare rate limit → CouchDB auth (anonymous only
-`/_up`) → non-admin `livesync` user scoped to vault DBs. The admin account never leaves OpenBao.
+`/_up`) → non-admin `livesync` user scoped to vault DBs. Devices never hold the admin account, and
+admin calls never cross the public path (see "Admin access").
+
+## Admin access
+
+Always through a port-forward (enters the pod directly: no Cloudflare, no WAF header, no CNP). The
+netrc via process substitution keeps the password out of `ps`:
+
+    kubectl -n obsidian-livesync port-forward deploy/couchdb 5984:5984 &
+    H=http://localhost:5984
+    AU=$(kubectl -n obsidian-livesync get secret couchdb-admin -o jsonpath='{.data.username}' | base64 -d)
+    AP=$(kubectl -n obsidian-livesync get secret couchdb-admin -o jsonpath='{.data.password}' | base64 -d)
+    adm() { curl -s --netrc-file <(printf 'machine localhost login %s password %s\n' "$AU" "$AP") "$@"; }
 
 ## First-time setup
 
@@ -25,21 +37,25 @@ Layers: Cloudflare WAF secret header → Cloudflare rate limit → CouchDB auth 
    `OPTIONS` is exempt because CORS preflights can't carry custom headers. Keep the value in the
    password manager.
 4. **Rate limit:** Cloudflare → Security → WAF → Rate limiting rules, `http.host eq
-   "obsidian.senger-solutions.com"`, 100 requests / 10 s per IP → Block 1 min.
+   "obsidian.senger-solutions.com"`, 300 requests / 10 s per IP → Block (Free plan: 10 s period and
+   10 s block are the only options). A backstop behind the header rule, so kept generous: a first
+   full sync of a large vault fetches many chunks. If sync stalls with 429s, raise it.
 5. **VPS relay:** `cd vps && ansible-playbook playbook.yml -K --tags nginx`.
-6. **Vault user** (admin, once). Admin creds from the cluster, header from the password manager:
+6. **Vault user** (once, via "Admin access"):
 
-       H=https://obsidian.senger-solutions.com; K='X-LiveSync-Key: <header value>'
-       A="$(kubectl -n obsidian-livesync get secret couchdb-admin -o jsonpath='{.data.username}' | base64 -d):$(kubectl -n obsidian-livesync get secret couchdb-admin -o jsonpath='{.data.password}' | base64 -d)"
-       curl -s -u "$A" -H "$K" -X PUT "$H/_users/org.couchdb.user:livesync" -H 'Content-Type: application/json' \
+       adm -X PUT "$H/_users/org.couchdb.user:livesync" -H 'Content-Type: application/json' \
          -d '{"name":"livesync","password":"<random ≥32>","roles":[],"type":"user"}'
+7. **Check** from outside the LAN: `curl -s -o /dev/null -w '%{http_code}\n'
+   https://obsidian.senger-solutions.com/_up` → 403 (no header); with
+   `-H 'X-LiveSync-Key: <value>'` → 200.
 
 ## Per vault
 
-Non-admins can't create databases, so the admin creates each one and scopes it to `livesync`:
+Non-admins can't create databases, so the admin creates each one and scopes it to `livesync`
+(via "Admin access"):
 
-    curl -s -u "$A" -H "$K" -X PUT "$H/<vault-db>"
-    curl -s -u "$A" -H "$K" -X PUT "$H/<vault-db>/_security" -H 'Content-Type: application/json' \
+    adm -X PUT "$H/<vault-db>"
+    adm -X PUT "$H/<vault-db>/_security" -H 'Content-Type: application/json' \
       -d '{"members":{"names":["livesync"],"roles":[]},"admins":{"names":[],"roles":[]}}'
 
 Database names: lowercase, e.g. `vault-notes`.
@@ -56,22 +72,38 @@ Lose the passphrase and the server copy is unreadable; rebuild from a device ins
 
 ## Restore
 
-- **From backup:** Longhorn UI → Backup → the `couchdb-data` volume → restore to a new volume. Disable
-  selfHeal on the ArgoCD app, scale `couchdb` to 0, point the PVC at the restored volume, scale back
-  up, re-enable selfHeal. See `backups-recovery.md` for the backup target.
+- **From backup** (a bound PVC's volume can't be swapped, so the PVC is recreated):
+  1. Longhorn UI → Backup → the `couchdb-data` volume's backup → Restore, to a new volume.
+  2. Disable selfHeal on the ArgoCD app `obsidian-livesync`, then
+     `kubectl -n obsidian-livesync scale deploy/couchdb --replicas=0`.
+  3. `kubectl -n obsidian-livesync delete pvc couchdb-data`. The old PV stays (`longhorn-retain`).
+  4. Longhorn UI → the restored volume → Create PV/PVC, PVC name `couchdb-data`, namespace
+     `obsidian-livesync`.
+  5. Scale back to 1, re-enable selfHeal. Delete the old volume in Longhorn once the data checks out.
+
+  See `backups-recovery.md` for the backup target.
 - **From a device ("Rebuild remote"):** the plugin deletes and recreates the database, which
-  `livesync` can't do. Recreate it and its `_security` as admin ("Per vault"), then run the rebuild.
+  `livesync` can't do. Reset it as admin first (via "Admin access"):
+
+      adm -X DELETE "$H/<vault-db>"
+      adm -X PUT "$H/<vault-db>"
+      adm -X PUT "$H/<vault-db>/_security" -H 'Content-Type: application/json' \
+        -d '{"members":{"names":["livesync"],"roles":[]},"admins":{"names":[],"roles":[]}}'
+
+  Then run the rebuild on the device. Its own delete of the remote may report an error; the
+  database is already empty, so the re-upload proceeds.
 
 ## Rotation
 
 - **Admin password / Erlang cookie:** `bao kv put` (setup step 1), force-sync the ExternalSecret,
   `kubectl -n obsidian-livesync rollout restart deploy/couchdb` (env vars don't reload).
-- **`livesync` password:** as admin, GET `$H/_users/org.couchdb.user:livesync`, PUT it back with
-  the same `_rev` and a new `"password"`. Update each device.
+- **`livesync` password:** via "Admin access", `adm "$H/_users/org.couchdb.user:livesync"`, PUT it
+  back with the same `_rev` and a new `"password"`. Update each device.
 - **WAF header value:** edit the Cloudflare rule, update each device's Custom Headers.
 
 ## Gotchas
 
 - Changing `uuid` in `livesync.ini` resets every device's replication checkpoint. Don't.
-- Every external `curl` needs `-H "$K"`; without it Cloudflare returns 403 before CouchDB sees it.
+- Every external request needs the `X-LiveSync-Key` header; without it Cloudflare returns 403
+  before CouchDB sees it. Admin work uses the port-forward instead.
 - Host unreachable but pod healthy → SNI allowlist or unproxied DNS; see `external-reach-recovery.md`.
