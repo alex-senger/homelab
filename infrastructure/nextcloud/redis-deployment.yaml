@@ -17,6 +17,12 @@ spec:
       labels:
         app: nextcloud-redis
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: redis
           # renovate: datasource=docker depName=redis
@@ -26,6 +32,11 @@ spec:
             - sh
             - -c
             - 'exec redis-server --requirepass "$REDIS_PASSWORD" --save "" --appendonly no'
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
           env:
             - name: REDIS_PASSWORD
               valueFrom:

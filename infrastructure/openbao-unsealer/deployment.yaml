@@ -15,6 +15,14 @@ spec:
       labels:
         app: openbao-unsealer
     spec:
+      # The image's openbao uid/gid; fsGroup keeps the shared /keys emptyDir writable by both containers.
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 100
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
       # Decrypts the SOPS unseal keys into a tmpfs emptyDir; nothing hits disk.
       initContainers:
         - name: decrypt
@@ -24,6 +32,11 @@ spec:
             - sh
             - -c
             - "sops -d /enc/unseal-keys.sops.yaml > /keys/unseal-keys.yaml"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
           env:
             - name: SOPS_AGE_KEY_FILE
               value: /age/key.txt
@@ -43,6 +56,10 @@ spec:
           command:
             - /bin/sh
             - /scripts/unseal.sh
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
           env:
             - name: BAO_ADDR
               value: http://openbao.openbao.svc:8200
