@@ -54,6 +54,17 @@ Usually a stale `~/.talos/config` from a prior cluster (same context name `roast
 fingerprints, then install the current one over it (`cp clusterconfig/talosconfig ~/.talos/config`;
 regen with `-s` first if `clusterconfig/` is missing).
 
+## Upgrade
+Always `--drain=false`: on one node the drain can't finish (nowhere to reschedule; CNPG blocks
+evicting `pg-1`), times out, and leaves the node cordoned with pods Pending (`kubectl uncordon
+roastery-1`). Always the factory image, never the stock default:
+
+    talosctl upgrade -n 192.168.178.16 --drain=false \
+      --image factory.talos.dev/metal-installer/<schematic>:<version>
+    talosctl upgrade-k8s -n 192.168.178.16 --to <k8s-version>
+
+Afterwards, dead pre-reboot pods linger as `Error`: `kubectl delete pods -A --field-selector=status.phase=Failed`.
+
 ## Rebuild from scratch
 Have in hand first (can't be read back from a wiped cluster): Cloudflare API token, the existing
 `wg0.conf` (same value keeps the VPS peer), Grafana admin creds, the OpenBao unseal age key and the
