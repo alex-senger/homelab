@@ -1,6 +1,12 @@
 # victoria-metrics-k8s-stack 0.92.1 — single-node, memory-budgeted.
 # See docs/superpowers/specs/2026-09-09-observability-victoriametrics-design.md
 
+# Explicit docker.io so Kyverno's registry allowlist matches: prefixes the operator image, and
+# (via VM_CONTAINERREGISTRY) every image the operator deploys, alertmanager included.
+global:
+  image:
+    registry: docker.io
+
 # --- VM operator ---
 victoria-metrics-operator:
   enabled: true
@@ -9,6 +15,9 @@ victoria-metrics-operator:
     # machinery (crds.enabled needs plain: false too).
     enabled: false
     plain: false
+    # pre-delete hook; split the ref so global.image.registry doesn't render docker.io/registry.k8s.io/...
+    cleanup:
+      image: { registry: registry.k8s.io, repository: kubectl }
   resources:
     requests:
       cpu: 25m

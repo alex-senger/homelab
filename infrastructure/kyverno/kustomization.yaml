@@ -19,4 +19,6 @@ helmCharts:
     releaseName: kyverno
     namespace: kyverno
     includeCRDs: true
+    # Helm test pods (readiness-checker:latest) are never applied by ArgoCD; keep them out of the render.
+    skipTests: true
     valuesFile: values.yaml
