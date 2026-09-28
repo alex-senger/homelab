@@ -13,7 +13,8 @@ stream {
 {% for route in nginx_stream_sni_routes %}
         {{ route.server_name }} {{ route.upstream }};
 {% endfor %}
-        default {{ nginx_stream_sni_default_upstream }};
+{# Quoted: an empty value must render `default "";` (runtime close), not `default ;` (nginx -t fails). #}
+        default "{{ nginx_stream_sni_default_upstream }}";
     }
 
     server {

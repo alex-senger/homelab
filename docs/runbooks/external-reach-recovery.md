@@ -28,6 +28,16 @@ Healthy = a recent handshake + nonzero transfer both ways. No handshake → VPS 
 peer pubkey mismatch, or outbound UDP blocked. Handshake then stale → check the VPS UFW (`51821/udp`) + its
 `nginx stream` SNI config.
 
+## One public host unreachable, others fine
+The VPS relays :443 by SNI allowlist only (`nginx_stream_sni_routes` in `vps/group_vars/vps/main.yml`);
+anything unlisted gets `no host in upstream ""` in the VPS nginx error log and the TLS handshake is
+reset. A new public HTTPRoute needs an allowlist entry, then `cd vps && ansible-playbook playbook.yml
+--tags nginx`. Check from outside the LAN:
+
+    openssl s_client -connect <vps-ip>:443 -servername <host> </dev/null   # cert = listed; reset = not
+
+`argocd.` and `grafana.` are deliberately unlisted (LAN-only).
+
 ## Stuck certificate
     kubectl -n <ns> describe certificate <name>
     kubectl -n <ns> get challenge && kubectl -n <ns> describe challenge <name>
