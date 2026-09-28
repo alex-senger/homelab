@@ -7,7 +7,6 @@ metadata:
     app: couchdb
 spec:
   replicas: 1
-  # RWO volume on a single node: Recreate avoids rollout multi-attach.
   strategy:
     type: Recreate
   selector:
@@ -39,7 +38,6 @@ spec:
             - name: COUCHDB_PASSWORD
               valueFrom:
                 secretKeyRef: { name: couchdb-admin, key: password }
-            # Random cookie via ERL_FLAGS: COUCHDB_ERLANG_COOKIE would write to the read-only rootfs.
             - name: ERLANG_COOKIE
               valueFrom:
                 secretKeyRef: { name: couchdb-admin, key: erlang-cookie }
@@ -62,7 +60,6 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /opt/couchdb/data
-            # The entrypoint writes docker.ini (hashed admin) here; rootfs is read-only.
             - name: local-d
               mountPath: /opt/couchdb/etc/local.d
             - name: config
