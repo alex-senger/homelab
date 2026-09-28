@@ -3,7 +3,6 @@ kind: Namespace
 metadata:
   name: nextcloud
   labels:
-    # baseline: the official nextcloud apache image runs as root; restricted needs the fpm variant.
-    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/enforce: restricted
     pod-security.kubernetes.io/warn: restricted
     pod-security.kubernetes.io/audit: restricted

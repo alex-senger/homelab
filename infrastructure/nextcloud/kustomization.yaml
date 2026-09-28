@@ -20,3 +20,6 @@ helmCharts:
     releaseName: nextcloud
     namespace: nextcloud
     valuesFile: values.yaml
+
+patches:
+  - path: php-confd-patch.yaml
