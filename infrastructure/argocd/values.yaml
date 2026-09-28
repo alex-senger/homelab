@@ -19,12 +19,10 @@ configs:
       g, argocd-admins, role:admin
 
   params:
-    # TLS terminates at the Gateway from sub-project #3 onward. Until then
-    # access is via kubectl port-forward, so serving plaintext internally
-    # avoids the self-signed-certificate warning loop.
+    # TLS terminates at the Gateway.
     server.insecure: true
 
-# Dex stays disabled; Authelia is the OIDC provider (#7b).
+# Authelia is the OIDC provider.
 dex:
   enabled: false
 

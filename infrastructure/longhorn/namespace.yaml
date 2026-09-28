@@ -3,8 +3,6 @@ kind: Namespace
 metadata:
   name: longhorn-system
   labels:
-    # Mandatory. Talos enforces PodSecurity "baseline" cluster-wide
-    # and exempts only kube-system. Longhorn's manager and instance-manager run
-    # privileged, so without this label every pod is rejected at admission and
-    # the error blames PodSecurity rather than storage. Verified 2026-08-20.
+    # Talos enforces baseline PSA cluster-wide; Longhorn's manager and
+    # instance-manager run privileged and are rejected at admission without this.
     pod-security.kubernetes.io/enforce: privileged

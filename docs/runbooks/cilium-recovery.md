@@ -9,7 +9,8 @@ broken, so `kubectl`/`helm`/`talosctl` keep working.
 
 ## Immediate recovery (Helm, bypassing ArgoCD)
     helm repo add cilium https://helm.cilium.io
-    helm upgrade --install cilium cilium/cilium --version 1.20.1 -n kube-system -f infrastructure/cilium/values.yaml
+    helm upgrade --install cilium cilium/cilium -n kube-system -f infrastructure/cilium/values.yaml \
+      --version "$(yq -r '.helmCharts[0].version' infrastructure/cilium/kustomization.yaml)"
     cilium status --wait
 Then remove the ArgoCD-invisible Helm release so there's one source of truth:
 `kubectl delete secret -n kube-system -l 'owner=helm,name=cilium'`.

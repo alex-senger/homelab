@@ -1,15 +1,15 @@
-# Network policies (Cilium ingress containment)
+# Network policies (Cilium containment)
 
-`infrastructure/network-policies/`, app `network-policies`, wave 26. One `CiliumNetworkPolicy`
-per protected namespace, all named `default-deny-ingress`.
+`infrastructure/network-policies/`, app `network-policies`, wave 26.
 
 ## Model
 
-Each CNP sets `endpointSelector: {}` (all endpoints in the namespace) with no egress rules —
-Cilium flips every selected endpoint to default-deny **ingress** only; egress stays open.
-Callers are matched by the automatic `k8s:io.kubernetes.pod.namespace` label (`fromEndpoints`)
-or by reserved identities (`fromEntities: [ingress, host, kube-apiserver]`). One PR merged
-per namespace; all 7 are live.
+A CNP with `endpointSelector: {}` and only ingress rules flips the namespace to default-deny
+**ingress**; egress stays open. Callers are matched by the automatic
+`k8s:io.kubernetes.pod.namespace` label (`fromEndpoints`) or reserved identities
+(`fromEntities: [ingress, host, kube-apiserver]`). Kyverno (`generate-default-netpol-v2`) adds an
+intra-namespace-only `default-deny-ingress` to every *new* namespace not in its exclude list; the
+files here add allows on top.
 
 ## Allow matrix
 
@@ -22,8 +22,11 @@ per namespace; all 7 are live.
 | garage | `fromEndpoints: [{}]` | `longhorn-system`, `databases` → :3900 (S3 API) |
 | authelia | `fromEndpoints: [{}]` | `fromEntities: [ingress, host]` → :9091 |
 | argocd | `fromEndpoints: [{}]` | `fromEntities: [ingress, host]` → :80 |
-
-`longhorn-system` is an allowed *source* to garage but is not itself a protected namespace.
+| nextcloud | `fromEndpoints: [{}]` | `fromEntities: [ingress, host]` → :80, :7867 (notify_push) |
+| cert-manager | `fromEndpoints: [{}]` | `fromEntities: [kube-apiserver, host]` → :10250 (webhook); `monitoring` → :9402 |
+| trivy-system | Kyverno-generated | `monitoring` → operator :8080 |
+| website | Kyverno-generated | `fromEntities: [ingress]` → :80 |
+| minecraft | Kyverno-generated | `wg-ingress` → :25565 |
 
 ## Verification
 
@@ -37,10 +40,12 @@ Gateway-fronted service (authelia/argocd), from a curl pod:
 
 Expect `200`.
 
-Containment probe — throwaway busybox pod in a public namespace (`nextcloud`/`minecraft`):
+Containment probe — throwaway busybox pod in a public namespace (`nextcloud`/`minecraft`); the
+overrides satisfy restricted PSA:
 
-    kubectl run probe --rm -it --image=busybox --restart=Never -n nextcloud -- \
-      nc -w3 -z <svc>.<protected-ns>.svc.cluster.local <port>
+    kubectl run probe --rm -it --image=docker.io/busybox:1.37 --restart=Never -n nextcloud \
+      --override-type=strategic --overrides='{"spec":{"containers":[{"name":"probe","securityContext":{"runAsNonRoot":true,"runAsUser":65534,"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"seccompProfile":{"type":"RuntimeDefault"}}}]}}' \
+      -- nc -w3 -z <svc>.<protected-ns>.svc.cluster.local <port>
 
 Expect exit code `1` (denied), confirmed by `hubble observe --namespace <protected-ns> --verdict DROPPED`
 showing `Policy denied DROPPED`.
@@ -64,10 +69,9 @@ kubectl streaming required.
    sidecar runs in the instance pod, which is why garage allows `databases` → :3900. A live
    on-demand backup completed through the policy, confirming this.
 
-## Residual risks (accepted, phase 1)
+## Residual risks (accepted)
 
-- Egress is open on every namespace — exfil/C2 is still possible. Phase 2: egress lockdown on
-  the public-facing apps.
+- Egress is open everywhere except minecraft/website (below).
 - Intra-namespace traffic is fully allowed (`fromEndpoints: [{}]`) with no further segmentation.
 - `longhorn-system` is an allowed source to garage but has no CNP of its own.
 

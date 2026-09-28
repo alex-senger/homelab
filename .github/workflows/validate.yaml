@@ -136,22 +136,8 @@ jobs:
           fi
           echo "$f is encrypted."
 
-  # Scoped to apps/ — the workloads authored in this repository — and NOT to
-  # infrastructure/.
-  #
-  # kube-linter's checks target application workloads. Run against the platform
-  # charts it produces 54 findings, all of which a CNI legitimately requires:
-  # cilium-agent cannot run as non-root, cilium-envoy needs SYS_ADMIN and the
-  # host network namespace, apply-sysctl-overwrites mounts /proc because writing
-  # sysctls is its entire purpose. Excluding every security and host check still
-  # leaves 21 (privileged-container, drop-net-raw-capability, unset resources on
-  # the upstream chart's containers). There is no configuration under which this
-  # tool says something true and useful about a CNI DaemonSet.
-  #
-  # A check that can never go green teaches people to ignore CI, so rather than
-  # leaving it permanently red under continue-on-error, it is scoped to where its
-  # checks actually apply and made a real gate. apps/ is empty until
-  # sub-project #6; the job says so explicitly rather than passing silently.
+  # apps/ only: on infrastructure/ charts (CNI, storage) kube-linter flags only
+  # legitimate privileged/host access and could never go green.
   lint:
     runs-on: ubuntu-latest
     steps:
@@ -178,7 +164,7 @@ jobs:
           done
           echo "found=$found" >> "$GITHUB_OUTPUT"
           if [ "$found" = "0" ]; then
-            echo "::notice title=kube-linter::No workloads under apps/ yet, so there is nothing to lint. Platform components under infrastructure/ are deliberately out of scope — see the comment above this job."
+            echo "::notice title=kube-linter::No workloads under apps/, nothing to lint. infrastructure/ is out of scope (see comment above this job)."
           fi
 
       - uses: stackrox/kube-linter-action@87802a2f4e01abebb3ee3c67a3002fea71f6eae5 # v1

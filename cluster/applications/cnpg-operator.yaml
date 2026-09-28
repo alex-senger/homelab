@@ -26,7 +26,7 @@ spec:
       - ServerSideApply=true
   # The operator injects its serving CA into these webhook configs at runtime,
   # so their caBundle drifts from the rendered (empty) manifest. Ignore it, or
-  # the app stays OutOfSync and selfHeal fights the operator (the #6 lesson).
+  # the app stays OutOfSync and selfHeal fights the operator.
   ignoreDifferences:
     - group: admissionregistration.k8s.io
       kind: MutatingWebhookConfiguration

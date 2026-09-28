@@ -28,7 +28,7 @@ spec:
       - ServerSideApply=true
       - RespectIgnoreDifferences=true
 
-  # Without this, Argo shows a permanent drift.
+  # The chart generates fresh certs on every render; ignore them or the app never syncs.
   ignoreDifferences:
     - group: ""
       kind: Secret

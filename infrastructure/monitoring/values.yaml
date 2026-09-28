@@ -1,6 +1,3 @@
-# victoria-metrics-k8s-stack 0.92.1 — single-node, memory-budgeted.
-# See docs/superpowers/specs/2026-09-09-observability-victoriametrics-design.md
-
 # Explicit docker.io so Kyverno's registry allowlist matches: prefixes the operator image, and
 # (via VM_CONTAINERREGISTRY) every image the operator deploys, alertmanager included.
 global:
@@ -29,7 +26,7 @@ victoria-metrics-operator:
 vmsingle:
   enabled: true
   spec:
-    retentionPeriod: "30d"          # spec §3
+    retentionPeriod: "30d"
     replicaCount: 1
     storage:
       accessModes:
@@ -37,7 +34,7 @@ vmsingle:
       storageClassName: longhorn    # default Delete class; metrics are reproducible
       resources:
         requests:
-          storage: 10Gi             # spec §3
+          storage: 10Gi
     resources:
       requests:
         cpu: 100m
@@ -90,9 +87,9 @@ grafana:
   persistence:
     enabled: false                  # stateless; dashboards provisioned from configmaps
   testFramework:
-    enabled: false                  # no test-hook pod
+    enabled: false
   admin:
-    existingSecret: grafana-admin   # materialised by the ExternalSecret in Task 2
+    existingSecret: grafana-admin   # from grafana-externalsecret.yaml
     userKey: admin-user
     passwordKey: admin-password
   service:

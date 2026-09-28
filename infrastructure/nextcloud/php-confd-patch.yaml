@@ -10,6 +10,7 @@ spec:
     spec:
       initContainers:
         - name: init-redis-session-ini
+          # renovate: datasource=docker depName=nextcloud
           image: docker.io/nextcloud:35.0.1-apache
           command: ["touch", "/php-confd/redis-session.ini"]
           securityContext:

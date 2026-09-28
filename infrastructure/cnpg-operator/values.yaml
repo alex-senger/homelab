@@ -1,5 +1,4 @@
-# CloudNativePG operator 0.29.0 (app 1.30.0). CRDs render as templates
-# (crds.create: true default) so this Application carries them.
+# CRDs render as templates, so this Application carries them.
 crds:
   create: true
 

@@ -14,15 +14,10 @@ spec:
   sourceRepos:
     - https://github.com/alex-senger/homelab.git
 
-  # Namespaces planned in sub-project #6. Extend as applications are added;
-  # an application targeting an unlisted namespace is refused.
+  # Extend per app; an Application targeting an unlisted namespace is refused.
   destinations:
     - server: https://kubernetes.default.svc
       namespace: website
-    - server: https://kubernetes.default.svc
-      namespace: authelia
-    - server: https://kubernetes.default.svc
-      namespace: nextcloud
     - server: https://kubernetes.default.svc
       namespace: minecraft
 

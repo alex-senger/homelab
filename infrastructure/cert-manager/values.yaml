@@ -3,7 +3,6 @@
 crds:
   enabled: true
 
-# Modest footprint.
 resources:
   requests:
     cpu: 10m

@@ -17,7 +17,7 @@ Source of truth for OpenBao paths: `secrets-externalsecret.yaml`, `users-externa
 
 ## Prerequisites (in main)
 - cilium `envoy.xdsMode: split` (1.20 'ads' breaks Gateway L7 xDS).
-- Gateway API CRDs v1.6.1 **experimental** channel, full set (Cilium 1.20 aborts without
+- Gateway API CRDs **experimental** channel, full set (Cilium 1.20 aborts without
   ReferenceGrant v1 / TLSRoute / BackendTLSPolicy).
 - After either lands: `kubectl -n kube-system rollout restart deploy/cilium-operator ds/cilium ds/cilium-envoy`.
   Cilium re-syncs the wildcard cert into `cilium-secrets` as `cilium-sync-secret-<hash>` — check

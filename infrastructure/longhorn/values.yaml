@@ -4,8 +4,7 @@ defaultSettings:
   storageOverProvisioningPercentage: 200
   storageMinimalAvailablePercentage: 15
 
-# backupTarget lives under defaultBackupStore, NOT defaultSettings (chart
-# 1.12.1 would silently drop it there).
+# backupTarget lives under defaultBackupStore; the chart silently drops it from defaultSettings.
 defaultBackupStore:
   backupTarget: s3://backups@garage/longhorn
   backupTargetCredentialSecret: longhorn-backup-credential
@@ -15,6 +14,6 @@ persistence:
   defaultClassReplicaCount: 1
   reclaimPolicy: Delete
 
-# Needed for Argo CD compatibility
+# Helm pre-upgrade hook; Longhorn docs require disabling it under ArgoCD.
 preUpgradeChecker:
   jobEnabled: false

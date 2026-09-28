@@ -2,8 +2,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-  # Versions bumped together by the "Gateway API CRD URLs" manager in
-  # .github/renovate.json5; keep them in lockstep.
+  # Renovate bumps these together; keep them in lockstep.
   - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.2/config/crd/experimental/gateway.networking.k8s.io_gatewayclasses.yaml
   - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.2/config/crd/experimental/gateway.networking.k8s.io_gateways.yaml
   - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.2/config/crd/experimental/gateway.networking.k8s.io_httproutes.yaml

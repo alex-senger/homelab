@@ -9,8 +9,7 @@
 
   timezone: "Europe/Berlin",
 
-  // Weekly rather than continuous, so the commit history reads as maintained
-  // rather than bot-flooded.
+  // Weekly, not continuous.
   schedule: ["* 0-6 * * 1"],
   prConcurrentLimit: 5,
   commitMessagePrefix: "chore(deps): ",
@@ -87,13 +86,13 @@
       ],
     },
     {
-      // Gateway API CRDs pulled by URL. Matches every URL line so all of
-      // them move together; Renovate folds them into a single update.
+      // Manifests pulled by versioned raw GitHub URL. URLs sharing a repo fold
+      // into a single update, so they move together.
       customType: "regex",
-      description: "Gateway API CRD URLs",
-      managerFilePatterns: ["/^infrastructure/gateway-api-crds/kustomization\\.yaml$/"],
+      description: "Versioned manifest URLs in kustomizations",
+      managerFilePatterns: ["/^infrastructure/.+/kustomization\\.yaml$/"],
       matchStrings: [
-        "https://raw\\.githubusercontent\\.com/(?<depName>kubernetes-sigs/gateway-api)/(?<currentValue>v[^/\\s]+)/",
+        "https://raw\\.githubusercontent\\.com/(?<depName>[^/\\s]+/[^/\\s]+)/(?<currentValue>v[^/\\s]+)/",
       ],
       datasourceTemplate: "github-releases",
     },

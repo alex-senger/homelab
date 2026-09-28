@@ -2,7 +2,7 @@
 
 Rebuilds `roastery` to one node `roastery-1` @ 192.168.178.16 (control-plane + schedulable,
 single etcd), Longhorn single-replica on a ~300 GB NVMe volume. Clean rebuild: ArgoCD replays all
-apps; OpenBao is re-seeded. Spec: `docs/superpowers/specs/2026-09-10-single-node-consolidation-design.md`.
+apps; OpenBao is re-seeded.
 
 ## Have in hand (can't be read back from a wiped cluster)
 Cloudflare API token; the **existing** `wg0.conf` (re-seeding the same value keeps the VPS peer);
