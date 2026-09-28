@@ -13,3 +13,4 @@ resources:
   - cert-manager.yaml
   - trivy-system.yaml
   - nextcloud.yaml
+  - obsidian-livesync.yaml
