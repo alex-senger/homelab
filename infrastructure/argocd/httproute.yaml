@@ -1,7 +1,5 @@
-# LAN-only: attached to the external Gateway for a valid wildcard cert + clean
-# hostname, but deliberately NOT added to the VPS nginx SNI relay, so it is
-# reachable on the LAN only (resolve argocd.senger-solutions.com -> Gateway .3
-# via local DNS). ArgoCD is a control plane; keep it off the public path.
+# LAN-only: on the external Gateway for the wildcard cert, but absent from the VPS SNI allowlist
+# (vps/group_vars/vps/main.yml), which closes any unlisted SNI. LAN clients resolve it to Gateway .3.
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
