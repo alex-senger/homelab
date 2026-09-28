@@ -6,6 +6,11 @@ replicaCount: 1
 
 nextcloud:
   host: nextcloud.senger-solutions.com
+  # Replaces the chart default (fsGroup: 33), so restate it. OnRootMismatch skips the recursive
+  # chown of the data volume on every start (35k+ files, ~3 min of 503s) when the root already matches.
+  podSecurityContext:
+    fsGroup: 33
+    fsGroupChangePolicy: OnRootMismatch
   existingSecret:
     enabled: true
     secretName: nextcloud-app
