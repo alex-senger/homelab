@@ -13,7 +13,6 @@ spec:
     metadata:
       labels: { app: garage }
     spec:
-      # First start after going non-root relabels the (root-owned) PVC; OnRootMismatch skips it after.
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000

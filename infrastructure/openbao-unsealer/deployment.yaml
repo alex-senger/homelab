@@ -56,7 +56,6 @@ spec:
           command:
             - /bin/sh
             - /scripts/unseal.sh
-          # No readOnlyRootFilesystem: a crashlooping unsealer leaves the vault sealed, so don't risk it.
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:

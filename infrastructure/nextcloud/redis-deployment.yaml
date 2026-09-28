@@ -17,7 +17,6 @@ spec:
       labels:
         app: nextcloud-redis
     spec:
-      # The command override skips the entrypoint's gosu drop, so set the image's redis uid/gid here.
       securityContext:
         runAsNonRoot: true
         runAsUser: 999
