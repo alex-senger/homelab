@@ -18,4 +18,4 @@ certController:
       cpu: 10m
       memory: 32Mi
     limits:
-      memory: 160Mi  # startup resync peaks at ~95Mi
+      memory: 160Mi
