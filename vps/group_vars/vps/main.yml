@@ -58,8 +58,6 @@ unattended_origins_patterns:
   - origin=Debian,codename=${distro_codename}-security,label=Debian-Security
 
 # nginx_stream
-# SNI allowlist: the client picks the SNI, so an unlisted HTTPRoute (argocd, grafana) must not
-# fall through to the Gateway. Empty default = connection closed.
 nginx_stream_sni_routes:
   - { server_name: senger-solutions.com, upstream: "10.10.0.2:443" }
   - { server_name: auth.senger-solutions.com, upstream: "10.10.0.2:443" }
