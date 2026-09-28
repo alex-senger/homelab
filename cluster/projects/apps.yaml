@@ -20,6 +20,8 @@ spec:
       namespace: website
     - server: https://kubernetes.default.svc
       namespace: minecraft
+    - server: https://kubernetes.default.svc
+      namespace: obsidian-livesync
 
   # Namespace only: apps own their namespace, but no other cluster-scoped
   # resource (no CRDs, ClusterRoles, or bindings — no escalation path).
