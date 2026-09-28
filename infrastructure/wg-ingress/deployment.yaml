@@ -54,6 +54,17 @@ spec:
             - -d
             - TCP-LISTEN:443,fork,reuseaddr
             - TCP:cilium-gateway-external.gateway.svc.cluster.local:443
+          # Non-root can bind :443 because the pod netns has ip_unprivileged_port_start=0.
+          securityContext: &relay-security-context
+            runAsNonRoot: true
+            runAsUser: 65534
+            runAsGroup: 65534
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+            seccompProfile:
+              type: RuntimeDefault
           resources:
             requests:
               cpu: 10m
@@ -68,6 +79,7 @@ spec:
             - -d
             - TCP-LISTEN:25565,fork,reuseaddr
             - TCP:minecraft.minecraft.svc.cluster.local:25565
+          securityContext: *relay-security-context
           resources:
             requests:
               cpu: 10m
