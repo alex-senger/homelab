@@ -65,7 +65,6 @@ nextcloud:
           key: password
   extraSidecarContainers:
     - name: notify-push
-      # renovate: datasource=docker depName=nextcloud
       image: docker.io/nextcloud:35.0.1-apache
       command:
         - sh
