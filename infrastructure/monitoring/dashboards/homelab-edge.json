@@ -107,7 +107,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (app)(label_replace(rate(envoy_cluster_upstream_rq_xx{envoy_cluster_name=~\"$app\",envoy_response_code_class=\"5\"}[$__rate_interval]), \"app\", \"$1\", \"envoy_cluster_name\", \"gateway/[^/]+/[^_]+_(.+)_[0-9]+\")) / sum by (app)(label_replace(rate(envoy_cluster_upstream_rq_total{envoy_cluster_name=~\"$app\"}[$__rate_interval]), \"app\", \"$1\", \"envoy_cluster_name\", \"gateway/[^/]+/[^_]+_(.+)_[0-9]+\"))",
+          "expr": "sum by (app)(label_replace(rate(envoy_cluster_upstream_rq_xx{envoy_cluster_name=~\"$app\",envoy_response_code_class=\"5\"}[$__rate_interval]), \"app\", \"$1\", \"envoy_cluster_name\", \"gateway/[^/]+/[^_]+_(.+)_[0-9]+\")) / sum by (app)(label_replace(rate(envoy_cluster_upstream_rq_xx{envoy_cluster_name=~\"$app\"}[$__rate_interval]), \"app\", \"$1\", \"envoy_cluster_name\", \"gateway/[^/]+/[^_]+_(.+)_[0-9]+\"))",
           "legendFormat": "{{app}}",
           "instant": false
         }
@@ -224,7 +224,7 @@
     {
       "id": 5,
       "type": "status-history",
-      "title": "Requests per hour (7d)",
+      "title": "Activity per hour (7d)",
       "datasource": {
         "type": "prometheus",
         "uid": "VictoriaMetrics"
@@ -241,23 +241,26 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (app)(label_replace(increase(envoy_cluster_upstream_rq_total{envoy_cluster_name=~\"$app\"}[1h]), \"app\", \"$1\", \"envoy_cluster_name\", \"gateway/[^/]+/[^_]+_(.+)_[0-9]+\"))",
+          "expr": "clamp_max(sum by (app)(label_replace(increase(envoy_cluster_upstream_rq_total{envoy_cluster_name=~\"$app\"}[1h]), \"app\", \"$1\", \"envoy_cluster_name\", \"gateway/[^/]+/[^_]+_(.+)_[0-9]+\")) / on(app) group_left() quantile_over_time(0.95, sum by (app)(label_replace(increase(envoy_cluster_upstream_rq_total{envoy_cluster_name=~\"$app\"}[1h]), \"app\", \"$1\", \"envoy_cluster_name\", \"gateway/[^/]+/[^_]+_(.+)_[0-9]+\"))[7d:1h]), 1)",
           "legendFormat": "{{app}}",
           "instant": false
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
+          "unit": "percentunit",
           "color": {
             "mode": "continuous-BlPu"
-          }
+          },
+          "min": 0,
+          "max": 1
         },
         "overrides": []
       },
       "options": {
         "showValue": "never"
-      }
+      },
+      "description": "Requests per hour relative to each app's p95 hour (1 = busy)."
     },
     {
       "id": 6,
@@ -401,6 +404,13 @@
             },
             "renameByName": {
               "Value": "flows"
+            },
+            "indexByName": {
+              "source_namespace": 0,
+              "source_workload": 1,
+              "destination_namespace": 2,
+              "destination_workload": 3,
+              "Value": 4
             }
           }
         }

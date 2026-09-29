@@ -372,7 +372,7 @@
       "options": {
         "sortBy": [
           {
-            "displayName": "Value",
+            "displayName": "CVEs",
             "desc": true
           }
         ]
@@ -383,6 +383,9 @@
           "options": {
             "excludeByName": {
               "Time": true
+            },
+            "renameByName": {
+              "Value": "CVEs"
             }
           }
         }
@@ -435,7 +438,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (source_namespace, source_workload, destination_namespace, destination_workload)(rate(hubble_drop_total{reason=\"POLICY_DENIED\"}[$__rate_interval]))",
+          "expr": "label_replace(label_replace(sum by (source_namespace, source_workload, destination_namespace, destination_workload)(rate(hubble_drop_total{reason=\"POLICY_DENIED\"}[$__rate_interval])), \"source_workload\", \"(world/host)\", \"source_workload\", \"\"), \"destination_workload\", \"(world/host)\", \"destination_workload\", \"\")",
           "legendFormat": "{{source_namespace}}/{{source_workload}} \u2192 {{destination_namespace}}/{{destination_workload}}",
           "instant": false
         }
@@ -465,7 +468,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "topk(20, sum by (source_namespace, source_workload, destination_namespace, destination_workload)(increase(hubble_drop_total{reason=\"POLICY_DENIED\"}[24h])) > 0)",
+          "expr": "label_replace(label_replace(topk(20, sum by (source_namespace, source_workload, destination_namespace, destination_workload)(increase(hubble_drop_total{reason=\"POLICY_DENIED\"}[24h])) > 0), \"source_workload\", \"(world/host)\", \"source_workload\", \"\"), \"destination_workload\", \"(world/host)\", \"destination_workload\", \"\")",
           "legendFormat": "",
           "instant": true,
           "format": "table"
@@ -478,7 +481,7 @@
       "options": {
         "sortBy": [
           {
-            "displayName": "Value",
+            "displayName": "drops",
             "desc": true
           }
         ]
@@ -489,6 +492,16 @@
           "options": {
             "excludeByName": {
               "Time": true
+            },
+            "renameByName": {
+              "Value": "drops"
+            },
+            "indexByName": {
+              "source_namespace": 0,
+              "source_workload": 1,
+              "destination_namespace": 2,
+              "destination_workload": 3,
+              "Value": 4
             }
           }
         }

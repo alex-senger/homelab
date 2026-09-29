@@ -220,7 +220,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "(sum(increase(envoy_cluster_upstream_rq_xx{envoy_cluster_name=~\"gateway/.*\",envoy_response_code_class=\"5\"}[24h])) or vector(0)) / sum(increase(envoy_cluster_upstream_rq_total{envoy_cluster_name=~\"gateway/.*\"}[24h]))",
+          "expr": "(sum(increase(envoy_cluster_upstream_rq_xx{envoy_cluster_name=~\"gateway/.*\",envoy_response_code_class=\"5\"}[24h])) or vector(0)) / sum(increase(envoy_cluster_upstream_rq_xx{envoy_cluster_name=~\"gateway/.*\"}[24h]))",
           "legendFormat": "",
           "instant": false
         }
@@ -506,7 +506,7 @@
           "refId": "A",
           "expr": "1 - avg(rate(node_cpu_seconds_total{mode=\"idle\"}[$__rate_interval]))",
           "legendFormat": "",
-          "instant": false
+          "instant": true
         }
       ],
       "fieldConfig": {
@@ -559,9 +559,9 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes",
+          "expr": "1 - sum(node_memory_MemAvailable_bytes) / sum(node_memory_MemTotal_bytes)",
           "legendFormat": "",
-          "instant": false
+          "instant": true
         }
       ],
       "fieldConfig": {
@@ -616,7 +616,7 @@
           "refId": "A",
           "expr": "sum(longhorn_disk_usage_bytes) / sum(longhorn_disk_capacity_bytes)",
           "legendFormat": "",
-          "instant": false
+          "instant": true
         }
       ],
       "fieldConfig": {

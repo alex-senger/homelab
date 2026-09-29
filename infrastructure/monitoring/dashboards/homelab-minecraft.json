@@ -26,8 +26,8 @@
           "type": "prometheus",
           "uid": "VictoriaMetrics"
         },
-        "expr": "(time() - kube_pod_start_time{namespace=\"minecraft\"}) < 300",
-        "step": "60s",
+        "expr": "(time() - kube_pod_start_time{namespace=\"minecraft\",pod=~\"minecraft-.*\"}) < 300",
+        "step": "300s",
         "titleFormat": "Server started",
         "textFormat": "{{pod}}"
       }
@@ -363,7 +363,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(mc_player_online)",
+          "expr": "sum(max by (player)(mc_player_online))",
           "legendFormat": "online",
           "instant": false
         }
@@ -373,9 +373,11 @@
           "unit": "short",
           "custom": {
             "lineInterpolation": "stepAfter",
-            "fillOpacity": 40
+            "fillOpacity": 40,
+            "axisSoftMax": 10
           },
-          "decimals": 0
+          "decimals": 0,
+          "min": 0
         },
         "overrides": []
       },
@@ -399,7 +401,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "mc_player_online",
+          "expr": "max by (player)(mc_player_online)",
           "legendFormat": "{{player}}",
           "instant": false
         }
