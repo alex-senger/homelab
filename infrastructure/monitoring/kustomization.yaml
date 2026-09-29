@@ -25,3 +25,18 @@ helmCharts:
     releaseName: vm
     namespace: monitoring
     valuesFile: values.yaml
+
+configMapGenerator:
+  - name: dashboards-homelab
+    files:
+      - dashboards/homelab-home.json
+      - dashboards/homelab-edge.json
+      - dashboards/homelab-security.json
+      - dashboards/homelab-data.json
+      - dashboards/homelab-minecraft.json
+    options:
+      disableNameSuffixHash: true
+      labels:
+        grafana_dashboard: "1"
+      annotations:
+        grafana_folder: Homelab
