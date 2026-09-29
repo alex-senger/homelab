@@ -147,6 +147,43 @@ spec:
             - name: paper-patches
               mountPath: /patches
               readOnly: true
+        - name: stats-exporter
+          # renovate: datasource=docker depName=python
+          image: docker.io/python:3.14.7-alpine3.24
+          command: [python3, /app/stats-exporter.py]
+          env:
+            - name: PYTHONDONTWRITEBYTECODE
+              value: "1"
+            - name: RCON_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: minecraft-access
+                  key: rcon-password
+          ports:
+            - name: stats
+              containerPort: 9941
+          readinessProbe:
+            tcpSocket:
+              port: stats
+            periodSeconds: 30
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 64Mi
+          volumeMounts:
+            - name: data
+              mountPath: /data
+              readOnly: true
+            - name: stats-exporter
+              mountPath: /app
+              readOnly: true
       volumes:
         - name: data
           persistentVolumeClaim:
@@ -156,3 +193,6 @@ spec:
         - name: paper-patches
           configMap:
             name: paper-patches
+        - name: stats-exporter
+          configMap:
+            name: stats-exporter
