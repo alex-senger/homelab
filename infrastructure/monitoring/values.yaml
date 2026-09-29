@@ -132,7 +132,6 @@ grafana:
         key: client-secret
 
 # --- Dashboards ---
-# Kept: alertmanager-overview, node-exporter-full, k8s-resources-{cluster,namespace,workload,pod}, victoriametrics-{single-node,vmagent}; homelab views live in dashboards/.
 defaultDashboards:
   enabled: true
   annotations:
