@@ -527,7 +527,9 @@
           "calcs": [
             "lastNotNull"
           ]
-        }
+        },
+        "sizing": "manual",
+        "maxVizHeight": 32
       }
     },
     {
