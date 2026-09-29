@@ -13,6 +13,7 @@ resources:
   - scrapes/cert-manager.yaml
   - scrapes/cilium-envoy.yaml
   - scrapes/hubble.yaml
+  - scrapes/longhorn.yaml
   - scrapes/trivy.yaml
 
 helmCharts:
