@@ -102,7 +102,7 @@ grafana:
       cpu: 50m
       memory: 128Mi
     limits:
-      memory: 512Mi                 # was OOMKilled at 256Mi
+      memory: 768Mi
   # OIDC login via Authelia. Local admin (existingSecret above) stays as break-glass.
   grafana.ini:
     server:
