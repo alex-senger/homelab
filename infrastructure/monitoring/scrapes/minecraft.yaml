@@ -13,4 +13,4 @@ spec:
   endpoints:
     - port: metrics
     - port: stats
-      scrapeInterval: 60s   # stats files only change on autosave
+      interval: 60s   # stats files only change on autosave
