@@ -103,8 +103,15 @@ grafana:
       memory: 128Mi
     limits:
       memory: 768Mi
+  sidecar:
+    dashboards:
+      folderAnnotation: grafana_folder
+      provider:
+        foldersFromFilesStructure: true
   # OIDC login via Authelia. Local admin (existingSecret above) stays as break-glass.
   grafana.ini:
+    dashboards:
+      default_home_dashboard_path: /var/lib/grafana/dashboards/default/Homelab/homelab-home.json
     server:
       root_url: https://grafana.senger-solutions.com
     auth.generic_oauth:
@@ -124,9 +131,54 @@ grafana:
         name: grafana-oidc
         key: client-secret
 
-# --- Dashboards (node/kube/object) ---
+# --- Dashboards ---
+# Keep drill-downs + VM troubleshooting; homelab views live in dashboards/.
 defaultDashboards:
   enabled: true
+  annotations:
+    grafana_folder: Kubernetes
+  dashboards:
+    alertmanager-overview: { enabled: true }
+    node-exporter-full: { enabled: true }
+    k8s-resources-cluster: { enabled: true }
+    k8s-resources-namespace: { enabled: true }
+    k8s-resources-workload: { enabled: true }
+    k8s-resources-pod: { enabled: true }
+    victoriametrics-single-node: { enabled: true }
+    victoriametrics-vmagent: { enabled: true }
+    victoriametrics-vmalert: { enabled: false }
+    victoriametrics-operator: { enabled: false }
+    grafana-overview: { enabled: false }
+    apiserver: { enabled: false }
+    kubernetes-system-api-server: { enabled: false }
+    kubernetes-system-coredns: { enabled: false }
+    kubelet: { enabled: false }
+    cluster-total: { enabled: false }
+    pod-total: { enabled: false }
+    workload-total: { enabled: false }
+    namespace-by-pod: { enabled: false }
+    namespace-by-workload: { enabled: false }
+    k8s-resources-multicluster: { enabled: false }
+    k8s-resources-node: { enabled: false }
+    k8s-resources-nodes-overview: { enabled: false }
+    k8s-resources-workloads-namespace: { enabled: false }
+    k8s-resources-windows-cluster: { enabled: false }
+    k8s-resources-windows-namespace: { enabled: false }
+    k8s-resources-windows-pod: { enabled: false }
+    k8s-windows-cluster-rsrc-use: { enabled: false }
+    k8s-windows-node-rsrc-use: { enabled: false }
+    kubernetes-views-global: { enabled: false }
+    kubernetes-views-namespaces: { enabled: false }
+    kubernetes-views-nodes: { enabled: false }
+    kubernetes-views-pods: { enabled: false }
+    node-cluster-rsrc-use: { enabled: false }
+    node-rsrc-use: { enabled: false }
+    nodes: { enabled: false }
+    nodes-aix: { enabled: false }
+    nodes-darwin: { enabled: false }
+    persistentvolumesusage: { enabled: false }
+    prometheus: { enabled: false }
+    prometheus-remote-write: { enabled: false }
 
 # --- Built-in scrapes: enable only what Talos actually serves ---
 kubelet:
