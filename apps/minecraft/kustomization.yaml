@@ -15,3 +15,6 @@ configMapGenerator:
   - name: paper-patches
     files:
       - paper-patches.json
+  - name: stats-exporter
+    files:
+      - stats-exporter.py

@@ -1,0 +1,16 @@
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMServiceScrape
+metadata:
+  name: minecraft
+  namespace: monitoring
+spec:
+  namespaceSelector:
+    matchNames:
+      - minecraft
+  selector:
+    matchLabels:
+      app: minecraft
+  endpoints:
+    - port: metrics
+    - port: stats
+      interval: 60s   # stats files only change on autosave

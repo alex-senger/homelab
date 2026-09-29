@@ -10,9 +10,12 @@ resources:
   - grafana-httproute.yaml
   - alerting-externalsecret.yaml
   - vmrule-roastery.yaml
+  - scrapes/argocd.yaml
   - scrapes/cert-manager.yaml
   - scrapes/cilium-envoy.yaml
   - scrapes/hubble.yaml
+  - scrapes/longhorn.yaml
+  - scrapes/minecraft.yaml
   - scrapes/trivy.yaml
 
 helmCharts:

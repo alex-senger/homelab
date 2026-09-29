@@ -3,6 +3,8 @@ kind: Service
 metadata:
   name: minecraft
   namespace: minecraft
+  labels:
+    app: minecraft
 spec:
   type: ClusterIP
   selector:
@@ -11,3 +13,9 @@ spec:
     - name: mc
       port: 25565
       targetPort: mc
+    - name: metrics
+      port: 9940
+      targetPort: metrics
+    - name: stats
+      port: 9941
+      targetPort: stats
