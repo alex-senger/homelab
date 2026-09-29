@@ -1,5 +1,3 @@
-# The Longhorn chart's own NetworkPolicy only admits Longhorn pods to longhorn-manager;
-# VMAgent needs its metrics on top (Cilium unions allows across both policy kinds).
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
