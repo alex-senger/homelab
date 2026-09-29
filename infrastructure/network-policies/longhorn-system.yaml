@@ -1,0 +1,19 @@
+# The Longhorn chart's own NetworkPolicy only admits Longhorn pods to longhorn-manager;
+# VMAgent needs its metrics on top (Cilium unions allows across both policy kinds).
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-monitoring-scrape
+  namespace: longhorn-system
+spec:
+  endpointSelector:
+    matchLabels:
+      app: longhorn-manager
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: monitoring
+      toPorts:
+        - ports:
+            - port: "9500"
+              protocol: TCP
