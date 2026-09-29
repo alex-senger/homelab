@@ -89,6 +89,11 @@ spec:
             # SpigotMC (id 57242) via Spiget, which doesn't game-version filter.
             - name: SPIGET_RESOURCES
               value: "57242"
+            # Spiget's entry is external and stuck at 2.4.2; fetch the release jar.
+            - name: PLUGINS
+              value: https://github.com/sladkoff/minecraft-prometheus-exporter/releases/download/v3.1.2/minecraft-prometheus-exporter-3.1.2.jar
+            - name: MINECRAFT_PROMETHEUS_EXPORTER_HOST
+              value: 0.0.0.0
             - name: MODRINTH_DOWNLOAD_DEPENDENCIES
               value: none
             - name: PATCH_DEFINITIONS
@@ -100,6 +105,8 @@ spec:
               containerPort: 25565
             - name: rcon
               containerPort: 25575
+            - name: metrics
+              containerPort: 9940
           # World gen + first-run plugin downloads are slow on this CPU; give the
           # startup probe a long budget before liveness takes over.
           startupProbe:

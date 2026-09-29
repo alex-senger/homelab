@@ -15,6 +15,7 @@ resources:
   - scrapes/cilium-envoy.yaml
   - scrapes/hubble.yaml
   - scrapes/longhorn.yaml
+  - scrapes/minecraft.yaml
   - scrapes/trivy.yaml
 
 helmCharts:
