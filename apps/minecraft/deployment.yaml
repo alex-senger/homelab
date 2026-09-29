@@ -162,7 +162,7 @@ spec:
           ports:
             - name: stats
               containerPort: 9941
-          readinessProbe:
+          livenessProbe:
             tcpSocket:
               port: stats
             periodSeconds: 30

@@ -53,7 +53,7 @@ def _names(data_dir):
     try:
         with open(os.path.join(data_dir, "usercache.json")) as f:
             return {e["uuid"]: e["name"] for e in json.load(f)}
-    except (OSError, ValueError, KeyError):
+    except (OSError, ValueError, KeyError, TypeError, AttributeError):
         return {}
 
 
@@ -67,7 +67,7 @@ def render(data_dir, level, online):
         try:
             with open(path) as f:
                 stats = json.load(f)["stats"]
-        except (OSError, ValueError, KeyError):
+        except (OSError, ValueError, KeyError, TypeError, AttributeError):
             continue  # mid-write during autosave
         player = names.get(uuid, uuid)
         players.add(player)
