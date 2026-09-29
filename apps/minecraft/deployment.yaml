@@ -92,8 +92,6 @@ spec:
             # Spiget's entry is external and stuck at 2.4.2; fetch the release jar.
             - name: PLUGINS
               value: https://github.com/sladkoff/minecraft-prometheus-exporter/releases/download/v3.1.2/minecraft-prometheus-exporter-3.1.2.jar
-            - name: MINECRAFT_PROMETHEUS_EXPORTER_HOST
-              value: 0.0.0.0
             - name: MODRINTH_DOWNLOAD_DEPENDENCIES
               value: none
             - name: PATCH_DEFINITIONS

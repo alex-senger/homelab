@@ -5,6 +5,12 @@
       "ops": [
         { "$set": { "path": "$.proxies.proxy-protocol", "value": true } }
       ]
+    },
+    {
+      "file": "/data/plugins/PrometheusExporter/config.yml",
+      "ops": [
+        { "$set": { "path": "$.host", "value": "0.0.0.0" } }
+      ]
     }
   ]
 }
