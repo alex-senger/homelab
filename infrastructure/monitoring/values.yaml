@@ -132,20 +132,12 @@ grafana:
         key: client-secret
 
 # --- Dashboards ---
-# Keep drill-downs + VM troubleshooting; homelab views live in dashboards/.
+# Kept: alertmanager-overview, node-exporter-full, k8s-resources-{cluster,namespace,workload,pod}, victoriametrics-{single-node,vmagent}; homelab views live in dashboards/.
 defaultDashboards:
   enabled: true
   annotations:
     grafana_folder: Kubernetes
   dashboards:
-    alertmanager-overview: { enabled: true }
-    node-exporter-full: { enabled: true }
-    k8s-resources-cluster: { enabled: true }
-    k8s-resources-namespace: { enabled: true }
-    k8s-resources-workload: { enabled: true }
-    k8s-resources-pod: { enabled: true }
-    victoriametrics-single-node: { enabled: true }
-    victoriametrics-vmagent: { enabled: true }
     victoriametrics-vmalert: { enabled: false }
     victoriametrics-operator: { enabled: false }
     grafana-overview: { enabled: false }
