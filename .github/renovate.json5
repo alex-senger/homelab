@@ -92,6 +92,18 @@
       ],
     },
     {
+      // GitHub release assets fetched by URL (e.g. Minecraft PLUGINS). The match spans
+      // the whole URL, so every occurrence of the version in it (tag + filename) is bumped.
+      customType: "regex",
+      description: "GitHub release asset URLs in manifests",
+      managerFilePatterns: ["/^(apps|infrastructure)/.+\\.ya?ml$/"],
+      matchStrings: [
+        "https://github\\.com/(?<depName>[^/\\s]+/[^/\\s]+)/releases/download/v(?<currentValue>[^/\\s]+)/\\S+",
+      ],
+      datasourceTemplate: "github-releases",
+      extractVersionTemplate: "^v(?<version>.+)$",
+    },
+    {
       customType: "regex",
       description: "Talos and Kubernetes versions in talconfig",
       managerFilePatterns: ["/^talos/talconfig\\.yaml$/"],
