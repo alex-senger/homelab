@@ -63,11 +63,11 @@ hubble:
   metrics:
     enabled:
       - dns
-      - drop
+      - drop:labelsContext=source_namespace,source_workload,destination_namespace,destination_workload,traffic_direction
       - tcp
-      - flow
+      - flow:labelsContext=source_namespace,source_workload,destination_namespace,destination_workload,traffic_direction
       - port-distribution
-      - httpV2
+      - httpV2:labelsContext=source_namespace,source_workload,destination_namespace,destination_workload,traffic_direction
 
 # One node ⇒ one operator (default 2 + anti-affinity would leave one Pending).
 operator:
