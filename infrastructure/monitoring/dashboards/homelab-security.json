@@ -501,7 +501,7 @@
               "source_workload": 1,
               "destination_namespace": 2,
               "destination_workload": 3,
-              "drops": 4
+              "Value": 4
             }
           }
         }
