@@ -7,7 +7,7 @@
   "timezone": "browser",
   "editable": true,
   "graphTooltip": 1,
-  "refresh": "1m",
+  "refresh": "5m",
   "schemaVersion": 41,
   "time": {
     "from": "now-24h",
@@ -684,14 +684,14 @@
         },
         {
           "refId": "B",
-          "expr": "sum by (namespace)(quantile_over_time(0.95, container_memory_working_set_bytes{container!=\"\",container!=\"POD\"}[7d]))",
+          "expr": "quantile_over_time(0.95, sum by (namespace)(container_memory_working_set_bytes{metrics_path=\"/metrics/cadvisor\",container!=\"\"})[7d:5m])",
           "legendFormat": "",
           "instant": true,
           "format": "table"
         },
         {
           "refId": "C",
-          "expr": "sum by (namespace)(kube_pod_container_resource_requests{resource=\"memory\"}) - sum by (namespace)(quantile_over_time(0.95, container_memory_working_set_bytes{container!=\"\",container!=\"POD\"}[7d]))",
+          "expr": "sum by (namespace)(kube_pod_container_resource_requests{resource=\"memory\"}) - quantile_over_time(0.95, sum by (namespace)(container_memory_working_set_bytes{metrics_path=\"/metrics/cadvisor\",container!=\"\"})[7d:5m])",
           "legendFormat": "",
           "instant": true,
           "format": "table"
@@ -792,14 +792,14 @@
         },
         {
           "refId": "B",
-          "expr": "sum by (namespace)(quantile_over_time(0.95, rate(container_cpu_usage_seconds_total{container!=\"\"}[5m])[7d:5m]))",
+          "expr": "quantile_over_time(0.95, sum by (namespace)(rate(container_cpu_usage_seconds_total{metrics_path=\"/metrics/cadvisor\",container!=\"\"}[5m]))[7d:5m])",
           "legendFormat": "",
           "instant": true,
           "format": "table"
         },
         {
           "refId": "C",
-          "expr": "sum by (namespace)(kube_pod_container_resource_requests{resource=\"cpu\"}) - sum by (namespace)(quantile_over_time(0.95, rate(container_cpu_usage_seconds_total{container!=\"\"}[5m])[7d:5m]))",
+          "expr": "sum by (namespace)(kube_pod_container_resource_requests{resource=\"cpu\"}) - quantile_over_time(0.95, sum by (namespace)(rate(container_cpu_usage_seconds_total{metrics_path=\"/metrics/cadvisor\",container!=\"\"}[5m]))[7d:5m])",
           "legendFormat": "",
           "instant": true,
           "format": "table"
