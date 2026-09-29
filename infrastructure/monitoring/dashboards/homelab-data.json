@@ -60,7 +60,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "cnpg_pg_database_size_bytes{datname!~\"template.*|postgres\"}",
+          "expr": "max by (datname)(cnpg_pg_database_size_bytes{datname!~\"template.*|postgres\"})",
           "legendFormat": "{{datname}}",
           "instant": false
         }
@@ -578,14 +578,44 @@
                 "value": 60
               }
             ]
-          },
-          "custom": {
-            "cellOptions": {
-              "type": "color-background"
-            }
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Days"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "red",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 14
+                    },
+                    {
+                      "color": "green",
+                      "value": 60
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
       },
       "options": {
         "sortBy": [
