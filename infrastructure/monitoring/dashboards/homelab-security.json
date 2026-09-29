@@ -367,20 +367,7 @@
       ],
       "fieldConfig": {
         "defaults": {},
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Time"
-            },
-            "properties": [
-              {
-                "id": "custom.hidden",
-                "value": true
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "options": {
         "sortBy": [
@@ -389,7 +376,17 @@
             "desc": true
           }
         ]
-      }
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            }
+          }
+        }
+      ]
     },
     {
       "id": 7,
@@ -476,20 +473,7 @@
       ],
       "fieldConfig": {
         "defaults": {},
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Time"
-            },
-            "properties": [
-              {
-                "id": "custom.hidden",
-                "value": true
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "options": {
         "sortBy": [
@@ -498,7 +482,17 @@
             "desc": true
           }
         ]
-      }
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            }
+          }
+        }
+      ]
     },
     {
       "id": 10,
@@ -519,8 +513,7 @@
           "refId": "A",
           "expr": "certmanager_certificate_expiration_timestamp_seconds - time()",
           "legendFormat": "{{exported_namespace}}/{{name}}",
-          "instant": true,
-          "format": "table"
+          "instant": true
         }
       ],
       "fieldConfig": {
