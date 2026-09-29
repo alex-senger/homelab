@@ -30,6 +30,8 @@ notifications:
   enabled: false
 
 controller:
+  metrics:
+    enabled: true   # argocd_app_info (sync/health) for the Grafana front page
   resources:
     requests:
       cpu: 100m

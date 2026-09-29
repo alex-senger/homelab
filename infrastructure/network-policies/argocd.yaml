@@ -18,3 +18,11 @@ spec:
         - ports:
             - port: "80"
               protocol: TCP
+    # VMAgent scrapes application-controller metrics
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: monitoring
+      toPorts:
+        - ports:
+            - port: "8082"
+              protocol: TCP
