@@ -590,7 +590,7 @@
       "options": {
         "sortBy": [
           {
-            "displayName": "Last",
+            "displayName": "Days",
             "desc": false
           }
         ]
@@ -603,6 +603,15 @@
             "reducers": [
               "lastNotNull"
             ]
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "Field": "Volume",
+              "Last *": "Days"
+            }
           }
         }
       ]
