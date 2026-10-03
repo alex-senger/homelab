@@ -17,8 +17,8 @@ spec:
         runAsNonRoot: true
         runAsUser: 1000
         runAsGroup: 1000
-        fsGroup: 1000
-        fsGroupChangePolicy: OnRootMismatch
+        # No fsGroup: Talos resets the mount root to root:root each boot → full-disk re-chown.
+        # data/ + meta/ are pre-created gid 1000 setgid (backups-recovery.md).
         seccompProfile:
           type: RuntimeDefault
       containers:

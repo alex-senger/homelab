@@ -19,6 +19,17 @@ Attach a ~200 GB **HDD-backed** disk to `roastery-1` — must be the only rotati
     # live node → needs the admin cert; do NOT use --insecure
 Confirm the mount: `talosctl -n 192.168.178.16 get mountstatus | grep garage`.
 
+Pre-create Garage's dirs (fresh disk only). The pod has no `fsGroup` — Talos resets the mount
+root to root:root on every mount, which made `OnRootMismatch` re-chown the whole disk each boot —
+so it can't create them itself (the root stays root-owned):
+
+    # kube-system: Talos enforces PSA baseline elsewhere, which rejects the privileged debug pod
+    kubectl -n kube-system debug node/roastery-1 -it --profile=sysadmin --image=docker.io/library/busybox:1.37 -- \
+      sh -c 'mkdir -p /host/var/mnt/garage/data /host/var/mnt/garage/meta &&
+             chgrp 1000 /host/var/mnt/garage/data /host/var/mnt/garage/meta &&
+             chmod 2775 /host/var/mnt/garage/data /host/var/mnt/garage/meta'
+    kubectl -n kube-system get pods -o name | grep node-debugger | xargs kubectl -n kube-system delete
+
 ### 3–4. Seed OpenBao (chicken/egg — Garage needs tokens to boot; the S3 key only exists after init)
 
 **4a. Tokens → unblocks the pod** (else `CreateContainerConfigError`):
