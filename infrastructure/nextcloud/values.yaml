@@ -122,7 +122,7 @@ imaginary:
   image:
     registry: ghcr.io
     repository: nextcloud-releases/aio-imaginary
-    tag: "20260916_075031"
+    tag: "20260929_105435"
   securityContext:
     runAsUser: 1000
     runAsNonRoot: true
