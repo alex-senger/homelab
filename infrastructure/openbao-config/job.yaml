@@ -23,7 +23,7 @@ spec:
       containers:
         - name: openbao-config
           # renovate: datasource=docker depName=quay.io/openbao/openbao
-          image: quay.io/openbao/openbao:2.7.0
+          image: quay.io/openbao/openbao:2.7.1
           command:
             - /bin/sh
             - /scripts/configure.sh
