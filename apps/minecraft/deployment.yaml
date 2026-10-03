@@ -147,7 +147,7 @@ spec:
               readOnly: true
         - name: stats-exporter
           # renovate: datasource=docker depName=python
-          image: docker.io/python:3.14.7-alpine3.24
+          image: docker.io/python:3.14.8-alpine3.24
           command: [python3, /app/stats-exporter.py]
           env:
             - name: PYTHONDONTWRITEBYTECODE
