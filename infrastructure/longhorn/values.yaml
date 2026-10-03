@@ -3,6 +3,7 @@ defaultSettings:
   defaultReplicaCount: 1
   storageOverProvisioningPercentage: 200
   storageMinimalAvailablePercentage: 15
+  concurrentAutomaticEngineUpgradePerNodeLimit: 1   # auto-move volumes to new engine after upgrades
 
 # backupTarget lives under defaultBackupStore; the chart silently drops it from defaultSettings.
 defaultBackupStore:
