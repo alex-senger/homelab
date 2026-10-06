@@ -22,6 +22,8 @@ spec:
       namespace: minecraft
     - server: https://kubernetes.default.svc
       namespace: obsidian-livesync
+    - server: https://kubernetes.default.svc
+      namespace: prism
 
   # Namespace only: apps own their namespace, but no other cluster-scoped
   # resource (no CRDs, ClusterRoles, or bindings — no escalation path).

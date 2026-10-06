@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prism
+  namespace: prism
+  labels:
+    app: prism
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: prism
+  template:
+    metadata:
+      labels:
+        app: prism
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101
+        runAsGroup: 101
+        fsGroup: 101
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: nginx
+          # renovate: datasource=docker depName=docker.io/nginxinc/nginx-unprivileged
+          image: docker.io/nginxinc/nginx-unprivileged:1.30.5-alpine
+          ports:
+            - containerPort: 8080
+          # Every path is behind basic auth, so probe the socket.
+          readinessProbe:
+            tcpSocket:
+              port: 8080
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            # Populated out-of-band (docs/runbooks/prism-recovery.md); nginx only reads.
+            - name: files
+              mountPath: /srv/files
+              readOnly: true
+            - name: config
+              mountPath: /etc/nginx/conf.d/default.conf
+              subPath: nginx.conf
+              readOnly: true
+            - name: htpasswd
+              mountPath: /etc/nginx/auth
+              readOnly: true
+            # pid + temp dirs; rootfs is read-only.
+            - name: tmp
+              mountPath: /tmp
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              memory: 64Mi
+      volumes:
+        - name: files
+          persistentVolumeClaim:
+            claimName: prism-files
+        - name: config
+          configMap:
+            name: prism-nginx
+        - name: htpasswd
+          secret:
+            secretName: prism-htpasswd
+            defaultMode: 0440
+        - name: tmp
+          emptyDir: {}

@@ -707,7 +707,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "min by (namespace)((kube_deployment_status_replicas_available{namespace=~\"argocd|authelia|databases|garage|minecraft|monitoring|nextcloud|obsidian-livesync|openbao|website\"} / (kube_deployment_spec_replicas{namespace=~\"argocd|authelia|databases|garage|minecraft|monitoring|nextcloud|obsidian-livesync|openbao|website\"} > 0)) or (kube_statefulset_status_replicas_ready{namespace=~\"argocd|authelia|databases|garage|minecraft|monitoring|nextcloud|obsidian-livesync|openbao|website\"} / (kube_statefulset_replicas{namespace=~\"argocd|authelia|databases|garage|minecraft|monitoring|nextcloud|obsidian-livesync|openbao|website\"} > 0)))",
+          "expr": "min by (namespace)((kube_deployment_status_replicas_available{namespace=~\"argocd|authelia|databases|garage|minecraft|monitoring|nextcloud|obsidian-livesync|openbao|prism|website\"} / (kube_deployment_spec_replicas{namespace=~\"argocd|authelia|databases|garage|minecraft|monitoring|nextcloud|obsidian-livesync|openbao|prism|website\"} > 0)) or (kube_statefulset_status_replicas_ready{namespace=~\"argocd|authelia|databases|garage|minecraft|monitoring|nextcloud|obsidian-livesync|openbao|prism|website\"} / (kube_statefulset_replicas{namespace=~\"argocd|authelia|databases|garage|minecraft|monitoring|nextcloud|obsidian-livesync|openbao|prism|website\"} > 0)))",
           "legendFormat": "{{namespace}}",
           "instant": false
         }
