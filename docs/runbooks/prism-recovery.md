@@ -28,15 +28,24 @@ only works at Cloudflare; the nginx cap is shared by all clients.
 ## Load / refresh files
 
 nginx mounts the PVC read-only, so write through a throwaway loader pod (RWO allows both pods on
-the single node), streaming straight from Nextcloud:
+the single node). Go via a local copy with `kubectl cp --retries`: piping `tar` between two
+`kubectl exec` streams truncates the tail when the API connection drops (`tar: short read`).
 
     kubectl -n prism run loader --image=docker.io/busybox:1.37 --restart=Never \
       --override-type=strategic --overrides='{"spec":{"securityContext":{"runAsNonRoot":true,"runAsUser":101,"runAsGroup":101,"fsGroup":101,"seccompProfile":{"type":"RuntimeDefault"}},"containers":[{"name":"loader","volumeMounts":[{"name":"files","mountPath":"/srv/files"}],"securityContext":{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]}}}],"volumes":[{"name":"files","persistentVolumeClaim":{"claimName":"prism-files"}}]}}' \
       -- sleep 3600
+    P=$(kubectl -n nextcloud get pod -l app.kubernetes.io/component=app -o name | cut -d/ -f2)
+    kubectl -n nextcloud cp -c nextcloud --retries=10 "$P:/var/www/html/data/asg/files/<folder>" ./prism-files
     kubectl -n prism exec loader -- find /srv/files -mindepth 1 -maxdepth 1 ! -name lost+found -exec rm -rf {} +
-    kubectl -n nextcloud exec deploy/nextcloud -c nextcloud -- tar -C '/var/www/html/data/asg/files/<folder>' -cf - . \
-      | kubectl -n prism exec -i loader -- tar -C /srv/files -xf -
-    kubectl -n prism delete pod loader
+    kubectl -n prism cp --retries=10 ./prism-files/. loader:/srv/files
+
+Verify, then clean up:
+
+    S='cd "$0" && find . -path ./lost+found -prune -o -type f -exec sha256sum {} + | sort -k2'
+    kubectl -n nextcloud exec "$P" -c nextcloud -- sh -c "$S" '/var/www/html/data/asg/files/<folder>' > src.sum
+    kubectl -n prism exec loader -- sh -c "$S" /srv/files > dst.sum
+    diff src.sum dst.sum && echo identical
+    kubectl -n prism delete pod loader && rm -rf ./prism-files src.sum dst.sum
 
 No restart needed; nginx serves the new files immediately.
 
