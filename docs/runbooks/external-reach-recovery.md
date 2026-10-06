@@ -36,7 +36,7 @@ reset. A new public HTTPRoute needs an allowlist entry, then `cd vps && ansible-
 
     openssl s_client -connect <vps-ip>:443 -servername <host> </dev/null   # cert = listed; reset = not
 
-`argocd.` and `grafana.` are deliberately unlisted (LAN-only).
+`argocd.`, `grafana.` and `nextcloud.` are deliberately unlisted (LAN-only).
 
 ## Stuck certificate
     kubectl -n <ns> describe certificate <name>

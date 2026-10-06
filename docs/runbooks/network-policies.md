@@ -41,10 +41,10 @@ Gateway-fronted service (authelia/argocd), from a curl pod:
 
 Expect `200`.
 
-Containment probe — throwaway busybox pod in a public namespace (`nextcloud`/`minecraft`); the
+Containment probe — throwaway busybox pod in a public namespace (`minecraft`/`website`); the
 overrides satisfy restricted PSA:
 
-    kubectl run probe --rm -it --image=docker.io/busybox:1.37 --restart=Never -n nextcloud \
+    kubectl run probe --rm -it --image=docker.io/busybox:1.37 --restart=Never -n minecraft \
       --override-type=strategic --overrides='{"spec":{"containers":[{"name":"probe","securityContext":{"runAsNonRoot":true,"runAsUser":65534,"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"seccompProfile":{"type":"RuntimeDefault"}}}]}}' \
       -- nc -w3 -z <svc>.<protected-ns>.svc.cluster.local <port>
 
