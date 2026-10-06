@@ -28,6 +28,7 @@ files here add allows on top.
 | website | Kyverno-generated | `fromEntities: [ingress]` → :80 |
 | minecraft | Kyverno-generated | `wg-ingress` → :25565 |
 | obsidian-livesync | Kyverno-generated | `fromEntities: [ingress]` → :5984 |
+| prism | Kyverno-generated | `fromEntities: [ingress]` → :8080 |
 
 ## Verification
 
@@ -72,11 +73,11 @@ kubectl streaming required.
 
 ## Residual risks (accepted)
 
-- Egress is open everywhere except minecraft/website (below).
+- Egress is open everywhere except the phase-2 apps (below).
 - Intra-namespace traffic is fully allowed (`fromEndpoints: [{}]`) with no further segmentation.
 - `longhorn-system` is an allowed source to garage but has no CNP of its own.
 
-## Phase 2 — egress lockdown (minecraft, website, obsidian-livesync)
+## Phase 2 — egress lockdown (minecraft, website, obsidian-livesync, prism)
 
 Model: egress-only CNP (`default-deny-egress`) flips the app to default-deny **egress**;
 ingress stays untouched (both are public apps). Egress policies MUST allow DNS.
@@ -88,6 +89,7 @@ Allow-lists:
 | website | CoreDNS :53 only |
 | minecraft | CoreDNS :53 + `world:443` (Mojang session auth/skins + plugin fetches) |
 | obsidian-livesync | CoreDNS :53 only |
+| prism | CoreDNS :53 only |
 
 Note: Nextcloud egress is intentionally **not** locked down — it needs broad HTTPS-to-world
 anyway, so a default-deny egress policy would add high maintenance for marginal value; phase 1

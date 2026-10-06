@@ -36,6 +36,7 @@ resources:
   - applications/website.yaml
   - applications/minecraft.yaml
   - applications/obsidian-livesync.yaml
+  - applications/prism.yaml
   - applications/network-policies.yaml
   - applications/trivy-operator.yaml
   - applications/kyverno.yaml
