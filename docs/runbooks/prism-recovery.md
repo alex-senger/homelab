@@ -4,8 +4,9 @@
 listing at `https://prism.senger-solutions.com`, behind one basic-auth user. No uploads, no app
 state; the PVC holds a copy of a Nextcloud folder.
 
-Layers: Cloudflare rate limit → basic auth → GET/HEAD only on a read-only mount. Apps see the
-tunnel IP, so per-IP limiting only works at Cloudflare.
+Layers: Cloudflare rate limit → nginx global limit (10 r/s, burst 20) → basic auth → GET/HEAD
+only on a read-only mount, symlinks refused, `no-store`. Apps see the tunnel IP, so per-IP limiting
+only works at Cloudflare; the nginx cap is shared by all clients.
 
 ## First-time setup
 
@@ -45,5 +46,6 @@ Repeat setup step 1 (+ force-sync). nginx re-reads the htpasswd file per request
 
 ## Failure modes
 - 401 with the right password → `prism-htpasswd` not synced, or the line isn't `user:$6$…`.
-- 403 on a listing → files not readable by uid/gid 101; re-run the loader (fsGroup 101).
+- 429 → the global nginx limit (all clients share it); wait a few seconds.
+- 403 on a file → symlink (`disable_symlinks on`) or not readable by uid/gid 101; re-run the loader (fsGroup 101).
 - Host unreachable but pod healthy → SNI allowlist or unproxied DNS; see `external-reach-recovery.md`.
