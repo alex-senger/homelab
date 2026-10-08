@@ -160,6 +160,15 @@ spec:
           for: 30m
           labels: { severity: warning }
           annotations: { summary: "Certificate {{ $labels.namespace }}/{{ $labels.name }} not Ready" }
+    # Fires only when an image's Critical count rises vs the prior day; known unfixables stay quiet.
+    - name: security
+      rules:
+        - alert: NewCriticalVulnerabilities
+          expr: |
+            max by (exported_namespace, image_repository) (trivy_image_vulnerabilities{severity="Critical"})
+            > max by (exported_namespace, image_repository) (max_over_time(trivy_image_vulnerabilities{severity="Critical"}[1d] offset 1d))
+          labels: { severity: warning }
+          annotations: { summary: "{{ $labels.exported_namespace }}/{{ $labels.image_repository }}: Critical CVEs rose to {{ $value }}" }
     # Without these, a dead exporter silences every rule that depends on it.
     - name: meta
       rules:
