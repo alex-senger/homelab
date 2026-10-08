@@ -1,15 +1,20 @@
-# Image-vulnerability scanning ONLY; other scanners off to spare the host.
+# Image vulns + config/RBAC audits (in-process, no scan jobs); rest off to spare the host.
 operator:
   vulnerabilityScannerEnabled: true
-  configAuditScannerEnabled: false
+  configAuditScannerEnabled: true
   exposedSecretScannerEnabled: false
-  rbacAssessmentScannerEnabled: false
+  rbacAssessmentScannerEnabled: true
   infraAssessmentScannerEnabled: false
   clusterComplianceEnabled: false
   scanJobsConcurrentLimit: 1        # weak host: one scan at a time (default 10)
   scannerReportTTL: "24h"
   metricsVulnIdEnabled: false       # per-CVE-id metrics = high cardinality; keep off
   builtInTrivyServer: true
+
+# Audits run inside the operator; cap its startup burst.
+resources:
+  requests: { cpu: 25m, memory: 256Mi }
+  limits:   { memory: 512Mi }
 
 trivy:
   resources:
