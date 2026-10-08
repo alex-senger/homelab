@@ -11,9 +11,10 @@ operator:
   metricsVulnIdEnabled: false       # per-CVE-id metrics = high cardinality; keep off
   builtInTrivyServer: true
 
+# Config/RBAC audits run in-process; sampled peak ~450Mi, spikes OOM'd at 512Mi.
 resources:
-  requests: { cpu: 25m, memory: 256Mi }
-  limits:   { memory: 512Mi }
+  requests: { cpu: 25m, memory: 384Mi }
+  limits:   { memory: 1Gi }
 
 trivy:
   resources:
