@@ -11,7 +11,6 @@ operator:
   metricsVulnIdEnabled: false       # per-CVE-id metrics = high cardinality; keep off
   builtInTrivyServer: true
 
-# Audits run inside the operator; cap its startup burst.
 resources:
   requests: { cpu: 25m, memory: 256Mi }
   limits:   { memory: 512Mi }
