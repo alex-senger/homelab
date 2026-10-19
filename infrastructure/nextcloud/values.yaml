@@ -65,7 +65,7 @@ nextcloud:
           key: password
   extraSidecarContainers:
     - name: notify-push
-      image: docker.io/nextcloud:35.0.1-apache
+      image: docker.io/nextcloud:35.0.2-apache
       command:
         - sh
         - -c
