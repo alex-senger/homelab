@@ -19,8 +19,6 @@ spec:
     - server: https://kubernetes.default.svc
       namespace: website
     - server: https://kubernetes.default.svc
-      namespace: minecraft
-    - server: https://kubernetes.default.svc
       namespace: obsidian-livesync
     - server: https://kubernetes.default.svc
       namespace: prism

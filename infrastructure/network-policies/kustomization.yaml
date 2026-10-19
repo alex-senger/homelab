@@ -13,5 +13,4 @@ resources:
   - trivy-system.yaml
   - nextcloud.yaml
   - obsidian-livesync.yaml
-  - prism.yaml
   - longhorn-system.yaml
