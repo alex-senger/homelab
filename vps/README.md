@@ -1,7 +1,7 @@
 # VPS (`ristretto`)
 
-Ansible for the public front door: a Debian 13 VPS at IONOS that forwards `:443` (SNI) and
-`:25565` over WireGuard (`wg1`, `10.10.0.1` ↔ cluster `wg-ingress` `10.10.0.2`).
+Ansible for the public front door: a Debian 13 VPS at IONOS that forwards `:443` (SNI) over
+WireGuard (`wg1`, `10.10.0.1` ↔ cluster `wg-ingress` `10.10.0.2`).
 Cloudflare proxies all HTTPS; only Cloudflare ranges may reach `:443`.
 
 ## Managed

@@ -37,12 +37,6 @@
       "type": "link",
       "url": "/d/homelab-data",
       "targetBlank": false
-    },
-    {
-      "title": "Minecraft",
-      "type": "link",
-      "url": "/d/homelab-minecraft",
-      "targetBlank": false
     }
   ],
   "panels": [
@@ -388,7 +382,7 @@
       "gridPos": {
         "x": 18,
         "y": 0,
-        "w": 3,
+        "w": 6,
         "h": 4
       },
       "targets": [
@@ -433,57 +427,6 @@
         {
           "title": "Security",
           "url": "/d/homelab-security"
-        }
-      ]
-    },
-    {
-      "id": 8,
-      "type": "stat",
-      "title": "Minecraft online",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "VictoriaMetrics"
-      },
-      "gridPos": {
-        "x": 21,
-        "y": 0,
-        "w": 3,
-        "h": 4
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "sum(mc_player_online) or vector(0)",
-          "legendFormat": "",
-          "instant": false
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "colorMode": "none",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ]
-        }
-      },
-      "links": [
-        {
-          "title": "Minecraft",
-          "url": "/d/homelab-minecraft"
         }
       ]
     },
@@ -707,7 +650,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "min by (namespace)((kube_deployment_status_replicas_available{namespace=~\"argocd|authelia|databases|garage|minecraft|monitoring|nextcloud|obsidian-livesync|openbao|prism|website\"} / (kube_deployment_spec_replicas{namespace=~\"argocd|authelia|databases|garage|minecraft|monitoring|nextcloud|obsidian-livesync|openbao|prism|website\"} > 0)) or (kube_statefulset_status_replicas_ready{namespace=~\"argocd|authelia|databases|garage|minecraft|monitoring|nextcloud|obsidian-livesync|openbao|prism|website\"} / (kube_statefulset_replicas{namespace=~\"argocd|authelia|databases|garage|minecraft|monitoring|nextcloud|obsidian-livesync|openbao|prism|website\"} > 0)))",
+          "expr": "min by (namespace)((kube_deployment_status_replicas_available{namespace=~\"argocd|authelia|databases|garage|monitoring|nextcloud|obsidian-livesync|openbao|prism|website\"} / (kube_deployment_spec_replicas{namespace=~\"argocd|authelia|databases|garage|monitoring|nextcloud|obsidian-livesync|openbao|prism|website\"} > 0)) or (kube_statefulset_status_replicas_ready{namespace=~\"argocd|authelia|databases|garage|monitoring|nextcloud|obsidian-livesync|openbao|prism|website\"} / (kube_statefulset_replicas{namespace=~\"argocd|authelia|databases|garage|monitoring|nextcloud|obsidian-livesync|openbao|prism|website\"} > 0)))",
           "legendFormat": "{{namespace}}",
           "instant": false
         }

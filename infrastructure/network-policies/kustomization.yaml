@@ -8,7 +8,6 @@ resources:
   - garage.yaml
   - authelia.yaml
   - argocd.yaml
-  - minecraft.yaml
   - website.yaml
   - cert-manager.yaml
   - trivy-system.yaml

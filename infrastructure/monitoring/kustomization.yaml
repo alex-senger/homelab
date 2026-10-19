@@ -15,7 +15,6 @@ resources:
   - scrapes/cilium-envoy.yaml
   - scrapes/hubble.yaml
   - scrapes/longhorn.yaml
-  - scrapes/minecraft.yaml
   - scrapes/trivy.yaml
 
 helmCharts:
@@ -33,7 +32,6 @@ configMapGenerator:
       - dashboards/homelab-edge.json
       - dashboards/homelab-security.json
       - dashboards/homelab-data.json
-      - dashboards/homelab-minecraft.json
     options:
       disableNameSuffixHash: true
       labels:
