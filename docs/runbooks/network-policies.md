@@ -27,7 +27,6 @@ files here add allows on top.
 | trivy-system | Kyverno-generated | `monitoring` → operator :8080 |
 | website | Kyverno-generated | `fromEntities: [ingress]` → :80 |
 | obsidian-livesync | Kyverno-generated | `fromEntities: [ingress]` → :5984 |
-| prism | Kyverno-generated | `fromEntities: [ingress]` → :8080 |
 
 ## Verification
 
@@ -76,7 +75,7 @@ kubectl streaming required.
 - Intra-namespace traffic is fully allowed (`fromEndpoints: [{}]`) with no further segmentation.
 - `longhorn-system` is an allowed source to garage but has no CNP of its own.
 
-## Phase 2 — egress lockdown (website, obsidian-livesync, prism)
+## Phase 2 — egress lockdown (website, obsidian-livesync)
 
 Model: egress-only CNP (`default-deny-egress`) flips the app to default-deny **egress**;
 ingress stays untouched (both are public apps). Egress policies MUST allow DNS.
@@ -87,7 +86,6 @@ Allow-lists:
 |---|---|
 | website | CoreDNS :53 only |
 | obsidian-livesync | CoreDNS :53 only |
-| prism | CoreDNS :53 only |
 
 Note: Nextcloud egress is intentionally **not** locked down — it needs broad HTTPS-to-world
 anyway, so a default-deny egress policy would add high maintenance for marginal value; phase 1

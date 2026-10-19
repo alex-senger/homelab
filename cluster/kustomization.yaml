@@ -35,7 +35,6 @@ resources:
   - applications/coredns.yaml
   - applications/website.yaml
   - applications/obsidian-livesync.yaml
-  - applications/prism.yaml
   - applications/network-policies.yaml
   - applications/trivy-operator.yaml
   - applications/kyverno.yaml
