@@ -2,7 +2,6 @@
 firewall_rules:
   - { rule: limit, port: "22", proto: tcp, comment: SSH }
   - { rule: allow, port: "51821", proto: udp, comment: WireGuard - k8s cluster tunnel }
-  - { rule: allow, port: "25565", proto: tcp, comment: Minecraft }
 
 # https://www.cloudflare.com/ips/ — update by hand when Cloudflare changes them.
 firewall_cloudflare_ipv4_ranges:
@@ -64,6 +63,4 @@ nginx_stream_sni_routes:
   - { server_name: obsidian.senger-solutions.com, upstream: "10.10.0.2:443" }
   - { server_name: prism.senger-solutions.com, upstream: "10.10.0.2:443" }
 nginx_stream_sni_default_upstream: ""
-nginx_stream_tcp_passthrough:
-  # proxy_protocol requires Paper to expect it (PR #98).
-  - { port: 25565, upstream: "10.10.0.2:25565", proxy_protocol: true }
+nginx_stream_tcp_passthrough: []

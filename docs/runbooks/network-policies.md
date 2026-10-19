@@ -26,7 +26,6 @@ files here add allows on top.
 | cert-manager | `fromEndpoints: [{}]` | `fromEntities: [kube-apiserver, host]` → :10250 (webhook); `monitoring` → :9402 |
 | trivy-system | Kyverno-generated | `monitoring` → operator :8080 |
 | website | Kyverno-generated | `fromEntities: [ingress]` → :80 |
-| minecraft | Kyverno-generated | `wg-ingress` → :25565 |
 | obsidian-livesync | Kyverno-generated | `fromEntities: [ingress]` → :5984 |
 | prism | Kyverno-generated | `fromEntities: [ingress]` → :8080 |
 
@@ -42,10 +41,10 @@ Gateway-fronted service (authelia/argocd), from a curl pod:
 
 Expect `200`.
 
-Containment probe — throwaway busybox pod in a public namespace (`minecraft`/`website`); the
+Containment probe — throwaway busybox pod in a public namespace (`website`); the
 overrides satisfy restricted PSA:
 
-    kubectl run probe --rm -it --image=docker.io/busybox:1.37 --restart=Never -n minecraft \
+    kubectl run probe --rm -it --image=docker.io/busybox:1.37 --restart=Never -n website \
       --override-type=strategic --overrides='{"spec":{"containers":[{"name":"probe","securityContext":{"runAsNonRoot":true,"runAsUser":65534,"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"seccompProfile":{"type":"RuntimeDefault"}}}]}}' \
       -- nc -w3 -z <svc>.<protected-ns>.svc.cluster.local <port>
 
@@ -77,7 +76,7 @@ kubectl streaming required.
 - Intra-namespace traffic is fully allowed (`fromEndpoints: [{}]`) with no further segmentation.
 - `longhorn-system` is an allowed source to garage but has no CNP of its own.
 
-## Phase 2 — egress lockdown (minecraft, website, obsidian-livesync, prism)
+## Phase 2 — egress lockdown (website, obsidian-livesync, prism)
 
 Model: egress-only CNP (`default-deny-egress`) flips the app to default-deny **egress**;
 ingress stays untouched (both are public apps). Egress policies MUST allow DNS.
@@ -87,7 +86,6 @@ Allow-lists:
 | Namespace | Allowed egress |
 |---|---|
 | website | CoreDNS :53 only |
-| minecraft | CoreDNS :53 + `world:443` (Mojang session auth/skins + plugin fetches) |
 | obsidian-livesync | CoreDNS :53 only |
 | prism | CoreDNS :53 only |
 
@@ -95,6 +93,5 @@ Note: Nextcloud egress is intentionally **not** locked down — it needs broad H
 anyway, so a default-deny egress policy would add high maintenance for marginal value; phase 1
 already contains its ingress to the crown-jewel namespaces.
 
-Verify: server/site healthy; minecraft `world:443` reachable (curl a Mojang endpoint from an
-in-namespace pod) and non-443 egress denied (`hubble observe --namespace minecraft --verdict
+Verify: site healthy; non-DNS egress denied (`hubble observe --namespace website --verdict
 DROPPED` shows `Policy denied DROPPED`).

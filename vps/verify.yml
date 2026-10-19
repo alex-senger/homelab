@@ -31,7 +31,7 @@
           - "ufw is not search('22/tcp\\s+ALLOW')"
           - "ufw is not search('80/tcp')"
           - "ufw is search('51821/udp\\s+ALLOW')"
-          - "ufw is search('25565/tcp\\s+ALLOW')"
+          - "ufw is not search('25565/tcp')"
           - "'permitrootlogin no' in sshd"
           - "'passwordauthentication no' in sshd"
           - "'allowusers asg' in sshd"
