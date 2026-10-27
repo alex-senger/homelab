@@ -28,7 +28,8 @@ data:
       expiration: 1h
       inactivity: 5m
       cookies:
-        - domain: senger-solutions.com
+        # Auth host only: the apex is served by the VPS, which must never see this cookie.
+        - domain: auth.senger-solutions.com
           authelia_url: https://auth.senger-solutions.com
     storage:
       postgres:
