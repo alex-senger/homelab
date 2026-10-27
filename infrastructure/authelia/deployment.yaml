@@ -40,6 +40,8 @@ spec:
             # oidc jwks/clients have no *_FILE form — injected via the Go
             # template config filter (configmap.yaml); this env enables it.
             - { name: X_AUTHELIA_CONFIG_FILTERS, value: template }
+            # Each argon2 check (login, OIDC client secret) allocates 64MiB; GC before the limit.
+            - { name: GOMEMLIMIT, value: 400MiB }
           ports:
             - { name: http, containerPort: 9091 }
           readinessProbe:
@@ -55,7 +57,7 @@ spec:
             - { name: data, mountPath: /data }
           resources:
             requests: { cpu: 50m, memory: 128Mi }
-            limits: { memory: 256Mi }
+            limits: { memory: 512Mi }
       volumes:
         - { name: config, configMap: { name: authelia-config } }
         - { name: users, secret: { secretName: authelia-users } }
