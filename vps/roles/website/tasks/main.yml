@@ -44,36 +44,16 @@
     mode: "0700"
   loop: [.config, .config/containers, .config/containers/systemd]
 
+# --creds only: no auth file is written, so the token never stays on the VPS.
 - name: Pull the pinned image
+  containers.podman.podman_image:
+    name: "{{ website_image }}"
+    username: "{{ website_ghcr_username }}"
+    password: "{{ website_ghcr_token }}"
   become: true
   become_user: "{{ website_user }}"
   environment:
     XDG_RUNTIME_DIR: /run/user/{{ website_account.uid }}
-  block:
-    - name: Check for the pinned image
-      ansible.builtin.command: podman image exists {{ website_image }}
-      register: website_image_present
-      changed_when: false
-      failed_when: website_image_present.rc not in [0, 1]
-
-    - name: Log in to ghcr
-      ansible.builtin.command: podman login --username {{ website_ghcr_username }} --password-stdin ghcr.io
-      args:
-        stdin: "{{ website_ghcr_token }}"
-      no_log: true
-      changed_when: false
-      when: website_image_present.rc == 1
-
-    - name: Pull
-      ansible.builtin.command: podman pull {{ website_image }}
-      changed_when: true
-      when: website_image_present.rc == 1
-  # The token never stays on the VPS.
-  always:
-    - name: Log out of ghcr
-      ansible.builtin.command: podman logout ghcr.io
-      changed_when: false
-      failed_when: false
 
 - name: Template the Quadlet unit
   ansible.builtin.template:

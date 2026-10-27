@@ -23,7 +23,7 @@ Not in git. Copy to `/srv/website/downloads/` (root-owned, `0644`):
 
 ## ghcr token
 Read-only on the package only (fine-grained if ghcr supports it, else classic `read:packages`).
-Used only during a pull, then logged out; not stored on the VPS. Rotate: `sops edit
+Passed to `podman pull --creds` only when the image is missing; no auth file is written. Rotate: `sops edit
 vps/group_vars/vps/secrets.sops.yml` → `website_ghcr_token`.
 
 ## Origin certificate
