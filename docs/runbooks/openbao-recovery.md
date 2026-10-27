@@ -47,6 +47,18 @@ No static credential: the `external-secrets` SA logs in as `eso` (read-only on
 role `eso`. On auth errors check: `openbao-config` completed, the SA name/namespace bindings, and
 OpenBao is unsealed.
 
+## OIDC login (Authelia)
+UI/CLI login via Authelia client `openbao` (2FA); role `admin` requires group `openbao-admins` and
+grants the `admin` policy (1h token). Not on the Gateway — reach it via port-forward:
+
+    kubectl -n openbao port-forward svc/openbao 8200   # UI: http://localhost:8200 → OIDC
+    BAO_ADDR=http://localhost:8200 bao login -method=oidc   # CLI, callback on :8250
+
+Seed `secret/openbao/oidc` (`client-secret` + `client-secret-hash`, see authelia-recovery.md), then
+re-run `openbao-config`; it skips OIDC while the `openbao-oidc` Secret is absent. Once OIDC works,
+revoke the root token. `invalid_redirect_uri`/`claim "groups" does not match` → the port must be
+8200 (UI) / 8250 (CLI) and the user needs `openbao-admins`.
+
 ## Health
     kubectl -n openbao get pods
     kubectl -n openbao exec -it openbao-0 -- bao status

@@ -1,0 +1,15 @@
+{
+  "role_type": "oidc",
+  "user_claim": "preferred_username",
+  "groups_claim": "groups",
+  "oidc_scopes": ["openid", "profile", "groups", "email"],
+  "bound_audiences": ["openbao"],
+  "bound_claims": { "groups": ["openbao-admins"] },
+  "allowed_redirect_uris": [
+    "http://localhost:8200/ui/vault/auth/oidc/oidc/callback",
+    "http://localhost:8250/oidc/callback"
+  ],
+  "token_policies": ["admin"],
+  "token_ttl": "1h",
+  "token_max_ttl": "8h"
+}

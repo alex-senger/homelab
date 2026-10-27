@@ -10,9 +10,12 @@ configMapGenerator:
   - name: openbao-policies
     files:
       - eso-read.hcl
+      - admin.hcl
+      - oidc-role.json
 
 generatorOptions:
   disableNameSuffixHash: false
 
 resources:
+  - oidc-externalsecret.yaml
   - job.yaml

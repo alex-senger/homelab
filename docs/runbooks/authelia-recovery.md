@@ -2,7 +2,7 @@
 
 OIDC provider at `https://auth.senger-solutions.com`. In-repo (no chart), ns `authelia`,
 wave 22, in-memory sessions, Postgres storage (`pg-rw.databases.svc`), file-based users via
-ESO. OIDC clients: `argocd`, `grafana`, `nextcloud`. Passkeys (WebAuthn) enabled.
+ESO. OIDC clients: `argocd`, `grafana`, `nextcloud`, `openbao`. Passkeys (WebAuthn) enabled.
 
 ## Secrets model
 Two ways secrets reach the config (matters when seeding):
@@ -29,7 +29,7 @@ Source of truth for OpenBao paths: `secrets-externalsecret.yaml`, `users-externa
 Generate: `openssl rand -hex 64` each for session / storage-encryption-key / jwt / oidc-hmac;
 `openssl genrsa -out issuer.pem 4096` for the RS256 issuer key.
 
-Per OIDC client (argocd/grafana/nextcloud) — plaintext + argon2 hash. **Hash it, strip the
+Per OIDC client (argocd/grafana/nextcloud/openbao) — plaintext + argon2 hash. **Hash it, strip the
 `Digest: ` label, seed via `@file` (never inline in `sh -c`)** or the `$` gets shell-mangled and
 Authelia stores it as plaintext → `invalid_client`:
 
@@ -37,7 +37,7 @@ Authelia stores it as plaintext → `invalid_client`:
     kubectl -n authelia exec deploy/authelia -- authelia crypto hash generate argon2 \
       --password "$SECRET" --no-confirm | sed -n 's/^Digest: //p' > app.hash   # must start with $argon2id$
 
-`users_database.yml` (file backend): admin + asg, with groups `argocd-admins` / `grafana-admins`
+`users_database.yml` (file backend): admin + asg, with groups `argocd-admins` / `grafana-admins` / `openbao-admins`
 for RBAC. Copy multi-line files into the pod, then write (`@file` resolves inside the pod):
 
     kubectl -n openbao cp issuer.pem openbao-0:/tmp/issuer.pem   # + app hashes, users_database.yml
@@ -45,7 +45,7 @@ for RBAC. Copy multi-line files into the pod, then write (`@file` resolves insid
       hmac=<…> issuer-private-key=@/tmp/issuer.pem \
       argocd-client-secret=<plain> argocd-client-secret-hash=@/tmp/argocd.hash …'
     kubectl -n openbao exec -it openbao-0 -- sh -c 'BAO_TOKEN=<root> bao kv put secret/authelia/users users-yaml=@/tmp/users_database.yml'
-    # also: secret/authelia/{session,storage,jwt}, and secret/{grafana,nextcloud}/oidc for those clients
+    # also: secret/authelia/{session,storage,jwt}, and secret/{grafana,nextcloud,openbao}/oidc (`client-secret`, `client-secret-hash`)
 
 Then shred local plaintext + remove the pod copies. Verify: `kubectl -n authelia get externalsecret`
 → SecretSynced; pod Running.
@@ -59,7 +59,7 @@ home-DNS override → `.3`. No public record. The session cookie is scoped to `a
 - Passkey/TOTP enrollment at `auth.senger-solutions.com/settings` (visible only because
   grafana/argocd clients require `two_factor` — authelia#9664). Notifier is filesystem:
   `kubectl -n authelia exec deploy/authelia -- cat /data/notification.txt`.
-- OIDC: argocd/grafana/nextcloud → "Log in with Authelia".
+- OIDC: argocd/grafana/nextcloud → "Log in with Authelia"; openbao → see openbao-recovery.md.
 
 ## Failure modes
 | Symptom | Cause / check |
