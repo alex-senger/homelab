@@ -5,9 +5,9 @@ metadata:
   namespace: kube-system
 data:
   # Base Corefile matches the Talos-bootstrapped default, plus a `hosts` block
-  # that resolves our external hostnames to the in-cluster Cilium Gateway (.3).
-  # Pods doing server-side calls (Nextcloud/ArgoCD OIDC discovery to
-  # auth.senger-solutions.com) otherwise resolve the public IP and hairpin.
+  # that resolves our hostnames to the in-cluster Cilium Gateway (.3). They have
+  # no public records, so server-side calls (Nextcloud/ArgoCD OIDC discovery to
+  # auth.senger-solutions.com) depend on it.
   # `fallthrough` keeps all other names on normal forwarding.
   # NOTE: Talos also owns this ConfigMap (bootstrap inventory); on a Talos/k8s
   # upgrade it may briefly reset the Corefile — ArgoCD selfHeal re-asserts this.
