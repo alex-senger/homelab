@@ -1,5 +1,3 @@
-# LAN-only: on the external Gateway for the wildcard cert, but absent from the VPS SNI allowlist
-# (vps/group_vars/vps/main.yml), which closes any unlisted SNI. LAN clients resolve it to Gateway .3.
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:

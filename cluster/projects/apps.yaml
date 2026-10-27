@@ -17,11 +17,7 @@ spec:
   # Extend per app; an Application targeting an unlisted namespace is refused.
   destinations:
     - server: https://kubernetes.default.svc
-      namespace: website
-    - server: https://kubernetes.default.svc
       namespace: obsidian-livesync
-    - server: https://kubernetes.default.svc
-      namespace: prism
 
   # Namespace only: apps own their namespace, but no other cluster-scoped
   # resource (no CRDs, ClusterRoles, or bindings — no escalation path).

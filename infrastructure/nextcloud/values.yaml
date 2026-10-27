@@ -34,7 +34,7 @@ nextcloud:
         'overwrite.cli.url' => 'https://nextcloud.senger-solutions.com',
         'overwritehost' => 'nextcloud.senger-solutions.com',
         'trusted_domains' => array('nextcloud.senger-solutions.com'),
-        'trusted_proxies' => array('10.0.0.0/8'),
+        'trusted_proxies' => array('10.244.0.0/16'),
         'default_phone_region' => 'DE',
         'memcache.local' => '\\OC\\Memcache\\APCu',
         'allow_local_remote_servers' => true,
