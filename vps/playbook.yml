@@ -18,27 +18,5 @@
     - role: nginx
       tags: [nginx]
 
-- name: Retire the cluster tunnel
-  hosts: vps
-  become: true
-  tags: [wireguard]
-  tasks:
-    - name: Check for wg1
-      ansible.builtin.stat:
-        path: /etc/wireguard/wg1.conf
-      register: wg1_conf
-
-    - name: Stop and disable wg-quick@wg1
-      ansible.builtin.systemd_service:
-        name: wg-quick@wg1
-        state: stopped
-        enabled: false
-      when: wg1_conf.stat.exists
-
-    - name: Remove the wg1 config
-      ansible.builtin.file:
-        path: /etc/wireguard/wg1.conf
-        state: absent
-
 - name: Verify
   ansible.builtin.import_playbook: verify.yml
