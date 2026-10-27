@@ -54,6 +54,10 @@ data:
           policy: bypass
     identity_providers:
       oidc:
+        # OpenBao reads groups/preferred_username from the ID token.
+        claims_policies:
+          openbao:
+            id_token: [groups, email, preferred_username, name]
         jwks:
           - key_id: primary
             algorithm: RS256
@@ -99,6 +103,22 @@ data:
             response_types: [code]
             # Nextcloud user_oidc sends client creds in the POST body, not Basic.
             token_endpoint_auth_method: client_secret_post
+            # First-party app: skip the consent screen.
+            consent_mode: implicit
+            userinfo_signed_response_alg: none
+          - client_id: openbao
+            client_name: OpenBao
+            client_secret: {{ secret "/secrets/OIDC_OPENBAO_CLIENT_SECRET_HASH" | mindent 14 "|" | msquote }}
+            public: false
+            authorization_policy: two_factor
+            # UI via `kubectl port-forward svc/openbao 8200`; CLI via `bao login -method=oidc`.
+            redirect_uris:
+              - http://localhost:8200/ui/vault/auth/oidc/oidc/callback
+              - http://localhost:8250/oidc/callback
+            scopes: [openid, profile, groups, email]
+            grant_types: [authorization_code]
+            response_types: [code]
+            claims_policy: openbao
             # First-party app: skip the consent screen.
             consent_mode: implicit
             userinfo_signed_response_alg: none

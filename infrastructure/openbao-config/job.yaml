@@ -40,6 +40,12 @@ spec:
                 secretKeyRef:
                   name: openbao-root-token
                   key: token
+            - name: OIDC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: openbao-oidc
+                  key: client-secret
+                  optional: true
           volumeMounts:
             - name: config-script
               mountPath: /scripts
