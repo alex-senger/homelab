@@ -27,7 +27,6 @@ spec:
                 - kyverno
                 - monitoring
                 - longhorn-system
-                - wg-ingress
                 - argocd
                 - authelia
                 - cnpg-system

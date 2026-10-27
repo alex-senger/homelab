@@ -25,7 +25,6 @@ files here add allows on top.
 | nextcloud | `fromEndpoints: [{}]` | `fromEntities: [ingress, host]` → :80, :7867 (notify_push) |
 | cert-manager | `fromEndpoints: [{}]` | `fromEntities: [kube-apiserver, host]` → :10250 (webhook); `monitoring` → :9402 |
 | trivy-system | Kyverno-generated | `monitoring` → operator :8080 |
-| website | Kyverno-generated | `fromEntities: [ingress]` → :80 |
 | obsidian-livesync | Kyverno-generated | `fromEntities: [ingress]` → :5984 |
 
 ## Verification
@@ -40,10 +39,10 @@ Gateway-fronted service (authelia/argocd), from a curl pod:
 
 Expect `200`.
 
-Containment probe — throwaway busybox pod in a public namespace (`website`); the
+Containment probe — throwaway busybox pod in an unprivileged namespace (`trivy-system`); the
 overrides satisfy restricted PSA:
 
-    kubectl run probe --rm -it --image=docker.io/busybox:1.37 --restart=Never -n website \
+    kubectl run probe --rm -it --image=docker.io/busybox:1.37 --restart=Never -n trivy-system \
       --override-type=strategic --overrides='{"spec":{"containers":[{"name":"probe","securityContext":{"runAsNonRoot":true,"runAsUser":65534,"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"seccompProfile":{"type":"RuntimeDefault"}}}]}}' \
       -- nc -w3 -z <svc>.<protected-ns>.svc.cluster.local <port>
 
@@ -75,21 +74,20 @@ kubectl streaming required.
 - Intra-namespace traffic is fully allowed (`fromEndpoints: [{}]`) with no further segmentation.
 - `longhorn-system` is an allowed source to garage but has no CNP of its own.
 
-## Phase 2 — egress lockdown (website, obsidian-livesync)
+## Phase 2 — egress lockdown (obsidian-livesync)
 
 Model: egress-only CNP (`default-deny-egress`) flips the app to default-deny **egress**;
-ingress stays untouched (both are public apps). Egress policies MUST allow DNS.
+ingress stays untouched. Egress policies MUST allow DNS.
 
 Allow-lists:
 
 | Namespace | Allowed egress |
 |---|---|
-| website | CoreDNS :53 only |
 | obsidian-livesync | CoreDNS :53 only |
 
 Note: Nextcloud egress is intentionally **not** locked down — it needs broad HTTPS-to-world
 anyway, so a default-deny egress policy would add high maintenance for marginal value; phase 1
 already contains its ingress to the crown-jewel namespaces.
 
-Verify: site healthy; non-DNS egress denied (`hubble observe --namespace website --verdict
+Verify: site healthy; non-DNS egress denied (`hubble observe --namespace obsidian-livesync --verdict
 DROPPED` shows `Policy denied DROPPED`).

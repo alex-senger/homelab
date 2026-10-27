@@ -24,8 +24,7 @@ Capture the unseal keys + root token (shown once). Then:
 2. Create the two out-of-band Secrets above.
 3. `kubectl -n openbao delete pod -l app=openbao-unsealer` → it unseals.
 4. Run the idempotent `openbao-config` Job (KV v2, k8s auth, `eso-read` policy, `eso` role).
-5. Seed adopted secrets: `secret/cert-manager/cloudflare-api-token` (`api-token`),
-   `secret/wg-ingress/wg-ingress-key` (`wg0.conf=@/path/to/wg0.conf`).
+5. Seed adopted secrets: `secret/cert-manager/cloudflare-api-token` (`api-token`).
 6. Verify the ExternalSecrets are SecretSynced.
 
 ## Auto-unseal

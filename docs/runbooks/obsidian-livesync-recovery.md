@@ -1,16 +1,15 @@
 # Obsidian LiveSync (CouchDB) — setup & recovery
 
 `apps/obsidian-livesync/`, app `obsidian-livesync`, wave 24. Single-node CouchDB behind the
-`external` Gateway at `https://obsidian.senger-solutions.com`. Vaults are end-to-end encrypted
+`external` Gateway at `https://obsidian.senger-solutions.com` (LAN-only). Vaults are end-to-end encrypted
 (content and paths) by the plugin; the server and its backups hold ciphertext only.
 
-Layers: Cloudflare WAF secret header → Cloudflare rate limit → CouchDB auth (anonymous only
-`/_up`) → non-admin `livesync` user scoped to vault DBs. Devices never hold the admin account, and
-admin calls never cross the public path (see "Admin access").
+Layers: CouchDB auth (anonymous only `/_up`) → non-admin `livesync` user scoped to vault DBs.
+Devices never hold the admin account, and admin calls stay on the port-forward (see "Admin access").
 
 ## Admin access
 
-Always through a port-forward (enters the pod directly: no Cloudflare, no WAF header, no CNP). The
+Always through a port-forward (enters the pod directly: no CNP). The
 netrc via process substitution keeps the password out of `ps`:
 
     kubectl -n obsidian-livesync port-forward deploy/couchdb 5984:5984 &
@@ -28,26 +27,13 @@ netrc via process substitution keeps the password out of `ps`:
 
    ESO syncs `couchdb-admin` within 1h; force it with
    `kubectl -n obsidian-livesync annotate externalsecret couchdb-admin force-sync=$(date +%s) --overwrite`.
-2. **DNS:** Cloudflare record `obsidian` → VPS, **proxied**. The VPS only accepts 443 from Cloudflare.
-3. **WAF secret header:** Cloudflare → Security → WAF → Custom rules → Block when
-
-       (http.host eq "obsidian.senger-solutions.com" and http.request.method ne "OPTIONS"
-        and not any(http.request.headers["x-livesync-key"][*] eq "<random ≥32>"))
-
-   `OPTIONS` is exempt because CORS preflights can't carry custom headers. Keep the value in the
-   password manager.
-4. **Rate limit:** Cloudflare → Security → WAF → Rate limiting rules, `http.host eq
-   "obsidian.senger-solutions.com"`, 300 requests / 10 s per IP → Block (Free plan: 10 s period and
-   10 s block are the only options). A backstop behind the header rule, so kept generous: a first
-   full sync of a large vault fetches many chunks. If sync stalls with 429s, raise it.
-5. **VPS relay:** `cd vps && ansible-playbook playbook.yml -K --tags nginx`.
-6. **Vault user** (once, via "Admin access"):
+2. **DNS:** home-DNS override `obsidian.senger-solutions.com` → `192.168.178.3`. No public record.
+3. **Vault user** (once, via "Admin access"):
 
        adm -X PUT "$H/_users/org.couchdb.user:livesync" -H 'Content-Type: application/json' \
          -d '{"name":"livesync","password":"<random ≥32>","roles":[],"type":"user"}'
-7. **Check** from outside the LAN: `curl -s -o /dev/null -w '%{http_code}\n'
-   https://obsidian.senger-solutions.com/_up` → 403 (no header); with
-   `-H 'X-LiveSync-Key: <value>'` → 200.
+4. **Check** from the LAN: `curl -s -o /dev/null -w '%{http_code}\n'
+   https://obsidian.senger-solutions.com/_up` → 200.
 
 ## Per vault
 
@@ -64,8 +50,8 @@ Database names: lowercase, e.g. `vault-notes`.
 
 Self-hosted LiveSync → Remote: CouchDB:
 - URI `https://obsidian.senger-solutions.com`, username `livesync`, its password, database `<vault-db>`.
-- **Custom Headers:** `X-LiveSync-Key: <header value>`.
 - **End-to-end encryption** on, passphrase in the password manager, **Path Obfuscation** on.
+- Syncs only on the home network.
 - Skip "Check server requirements" fixes. They need admin, and the config is already in `livesync.ini`.
 
 Lose the passphrase and the server copy is unreadable; rebuild from a device instead.
@@ -99,11 +85,8 @@ Lose the passphrase and the server copy is unreadable; rebuild from a device ins
   `kubectl -n obsidian-livesync rollout restart deploy/couchdb` (env vars don't reload).
 - **`livesync` password:** via "Admin access", `adm "$H/_users/org.couchdb.user:livesync"`, PUT it
   back with the same `_rev` and a new `"password"`. Update each device.
-- **WAF header value:** edit the Cloudflare rule, update each device's Custom Headers.
 
 ## Gotchas
 
 - Changing `uuid` in `livesync.ini` resets every device's replication checkpoint. Don't.
-- Every external request needs the `X-LiveSync-Key` header; without it Cloudflare returns 403
-  before CouchDB sees it. Admin work uses the port-forward instead.
-- Host unreachable but pod healthy → SNI allowlist or unproxied DNS; see `external-reach-recovery.md`.
+- Host unreachable but pod healthy → home DNS override; see `certificates-recovery.md`.

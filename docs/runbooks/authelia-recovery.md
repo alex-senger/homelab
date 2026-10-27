@@ -52,7 +52,7 @@ Then shred local plaintext + remove the pod copies. Verify: `kubectl -n authelia
 
 ## DNS
 `auth.senger-solutions.com` → in-cluster via CoreDNS (`infrastructure/coredns` → `.3`); LAN via
-laptop `/etc/hosts` → `.3`; public via the VPS nginx SNI relay → `10.10.0.2:443`.
+home-DNS override → `.3`. No public record. The session cookie is scoped to `auth.` only.
 
 ## Verify
 - Portal loads at `auth.`; admin logs in.

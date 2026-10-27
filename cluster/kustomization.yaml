@@ -21,7 +21,6 @@ resources:
   - applications/openbao-unsealer.yaml
   - applications/openbao-config.yaml
   - applications/gateway.yaml
-  - applications/wg-ingress.yaml
   - applications/monitoring-crds.yaml
   - applications/external-secrets.yaml
   - applications/external-secrets-store.yaml
@@ -33,7 +32,6 @@ resources:
   - applications/authelia.yaml
   - applications/nextcloud.yaml
   - applications/coredns.yaml
-  - applications/website.yaml
   - applications/obsidian-livesync.yaml
   - applications/network-policies.yaml
   - applications/trivy-operator.yaml
