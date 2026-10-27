@@ -28,7 +28,7 @@ data:
       expiration: 1h
       inactivity: 5m
       cookies:
-        - domain: senger-solutions.com
+        - domain: auth.senger-solutions.com
           authelia_url: https://auth.senger-solutions.com
     storage:
       postgres:
