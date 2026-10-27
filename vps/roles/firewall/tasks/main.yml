@@ -24,6 +24,13 @@
     proto: tcp
     delete: true
 
+- name: Remove retired cluster tunnel allow
+  community.general.ufw:
+    rule: allow
+    port: "51821"
+    proto: udp
+    delete: true
+
 - name: Allow HTTPS from Cloudflare
   community.general.ufw:
     rule: allow

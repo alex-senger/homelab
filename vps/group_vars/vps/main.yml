@@ -1,7 +1,6 @@
 ---
 firewall_rules:
   - { rule: limit, port: "22", proto: tcp, comment: SSH }
-  - { rule: allow, port: "51821", proto: udp, comment: WireGuard - k8s cluster tunnel }
 
 # https://www.cloudflare.com/ips/ — update by hand when Cloudflare changes them.
 firewall_cloudflare_ipv4_ranges:
