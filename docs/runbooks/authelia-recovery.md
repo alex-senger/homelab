@@ -68,7 +68,6 @@ home-DNS override → `.3`. No public record. The session cookie is scoped to `a
 | `invalid_client` with `client_secret_post`/`_basic` mismatch | set the client's `token_endpoint_auth_method` to what the app sends (nextcloud user_oidc = post; argocd/grafana = basic default). |
 | OIDC discovery 525/timeout from a pod | in-cluster `auth.` resolution — handled by CoreDNS (`auth`→`.3`). Check `getent hosts auth.senger-solutions.com` in the pod = `.3`. |
 | Passkey/2FA registration option missing in settings | Authelia hides it unless a policy requires `two_factor` (authelia#9664). |
-| login loops back to the portal; pod `OOMKilled` | argon2 (m=64MiB per check) over the memory limit kills the pod and its in-memory sessions. Keep limit 512Mi + `GOMEMLIMIT`. |
 | pod `CreateContainerConfigError` | ExternalSecret not Ready / key typo — `describe externalsecret`. |
 | CrashLoop, storage errors | Postgres unreachable, or `STORAGE_PASSWORD` ≠ `secret/databases/authelia`. |
 | redirect_uri mismatch | client `redirect_uris` in `configmap.yaml` vs what the app requests. |
