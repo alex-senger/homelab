@@ -10,6 +10,9 @@ PublishPort=127.0.0.1:8080:80
 User=101
 Group=101
 ReadOnly=true
+# Podman's automatic /run tmpfs isn't writable by uid 101 (nginx.pid).
+ReadOnlyTmpfs=false
+Tmpfs=/run:rw,mode=1777
 Tmpfs=/var/cache/nginx:rw,mode=1777
 DropCapability=ALL
 AddCapability=NET_BIND_SERVICE
