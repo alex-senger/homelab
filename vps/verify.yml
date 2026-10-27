@@ -88,7 +88,7 @@
       ansible.builtin.assert:
         that:
           - "website_unit.status.ActiveState == 'active'"
-          - "(website_inspect.stdout | from_json)[0].ImageName == website_image"
+          - "(website_inspect.stdout | from_json)[0].ImageName == website_image_ref"
           - "probes.results[0].stdout == '200'"
           # The container's own nginx answers POST on a static site with 405.
           - "probes.results[1].stdout == '405'"
