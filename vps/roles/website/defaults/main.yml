@@ -1,0 +1,6 @@
+---
+website_port: 8080
+website_user: website
+website_home: /var/lib/website
+website_downloads_dir: /srv/website/downloads
+website_subid_start: 300000

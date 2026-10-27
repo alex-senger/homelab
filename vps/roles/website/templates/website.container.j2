@@ -1,0 +1,24 @@
+# Managed by Ansible (vps/roles/website).
+[Unit]
+Description=Personal website
+
+[Container]
+ContainerName=website
+Image={{ website_image }}
+Pull=never
+PublishPort=127.0.0.1:{{ website_port }}:80
+User=101
+Group=101
+ReadOnly=true
+Tmpfs=/var/cache/nginx:rw,mode=1777
+DropCapability=ALL
+AddCapability=NET_BIND_SERVICE
+NoNewPrivileges=true
+Volume={{ website_downloads_dir }}:/usr/share/nginx/html/downloads:ro
+PodmanArgs=--memory=64m
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=default.target

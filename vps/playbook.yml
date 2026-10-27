@@ -13,6 +13,8 @@
       tags: [fail2ban]
     - role: hifis.toolkit.unattended_upgrades
       tags: [upgrades]
+    - role: website
+      tags: [website]
     - role: wireguard
       tags: [wireguard]
     - role: nginx_stream
