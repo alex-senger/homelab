@@ -17,7 +17,7 @@
       tags: [website]
     - role: wireguard
       tags: [wireguard]
-    - role: nginx_stream
+    - role: nginx
       tags: [nginx]
 
 - name: Verify

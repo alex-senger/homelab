@@ -1,0 +1,66 @@
+---
+- name: Install nginx
+  ansible.builtin.apt:
+    name: nginx
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Remove the stream module
+  ansible.builtin.apt:
+    name: libnginx-mod-stream
+    state: absent
+
+- name: Create the TLS directory
+  ansible.builtin.file:
+    path: "{{ nginx_tls_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+
+- name: Install the Origin CA certificate and key
+  ansible.builtin.copy:
+    content: "{{ item.content }}"
+    dest: "{{ nginx_tls_dir }}/{{ item.name }}"
+    owner: root
+    group: root
+    mode: "0600"
+  loop:
+    - { name: origin.pem, content: "{{ website_origin_cert }}" }
+    - { name: origin.key, content: "{{ website_origin_key }}" }
+  loop_control:
+    label: "{{ item.name }}"
+  no_log: true
+  notify: Reload nginx
+
+- name: Install the AOP client CA
+  ansible.builtin.copy:
+    src: aop-ca.pem
+    dest: "{{ nginx_tls_dir }}/aop-ca.pem"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload nginx
+
+- name: Template nginx.conf
+  ansible.builtin.template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+    owner: root
+    group: root
+    mode: "0644"
+    validate: nginx -t -c %s
+  notify: Reload nginx
+
+# nginx.conf doesn't include sites-enabled.
+- name: Remove default site
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+
+- name: Enable and start nginx
+  ansible.builtin.systemd:
+    name: nginx
+    enabled: true
+    state: started

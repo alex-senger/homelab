@@ -1,4 +1,0 @@
----
-nginx_stream_sni_routes: []
-nginx_stream_sni_default_upstream: ""  # fail closed
-nginx_stream_tcp_passthrough: []

@@ -1,0 +1,3 @@
+---
+nginx_server_name: senger-solutions.com
+nginx_tls_dir: /etc/nginx/tls
