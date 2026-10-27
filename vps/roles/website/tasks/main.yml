@@ -1,0 +1,78 @@
+---
+- name: Install podman
+  ansible.builtin.apt:
+    name: [podman, uidmap, passt, dbus-user-session]
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Create the website user
+  ansible.builtin.user:
+    name: "{{ website_user }}"
+    shell: /usr/sbin/nologin
+    home: "{{ website_home }}"
+    create_home: true
+  register: website_account
+
+- name: Grant subordinate ids
+  ansible.builtin.lineinfile:
+    path: "{{ item }}"
+    regexp: "^{{ website_user }}:"
+    line: "{{ website_user }}:{{ website_subid_start }}:65536"
+  loop: [/etc/subuid, /etc/subgid]
+
+- name: Enable lingering
+  ansible.builtin.command: loginctl enable-linger {{ website_user }}
+  args:
+    creates: /var/lib/systemd/linger/{{ website_user }}
+
+# PDFs are copied in by hand (docs/runbooks/website-recovery.md).
+- name: Create the downloads directory
+  ansible.builtin.file:
+    path: "{{ website_downloads_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Create the Quadlet directory
+  ansible.builtin.file:
+    path: "{{ website_home }}/{{ item }}"
+    state: directory
+    owner: "{{ website_user }}"
+    group: "{{ website_user }}"
+    mode: "0700"
+  loop: [.config, .config/containers, .config/containers/systemd]
+
+# --creds only: no auth file is written, so the token never stays on the VPS.
+- name: Pull the pinned image
+  containers.podman.podman_image:
+    name: "{{ website_image }}"
+    username: "{{ website_ghcr_username }}"
+    password: "{{ website_ghcr_token }}"
+  become: true
+  become_user: "{{ website_user }}"
+  environment:
+    XDG_RUNTIME_DIR: /run/user/{{ website_account.uid }}
+
+- name: Template the Quadlet unit
+  ansible.builtin.template:
+    src: website.container.j2
+    dest: "{{ website_home }}/.config/containers/systemd/website.container"
+    owner: "{{ website_user }}"
+    group: "{{ website_user }}"
+    mode: "0600"
+  notify: Restart website
+
+- name: Apply unit changes
+  ansible.builtin.meta: flush_handlers
+
+- name: Start website
+  ansible.builtin.systemd_service:
+    name: website.service
+    scope: user
+    state: started
+  become: true
+  become_user: "{{ website_user }}"
+  environment:
+    XDG_RUNTIME_DIR: /run/user/{{ website_account.uid }}

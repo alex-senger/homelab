@@ -43,10 +43,16 @@
     {
       // Everything else: patch bumps land on their own once CI is green.
       matchUpdateTypes: ["patch"],
-      matchPackageNames: ["!cilium", "!argo-cd", "!siderolabs/talos", "!kubernetes/kubernetes"],
+      matchPackageNames: ["!cilium", "!argo-cd", "!siderolabs/talos", "!kubernetes/kubernetes", "!ghcr.io/alex-senger/personal-website"],
       automerge: true,
       automergeType: "pr",
       platformAutomerge: true,
+    },
+    {
+      // Merging only edits group_vars; the deploy is a manual playbook run.
+      matchPackageNames: ["ghcr.io/alex-senger/personal-website"],
+      automerge: false,
+      addLabels: ["manual-deploy"],
     },
     {
       // Timestamp tags (YYYYMMDD_HHMMSS), not semver.
@@ -89,6 +95,14 @@
       managerFilePatterns: ["/^(apps|infrastructure)/.+\\.ya?ml$/"],
       matchStrings: [
         "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\s+(?:image|imageName):\\s*[^\\s:]+:(?<currentValue>[^\\s@]+)",
+      ],
+    },
+    {
+      customType: "regex",
+      description: "Pinned images in VPS Ansible vars",
+      managerFilePatterns: ["/^vps/group_vars/.+\\.ya?ml$/"],
+      matchStrings: [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\s+[a-z_]+_image:\\s*[^\\s:]+:(?<currentValue>[^\\s@]+)@(?<currentDigest>sha256:[a-f0-9]+)",
       ],
     },
     {

@@ -4,13 +4,17 @@
   become: true
   gather_facts: false
   tags: [verify]
+  # Role defaults don't reach this play.
+  vars_files:
+    - roles/website/defaults/main.yml
+    - roles/nginx/defaults/main.yml
   # Asserts post-apply state, so a --check dry run skips it.
   tasks:
     - name: Read state
       ansible.builtin.command: "{{ item }}"
       loop:
         - nginx -t
-        - wg show wg1 allowed-ips
+        - ip -br link
         - ufw status
         - sshd -T
         - fail2ban-client status sshd
@@ -21,16 +25,16 @@
     - name: Assert end state
       when: not ansible_check_mode
       vars:
-        wg: "{{ verify_state.results[1].stdout }}"
+        links: "{{ verify_state.results[1].stdout }}"
         ufw: "{{ verify_state.results[2].stdout }}"
         sshd: "{{ verify_state.results[3].stdout_lines }}"
       ansible.builtin.assert:
         that:
-          - "'10.10.0.2/32' in wg"
+          - "links is not search('^wg1\\s', multiline=True)"
           - "ufw is search('22/tcp\\s+LIMIT')"
           - "ufw is not search('22/tcp\\s+ALLOW')"
           - "ufw is not search('80/tcp')"
-          - "ufw is search('51821/udp\\s+ALLOW')"
+          - "ufw is not search('51821')"
           - "ufw is not search('25565/tcp')"
           - "'permitrootlogin no' in sshd"
           - "'passwordauthentication no' in sshd"
@@ -42,3 +46,54 @@
         quiet: true
       when: not ansible_check_mode
       loop: "{{ firewall_cloudflare_ipv4_ranges + firewall_cloudflare_ipv6_ranges }}"
+
+    - name: Look up the website uid
+      ansible.builtin.command: id -u {{ website_user }}
+      register: website_uid
+      changed_when: false
+      when: not ansible_check_mode
+
+    - name: Read website state
+      when: not ansible_check_mode
+      become: true
+      become_user: "{{ website_user }}"
+      environment:
+        XDG_RUNTIME_DIR: "/run/user/{{ website_uid.stdout }}"
+      block:
+        - name: Unit status
+          ansible.builtin.systemd_service:
+            name: website.service
+            scope: user
+          register: website_unit
+
+        - name: Container image
+          ansible.builtin.command: podman container inspect website
+          register: website_inspect
+          changed_when: false
+
+    - name: Probe nginx and the upstream
+      when: not ansible_check_mode
+      ansible.builtin.command: "{{ item }}"
+      loop:
+        - curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:{{ website_port }}/
+        - curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:{{ website_port }}/
+        - curl -sk -o /dev/null -w '%{http_code}' --resolve {{ nginx_server_name }}:443:127.0.0.1 https://{{ nginx_server_name }}/
+        - curl -sk -o /dev/null --resolve unknown.invalid:443:127.0.0.1 https://unknown.invalid/
+      register: probes
+      changed_when: false
+      failed_when: false
+
+    - name: Assert website end state
+      when: not ansible_check_mode
+      ansible.builtin.assert:
+        that:
+          - "website_unit.status.ActiveState == 'active'"
+          - "(website_inspect.stdout | from_json)[0].ImageName == website_image"
+          - "probes.results[0].stdout == '200'"
+          # The container's own nginx answers POST on a static site with 405.
+          - "probes.results[1].stdout == '405'"
+          # No AOP client cert → nginx 400; a foreign Cloudflare zone can't present ours.
+          - "probes.results[2].stdout == '400'"
+          # Unknown SNI → handshake rejected (curl exit 35).
+          - "probes.results[3].rc != 0"
+        fail_msg: "website: deployed image or nginx hardening differs from group_vars"

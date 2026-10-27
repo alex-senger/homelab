@@ -1,0 +1,26 @@
+---
+- name: Render templates and diff against golden files
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files:
+    - ../group_vars/vps/main.yml
+    - ../roles/website/defaults/main.yml
+    - ../roles/nginx/defaults/main.yml
+    - vars-test.yml
+  tasks:
+    - name: Render
+      ansible.builtin.template:
+        src: "../roles/{{ item.role }}/templates/{{ item.name }}.j2"
+        dest: "{{ playbook_dir }}/.out/{{ item.name }}"
+        mode: "0644"
+      loop:
+        - { role: website, name: website.container }
+        - { role: nginx, name: nginx.conf }
+
+    - name: Compare with golden files
+      ansible.builtin.command: diff -u {{ playbook_dir }}/expected/{{ item.name }} {{ playbook_dir }}/.out/{{ item.name }}
+      changed_when: false
+      loop:
+        - { role: website, name: website.container }
+        - { role: nginx, name: nginx.conf }

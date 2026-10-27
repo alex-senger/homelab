@@ -1,7 +1,6 @@
 ---
 firewall_rules:
   - { rule: limit, port: "22", proto: tcp, comment: SSH }
-  - { rule: allow, port: "51821", proto: udp, comment: WireGuard - k8s cluster tunnel }
 
 # https://www.cloudflare.com/ips/ — update by hand when Cloudflare changes them.
 firewall_cloudflare_ipv4_ranges:
@@ -56,10 +55,6 @@ unattended_origins_patterns:
   - origin=Debian,codename=${distro_codename},label=Debian-Security
   - origin=Debian,codename=${distro_codename}-security,label=Debian-Security
 
-# nginx_stream
-nginx_stream_sni_routes:
-  - { server_name: senger-solutions.com, upstream: "10.10.0.2:443" }
-  - { server_name: auth.senger-solutions.com, upstream: "10.10.0.2:443" }
-  - { server_name: obsidian.senger-solutions.com, upstream: "10.10.0.2:443" }
-nginx_stream_sni_default_upstream: ""
-nginx_stream_tcp_passthrough: []
+# website (Renovate bumps tag + digest; deploy: ansible-playbook playbook.yml -K --tags website)
+# renovate: datasource=docker depName=ghcr.io/alex-senger/personal-website
+website_image: ghcr.io/alex-senger/personal-website:v1.1.2@sha256:8d009d7d54f9b68455165692af99e330571ecd60a4b90b9f60b4483cd5e0a50b

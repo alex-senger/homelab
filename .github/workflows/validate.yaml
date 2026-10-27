@@ -191,11 +191,19 @@ jobs:
       - name: Syntax-check playbooks
         run: ansible-playbook --syntax-check playbook.yml verify.yml bootstrap.yml
 
-      - name: nginx template golden tests
+      - name: Template golden tests
         run: |
           mkdir -p tests/.out
-          ansible-playbook tests/render_nginx.yml
-          ansible-playbook tests/render_nginx.yml -e @tests/vars-routes.yml
+          ansible-playbook tests/render.yml
+
+      - name: nginx -t on the rendered config
+        run: |
+          sudo apt-get update && sudo apt-get install -y nginx
+          sudo mkdir -p /etc/nginx/tls
+          sudo openssl req -x509 -newkey rsa:2048 -nodes -days 1 -subj /CN=test \
+            -keyout /etc/nginx/tls/origin.key -out /etc/nginx/tls/origin.pem
+          sudo cp roles/nginx/files/aop-ca.pem /etc/nginx/tls/
+          sudo nginx -t -c "$PWD/tests/.out/nginx.conf"
 
       - name: Lint
         run: pipx run ansible-lint
