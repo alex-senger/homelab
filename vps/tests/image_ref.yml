@@ -1,0 +1,13 @@
+---
+- name: Image ref matches what podman reports
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files:
+    - ../roles/website/defaults/main.yml
+    - vars-test.yml
+  tasks:
+    - name: Podman drops the tag when a digest is pinned
+      ansible.builtin.assert:
+        that:
+          - website_image_ref == "ghcr.io/alex-senger/personal-website@sha256:" ~ "0" * 64

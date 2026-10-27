@@ -4,3 +4,5 @@ website_user: website
 website_home: /var/lib/website
 website_downloads_dir: /srv/website/downloads
 website_subid_start: 300000
+# What podman reports as ImageName: it drops the tag when a digest is pinned.
+website_image_ref: "{{ website_image | regex_replace('^(.+):[^:/@]+@', '\\1@') }}"
