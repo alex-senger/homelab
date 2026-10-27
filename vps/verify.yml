@@ -4,6 +4,10 @@
   become: true
   gather_facts: false
   tags: [verify]
+  # Role defaults don't reach this play.
+  vars_files:
+    - roles/website/defaults/main.yml
+    - roles/nginx/defaults/main.yml
   # Asserts post-apply state, so a --check dry run skips it.
   tasks:
     - name: Read state
