@@ -68,6 +68,7 @@ password for ESO exists anywhere, in Git or otherwise.
 **The two external-reach secrets become OpenBao-backed.** `ExternalSecret`s in `cert-manager` and
 `wg-ingress` reference the `openbao` `ClusterSecretStore` and resolve to `secret/cert-manager/cloudflare-api-token`
 and `secret/wg-ingress/wg-ingress-key` respectively, closing the gap ADR 0003 left open.
+(2026-10-27: `wg-ingress` and its secret were removed by ADR 0005.)
 
 ## Consequences
 

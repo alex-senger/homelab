@@ -4,7 +4,7 @@ Date: 2026-09-08
 
 ## Status
 
-Accepted
+Superseded by [0005](0005-lan-only-cluster-website-on-vps.md) (2026-10-27).
 
 ## Context
 

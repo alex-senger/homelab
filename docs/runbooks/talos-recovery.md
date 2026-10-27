@@ -66,8 +66,8 @@ roastery-1`). Always the factory image, never the stock default:
 Afterwards, dead pre-reboot pods linger as `Error`: `kubectl delete pods -A --field-selector=status.phase=Failed`.
 
 ## Rebuild from scratch
-Have in hand first (can't be read back from a wiped cluster): Cloudflare API token, the existing
-`wg0.conf` (same value keeps the VPS peer), Grafana admin creds, the OpenBao unseal age key and the
+Have in hand first (can't be read back from a wiped cluster): Cloudflare API token,
+Grafana admin creds, the OpenBao unseal age key and the
 Talos age key.
 
 1. **VM** (Proxmox): q35, VirtIO SCSI single, CPU host 4 cores, 28 GB RAM ballooning OFF, VirtIO

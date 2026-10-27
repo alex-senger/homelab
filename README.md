@@ -24,13 +24,13 @@
 | CI | **GitHub Actions** — render + `kubeconform -strict` + rendered-object diff per PR; **Renovate** (automerge gated on CI) |
 | Gateway API | Cilium Gateway controller, experimental CRDs |
 | TLS | **cert-manager** Let's Encrypt wildcard via Cloudflare DNS-01 |
-| External reach | **VPS + WireGuard** tunnel → Cilium Gateway (TLS terminates in-cluster) |
+| Exposure | **LAN-only** cluster (Gateway on `192.168.178.3`); website on a **VPS** (rootless Podman, Cloudflare-proxied) |
 | Secrets | **OpenBao** (KV v2) + **External Secrets Operator** |
 | Storage | **Longhorn** (single-replica, NVMe); **Garage** S3 backups on a separate HDD |
 | Database | **CloudNativePG** (Postgres); WAL + PITR to Garage |
 | Observability | **VictoriaMetrics** + **Grafana** + Hubble |
 | SSO | **Authelia** |
-| Network policy | **Cilium** ingress default-deny per namespace; egress lockdown on public apps |
+| Network policy | **Cilium** ingress default-deny per namespace; egress lockdown on LiveSync |
 | Admission | **Kyverno** (enforce), Pod Security `restricted`, **Trivy** image scanning |
 
 ## Layout
@@ -40,6 +40,7 @@
     infrastructure/   platform component manifests
     apps/             user-facing workloads
     talos/            machine config: talconfig, patches, encrypted secrets
+    vps/              Ansible for the website VPS
     docs/             bootstrap, runbooks
 
 ## Bootstrap
@@ -63,8 +64,6 @@ Open a PR → merge → ArgoCD reconciles within ~3 min. Rollback is `git revert
   the age key is the one thing held out of band. CI refuses tracked `clusterconfig/` or a secrets
   file that loses its SOPS metadata.
 - **Cilium CRDs aren't declarative.** The agent/operator register the `cilium.io` CRDs at startup.
-- **No client-IP preservation** — the VPS→Gateway hop is L4 SNI passthrough, so apps see the tunnel
-  IP (proxy_protocol deferred: it can't coexist with LAN-direct access on the shared Gateway).
 
 </details>
 
