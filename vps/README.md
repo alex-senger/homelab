@@ -47,8 +47,8 @@ ansible-playbook playbook.yml -K --tags website   # deploy a new website image
 ansible-playbook verify.yml -K                    # checks only
 ```
 
-Tags: `base`, `sshd`, `firewall`, `fail2ban`, `upgrades`, `website`, `nginx`, `wireguard` (tunnel
-cleanup), `verify`. Keep a second SSH session open when applying `sshd` or `firewall`.
+Tags: `base`, `sshd`, `firewall`, `fail2ban`, `upgrades`, `website`, `nginx`, `verify`.
+Keep a second SSH session open when applying `sshd` or `firewall`.
 
 Website operations: [docs/runbooks/website-recovery.md](../docs/runbooks/website-recovery.md).
 Rebuilding from scratch: [docs/runbooks/vps-recovery.md](../docs/runbooks/vps-recovery.md).

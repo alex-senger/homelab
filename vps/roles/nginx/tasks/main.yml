@@ -6,11 +6,6 @@
     update_cache: true
     cache_valid_time: 3600
 
-- name: Remove the stream module
-  ansible.builtin.apt:
-    name: libnginx-mod-stream
-    state: absent
-
 - name: Create the TLS directory
   ansible.builtin.file:
     path: "{{ nginx_tls_dir }}"
