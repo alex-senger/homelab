@@ -2,7 +2,7 @@ clusterName: roastery
 # renovate: datasource=github-releases depName=siderolabs/talos
 talosVersion: v1.14.6
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
-kubernetesVersion: v1.37.1
+kubernetesVersion: v1.37.2
 
 # Single-node: the node's address is the API endpoint (no VIP).
 endpoint: https://192.168.178.16:6443
