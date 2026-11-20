@@ -57,4 +57,4 @@ unattended_origins_patterns:
 
 # website (Renovate bumps tag + digest; deploy: ansible-playbook playbook.yml -K --tags website)
 # renovate: datasource=docker depName=ghcr.io/alex-senger/personal-website
-website_image: ghcr.io/alex-senger/personal-website:v1.1.2@sha256:8d009d7d54f9b68455165692af99e330571ecd60a4b90b9f60b4483cd5e0a50b
+website_image: ghcr.io/alex-senger/personal-website:v1.1.3@sha256:fff98843050dcac277b990e79e204fda8bf510df919b51fd68fb9c23343d35d2
