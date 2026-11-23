@@ -45,7 +45,7 @@ repoServer:
       cpu: 50m
       memory: 128Mi
     limits:
-      memory: 1Gi # 512Mi OOMed rendering several chart bumps at once
+      memory: 1Gi
 
 server:
   resources:
