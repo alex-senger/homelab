@@ -144,12 +144,12 @@ spec:
           annotations: { summary: "{{ $labels.namespace }}/{{ $labels.pod }} container {{ $labels.container }} at {{ $value | humanizePercentage }} of memory limit" }
     - name: cert-manager
       rules:
-        # LE renews at 30d left, so < 21d means renewal has been failing for 9d.
+        # Renewal overdue by 1d; independent of each cert's renewBefore.
         - alert: CertificateExpiringSoon
-          expr: (certmanager_certificate_expiration_timestamp_seconds - time()) < 21 * 24 * 3600
+          expr: (time() - certmanager_certificate_renewal_timestamp_seconds) > 24 * 3600
           for: 1h
           labels: { severity: warning }
-          annotations: { summary: "Certificate {{ $labels.namespace }}/{{ $labels.name }} expires in < 21d (renewal failing?)" }
+          annotations: { summary: "Certificate {{ $labels.namespace }}/{{ $labels.name }} renewal overdue by {{ $value | humanizeDuration }}" }
         - alert: CertificateExpiryCritical
           expr: (certmanager_certificate_expiration_timestamp_seconds - time()) < 7 * 24 * 3600
           for: 1h
